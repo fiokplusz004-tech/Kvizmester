@@ -410,13 +410,10 @@ async function joinGame() {
     db = firebase.database();
     roomRef = db.ref('rooms/' + roomCode);
 
-    // Check room exists
+    // Check room exists - ellenőrizzük hogy a host már beállította-e a szobát
+    // Ha gameState nincs, megpróbálunk csatlakozni és várunk
     const snap = await roomRef.child('gameState').once('value');
-    const state = snap.val();
-    if (!state) {
-      err.textContent = 'Szoba nem található! Ellenőrizd a szoba nevét.';
-      return;
-    }
+    // Nem blokkoljuk a belépést ha nincs gameState - lehet hogy a host még tölt
 
     // Register player
     await roomRef.child('players').child(playerId).set({
