@@ -703,14 +703,9 @@ function showMain() {
   const playerUrl = window.location.origin + window.location.pathname.replace('quiz-host.html','quiz-player.html') + '?room=' + roomCode;
   document.getElementById('player-url').textContent = playerUrl;
 
-  // FONTOS: azonnal beírjuk a gameState-t, hogy a játékosok csatlakozni tudjanak
+  // Mindig beírjuk a waiting állapotot, hogy a játékosok csatlakozni tudjanak
   if (db) {
-    roomRef.child('gameState').once('value').then(snap => {
-      if (!snap.val()) {
-        // Csak akkor írjuk be, ha még nincs gameState (első indítás)
-        roomRef.child('gameState').set({ phase: 'waiting' });
-      }
-    });
+    roomRef.child('gameState').set({ phase: 'waiting' });
   }
 
   // QR code
@@ -918,7 +913,6 @@ function startGame() {
   gamePhase = 'playing';
   document.getElementById('btn-start').classList.add('hidden');
   document.getElementById('btn-end').classList.remove('hidden');
-  if (db) roomRef.child('gameState').set({ phase: 'playing', questionIndex: -1 });
   nextQuestion();
 }
 
@@ -1086,12 +1080,11 @@ function newGame() {
   currentQIndex = -1;
   activeQuestions = [];
   gamePhase = 'waiting';
-  Object.keys(players).forEach(id => { if(players[id]) players[id].score = 0; });
+  players = {};
   if (db) {
     roomRef.child('gameState').set({ phase: 'waiting' });
-    const updates = {};
-    Object.keys(players).forEach(id => { updates[id + '/score'] = 0; });
-    roomRef.child('players').update(updates);
+    roomRef.child('answers').remove();
+    roomRef.child('players').remove();
   }
   document.getElementById('waiting-state').classList.remove('hidden');
   document.getElementById('question-state').classList.add('hidden');
@@ -1100,6 +1093,7 @@ function newGame() {
   document.getElementById('btn-next').classList.add('hidden');
   document.getElementById('btn-end').classList.add('hidden');
   updateScoreboard();
+  updatePlayerChips();
 }
 
 // ============================================================
