@@ -601,8 +601,17 @@ function initFirebase() {
     firebase.initializeApp({ apiKey, authDomain, databaseURL, projectId });
     db = firebase.database();
     roomRef = db.ref('rooms/' + roomCode);
-    setupListeners();
-    showMain();
+
+    // Teszt: írhatunk-e a Firebase-be?
+    roomRef.child('gameState').set({ phase: 'waiting' })
+      .then(() => {
+        setupListeners();
+        showMain();
+      })
+      .catch(e => {
+        db = null;
+        alert('Firebase írási hiba: ' + e.message + '\n\nA Database szabályok valószínűleg lejártak (test mode 30 nap)!\n\nMegoldás: Firebase Console → Realtime Database → Rules → illeszd be:\n{\n  "rules": {\n    "rooms": {\n      "$roomId": {\n        ".read": true,\n        ".write": true\n      }\n    }\n  }\n}\n\nMajd kattints Publish!');
+      });
   } catch(e) {
     alert('Firebase hiba: ' + e.message);
   }
@@ -685,10 +694,8 @@ function setupListeners() {
   // Questions from DB
   roomRef.child('questions').on('value', snap => {
     const dbQ = snap.val();
-    if (dbQ) {
-      questions = Object.entries(dbQ).map(([id, q]) => ({ ...q, id }));
-      renderQuestions();
-    }
+    questions = dbQ ? Object.entries(dbQ).map(([id, q]) => ({ ...q, id })) : [];
+    renderQuestions();
   });
 }
 
@@ -754,7 +761,6 @@ function showAddQuestion(editId = null) {
 function hideAddQuestion() {
   document.getElementById('add-q-form').classList.add('hidden');
   editingQId = null;
-  // Mezők ürítése hogy a következő új kérdés tiszta lappal kezdődjön
   document.getElementById('q-text-input').value = '';
   ['opt-a','opt-b','opt-c','opt-d'].forEach(id => {
     const el = document.getElementById(id);
@@ -780,24 +786,28 @@ function saveQuestion() {
   if (!text || opts.some(o => !o)) { alert('Töltsd ki az összes mezőt!'); return; }
 
   const qData = { text, options: opts, correct: correctSelectedOpt, category: cat, time };
-  const currentEditId = editingQId; // snapshot before hide clears it
+  const eid = editingQId; // mentés előtt elmentjük, mert hideAddQuestion törli
+
+  hideAddQuestion(); // először zárjuk be a formot
 
   if (db) {
-    if (currentEditId) {
-      roomRef.child('questions').child(currentEditId).set(qData);
+    if (eid) {
+      roomRef.child('questions').child(eid).set(qData)
+        .catch(e => alert('Mentési hiba: ' + e.message));
     } else {
-      roomRef.child('questions').push(qData);
+      roomRef.child('questions').push(qData)
+        .catch(e => alert('Mentési hiba: ' + e.message));
     }
+    // Firebase listener automatikusan frissíti a questions tömböt és rendereli
   } else {
-    if (currentEditId) {
-      const idx = questions.findIndex(q => q.id === currentEditId);
-      if (idx >= 0) questions[idx] = { ...qData, id: currentEditId };
+    if (eid) {
+      const idx = questions.findIndex(q => q.id === eid);
+      if (idx >= 0) questions[idx] = { ...qData, id: eid };
     } else {
       questions.push({ ...qData, id: 'q' + Date.now() });
     }
     renderQuestions();
   }
-  hideAddQuestion();
 }
 
 function deleteQuestion(id) {
@@ -1182,29 +1192,47 @@ function doImport() {
     const raw = document.getElementById('import-textarea').value.trim();
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) throw new Error('Tömbnek kell lennie');
-    if (parsed.length === 0) throw new Error('Üres lista');
+    if (parsed.length === 0) throw new Error('Üres lista!');
 
     if (db) {
-      // Firebase: minden kérdést egyenként push, de tranzakciós módon
+      // Firebase: sorban importáljuk, Promise.all-lal várjuk meg mindet
       const promises = parsed.map(q => {
-        const qData = { text: q.text, options: q.options, correct: q.correct||0, category: q.category||'Általános', time: q.time||30 };
+        const qData = {
+          text: q.text,
+          options: q.options,
+          correct: q.correct || 0,
+          category: q.category || 'Általános',
+          time: q.time || 30
+        };
         return roomRef.child('questions').push(qData);
       });
-      Promise.all(promises).then(() => {
-        document.getElementById('import-modal').classList.add('hidden');
-        alert(parsed.length + ' kérdés importálva!');
-      }).catch(e => alert('Firebase hiba: ' + e.message));
+      Promise.all(promises)
+        .then(() => {
+          document.getElementById('import-modal').classList.add('hidden');
+          document.getElementById('import-textarea').value = '';
+          alert(parsed.length + ' kérdés sikeresen importálva!');
+        })
+        .catch(e => {
+          alert('Firebase írási hiba: ' + e.message + '\n\nEllenőrizd a Firebase Database szabályokat! A "rules" alatt a questions node-nak ".write": true kell legyen.');
+        });
     } else {
       parsed.forEach(q => {
-        const qData = { text: q.text, options: q.options, correct: q.correct||0, category: q.category||'Általános', time: q.time||30 };
-        questions.push({ ...qData, id: 'q'+Date.now()+Math.random() });
+        questions.push({
+          text: q.text,
+          options: q.options,
+          correct: q.correct || 0,
+          category: q.category || 'Általános',
+          time: q.time || 30,
+          id: 'q' + Date.now() + Math.random()
+        });
       });
       renderQuestions();
       document.getElementById('import-modal').classList.add('hidden');
+      document.getElementById('import-textarea').value = '';
       alert(parsed.length + ' kérdés importálva!');
     }
   } catch(e) {
-    alert('Hiba: ' + e.message);
+    alert('JSON hiba: ' + e.message);
   }
 }
 </script>
