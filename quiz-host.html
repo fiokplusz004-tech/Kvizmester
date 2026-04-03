@@ -754,6 +754,16 @@ function showAddQuestion(editId = null) {
 function hideAddQuestion() {
   document.getElementById('add-q-form').classList.add('hidden');
   editingQId = null;
+  // Mezők ürítése hogy a következő új kérdés tiszta lappal kezdődjön
+  document.getElementById('q-text-input').value = '';
+  ['opt-a','opt-b','opt-c','opt-d'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  correctSelectedOpt = 0;
+  document.querySelectorAll('.correct-mark').forEach((el, i) => {
+    el.classList.toggle('selected', i === 0);
+  });
 }
 
 function saveQuestion() {
@@ -770,17 +780,18 @@ function saveQuestion() {
   if (!text || opts.some(o => !o)) { alert('Töltsd ki az összes mezőt!'); return; }
 
   const qData = { text, options: opts, correct: correctSelectedOpt, category: cat, time };
+  const currentEditId = editingQId; // snapshot before hide clears it
 
   if (db) {
-    if (editingQId) {
-      roomRef.child('questions').child(editingQId).set(qData);
+    if (currentEditId) {
+      roomRef.child('questions').child(currentEditId).set(qData);
     } else {
       roomRef.child('questions').push(qData);
     }
   } else {
-    if (editingQId) {
-      const idx = questions.findIndex(q => q.id === editingQId);
-      if (idx >= 0) questions[idx] = { ...qData, id: editingQId };
+    if (currentEditId) {
+      const idx = questions.findIndex(q => q.id === currentEditId);
+      if (idx >= 0) questions[idx] = { ...qData, id: currentEditId };
     } else {
       questions.push({ ...qData, id: 'q' + Date.now() });
     }
@@ -1171,14 +1182,27 @@ function doImport() {
     const raw = document.getElementById('import-textarea').value.trim();
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) throw new Error('Tömbnek kell lennie');
-    parsed.forEach(q => {
-      const qData = { text: q.text, options: q.options, correct: q.correct||0, category: q.category||'Általános', time: q.time||30 };
-      if (db) roomRef.child('questions').push(qData);
-      else questions.push({ ...qData, id: 'q'+Date.now()+Math.random() });
-    });
-    if (!db) renderQuestions();
-    document.getElementById('import-modal').classList.add('hidden');
-    alert(parsed.length + ' kérdés importálva!');
+    if (parsed.length === 0) throw new Error('Üres lista');
+
+    if (db) {
+      // Firebase: minden kérdést egyenként push, de tranzakciós módon
+      const promises = parsed.map(q => {
+        const qData = { text: q.text, options: q.options, correct: q.correct||0, category: q.category||'Általános', time: q.time||30 };
+        return roomRef.child('questions').push(qData);
+      });
+      Promise.all(promises).then(() => {
+        document.getElementById('import-modal').classList.add('hidden');
+        alert(parsed.length + ' kérdés importálva!');
+      }).catch(e => alert('Firebase hiba: ' + e.message));
+    } else {
+      parsed.forEach(q => {
+        const qData = { text: q.text, options: q.options, correct: q.correct||0, category: q.category||'Általános', time: q.time||30 };
+        questions.push({ ...qData, id: 'q'+Date.now()+Math.random() });
+      });
+      renderQuestions();
+      document.getElementById('import-modal').classList.add('hidden');
+      alert(parsed.length + ' kérdés importálva!');
+    }
   } catch(e) {
     alert('Hiba: ' + e.message);
   }
