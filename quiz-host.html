@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuizMaster — Host Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: #2a2a3d;
+    --accent: #f0c040;
+    --accent2: #e05a2b;
+    --green: #3ecf8e;
+    --red: #e05a5a;
+    --text: #f0f0f8;
+    --muted: #6b6b8a;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+
+  /* SETUP SCREEN */
+  #setup-screen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 40px 20px;
+  }
+  .setup-logo { font-family: var(--font-display); font-size: 72px; letter-spacing: 4px; color: var(--accent); line-height: 1; margin-bottom: 8px; }
+  .setup-sub { color: var(--muted); font-size: 14px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 48px; }
+  .setup-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 40px; width: 100%; max-width: 560px;
+  }
+  .setup-card h2 { font-family: var(--font-display); font-size: 28px; letter-spacing: 2px; margin-bottom: 24px; color: var(--accent); }
+  .field { margin-bottom: 20px; }
+  .field label { display: block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .field input, .field select, .field textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 16px; color: var(--text); font-family: var(--font-body); font-size: 15px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field select option { background: var(--bg); }
+  .btn {
+    width: 100%; padding: 16px; background: var(--accent); color: #000; border: none;
+    border-radius: 8px; font-family: var(--font-display); font-size: 22px; letter-spacing: 2px;
+    cursor: pointer; transition: transform 0.1s, opacity 0.2s;
+  }
+  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn-secondary {
+    background: transparent; color: var(--accent); border: 1px solid var(--accent);
+    font-size: 14px; padding: 10px; letter-spacing: 1px; font-family: var(--font-body); font-weight: 600;
+    border-radius: 8px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-secondary:hover { background: var(--accent); color: #000; }
+
+  /* MAIN LAYOUT */
+  #main-screen { display: none; }
+  .topbar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px; height: 64px;
+  }
+  .topbar-logo { font-family: var(--font-display); font-size: 32px; letter-spacing: 3px; color: var(--accent); }
+  .topbar-room { font-size: 12px; color: var(--muted); letter-spacing: 2px; }
+  .topbar-room span { color: var(--accent); font-weight: 600; font-size: 16px; }
+  .topbar-actions { display: flex; gap: 12px; }
+  .main-grid { display: grid; grid-template-columns: 340px 1fr 300px; gap: 0; height: calc(100vh - 64px); }
+
+  /* LEFT PANEL — Questions */
+  .panel-left {
+    background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .panel-header {
+    padding: 20px 24px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-header h3 { font-family: var(--font-display); font-size: 20px; letter-spacing: 2px; color: var(--accent); }
+  .panel-content { flex: 1; overflow-y: auto; padding: 16px; }
+  .panel-content::-webkit-scrollbar { width: 4px; }
+  .panel-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Category tabs */
+  .cat-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .cat-tab {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted);
+    transition: all 0.2s; letter-spacing: 0.5px;
+  }
+  .cat-tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  /* Question cards */
+  .q-card {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;
+    position: relative;
+  }
+  .q-card:hover { border-color: var(--accent); }
+  .q-card.active { border-color: var(--accent); background: rgba(240,192,64,0.07); }
+  .q-card.used { opacity: 0.4; }
+  .q-card-text { font-size: 13px; line-height: 1.5; margin-bottom: 8px; }
+  .q-card-meta { display: flex; gap: 8px; align-items: center; }
+  .q-cat-badge {
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px;
+    border-radius: 4px; background: var(--border); color: var(--muted);
+  }
+  .q-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s; }
+  .q-card:hover .q-actions { opacity: 1; }
+  .q-btn-sm {
+    width: 26px; height: 26px; border-radius: 6px; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all 0.15s;
+  }
+  .q-btn-del { background: rgba(224,90,90,0.15); color: var(--red); }
+  .q-btn-del:hover { background: var(--red); color: #fff; }
+  .q-btn-edit { background: rgba(240,192,64,0.15); color: var(--accent); }
+  .q-btn-edit:hover { background: var(--accent); color: #000; }
+
+  /* ADD QUESTION FORM */
+  .add-q-form {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; margin-bottom: 12px;
+  }
+  .add-q-form.hidden { display: none; }
+  .add-q-form h4 { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+  .add-q-form input, .add-q-form select, .add-q-form textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 9px 12px; color: var(--text); font-family: var(--font-body); font-size: 13px;
+    outline: none; margin-bottom: 8px; transition: border-color 0.2s;
+  }
+  .add-q-form input:focus, .add-q-form select:focus, .add-q-form textarea:focus { border-color: var(--accent); }
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .option-input-wrap { position: relative; }
+  .option-input-wrap input { margin: 0; padding-right: 32px; }
+  .correct-mark {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border);
+    cursor: pointer; transition: all 0.2s; background: transparent;
+  }
+  .correct-mark.selected { border-color: var(--green); background: var(--green); }
+  .form-row { display: flex; gap: 8px; }
+  .form-row input, .form-row select { flex: 1; }
+  .add-q-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .btn-save { flex: 1; padding: 10px; background: var(--green); color: #000; border: none; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; transition: opacity 0.2s; }
+  .btn-save:hover { opacity: 0.85; }
+  .btn-cancel-form { padding: 10px 16px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; cursor: pointer; }
+
+  /* CENTER — Game Stage */
+  .panel-center { display: flex; flex-direction: column; overflow: hidden; }
+  .stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; position: relative; }
+
+  /* Waiting state */
+  .waiting-state { text-align: center; }
+  .qr-wrapper {
+    background: #fff; border-radius: 16px; padding: 20px; display: inline-block;
+    margin-bottom: 24px; box-shadow: 0 0 60px rgba(240,192,64,0.15);
+  }
+  .waiting-title { font-family: var(--font-display); font-size: 48px; letter-spacing: 3px; color: var(--accent); margin-bottom: 8px; }
+  .waiting-url { font-size: 18px; color: var(--text); background: var(--surface2); padding: 12px 24px; border-radius: 8px; margin-bottom: 16px; font-weight: 500; }
+  .player-count { font-size: 14px; color: var(--muted); }
+  .player-count span { color: var(--green); font-size: 24px; font-weight: 700; }
+  .players-joined { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 20px; max-width: 600px; }
+  .player-chip {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 20px;
+    padding: 6px 16px; font-size: 13px; display: flex; align-items: center; gap: 8px;
+    animation: chipIn 0.3s ease;
+  }
+  @keyframes chipIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+  .player-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+
+  /* Question display */
+  .question-state { width: 100%; max-width: 780px; }
+  .q-number { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .q-category-tag {
+    display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 11px;
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px;
+    background: rgba(240,192,64,0.15); color: var(--accent); border: 1px solid rgba(240,192,64,0.3);
+  }
+  .q-text { font-family: var(--font-display); font-size: 42px; letter-spacing: 1px; line-height: 1.15; margin-bottom: 36px; }
+  .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .answer-card {
+    background: var(--surface2); border: 2px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; display: flex; align-items: center; gap: 16px;
+    transition: all 0.3s;
+  }
+  .answer-card.correct { border-color: var(--green); background: rgba(62,207,142,0.1); }
+  .answer-card.wrong { border-color: var(--red); background: rgba(224,90,90,0.08); opacity: 0.5; }
+  .answer-letter {
+    width: 36px; height: 36px; border-radius: 8px; background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-size: 20px; flex-shrink: 0;
+  }
+  .answer-card.correct .answer-letter { background: var(--green); color: #000; }
+  .answer-text { font-size: 15px; line-height: 1.4; }
+
+  /* Timer */
+  .timer-bar-wrap { width: 100%; max-width: 780px; margin-bottom: 24px; }
+  .timer-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .timer-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 1s linear, background 0.5s; }
+  .timer-bar-fill.urgent { background: var(--red); }
+  .timer-display { font-family: var(--font-display); font-size: 48px; color: var(--accent); text-align: right; margin-top: 4px; }
+  .timer-display.urgent { color: var(--red); }
+
+  /* Answer stats bar */
+  .answer-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .stat-bar { background: var(--surface2); border-radius: 8px; padding: 10px 14px; }
+  .stat-bar-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .stat-bar-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .stat-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+
+  /* Control bar */
+  .control-bar {
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .ctrl-btn {
+    padding: 12px 28px; border-radius: 8px; border: none; font-family: var(--font-display);
+    font-size: 18px; letter-spacing: 1.5px; cursor: pointer; transition: all 0.2s;
+  }
+  .ctrl-start { background: var(--green); color: #000; }
+  .ctrl-next { background: var(--accent); color: #000; }
+  .ctrl-reveal { background: var(--accent2); color: #fff; }
+  .ctrl-end { background: var(--red); color: #fff; }
+  .ctrl-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+  .game-phase { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+  /* RIGHT PANEL — Scoreboard */
+  .panel-right {
+    background: var(--surface); border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .score-list { flex: 1; overflow-y: auto; padding: 12px; }
+  .score-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    border-radius: 10px; margin-bottom: 6px; transition: all 0.3s;
+    background: var(--surface2); border: 1px solid transparent;
+  }
+  .score-item.top1 { border-color: var(--accent); background: rgba(240,192,64,0.08); }
+  .score-item.top2 { border-color: rgba(192,192,192,0.4); }
+  .score-item.top3 { border-color: rgba(180,100,40,0.4); }
+  .rank-num { font-family: var(--font-display); font-size: 22px; width: 28px; text-align: center; color: var(--muted); }
+  .score-item.top1 .rank-num { color: var(--accent); }
+  .score-item.top2 .rank-num { color: #c0c0c0; }
+  .score-item.top3 .rank-num { color: #b46428; }
+  .player-info { flex: 1; min-width: 0; }
+  .player-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .player-pts { font-family: var(--font-display); font-size: 26px; color: var(--accent); }
+  .score-delta {
+    font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+    background: rgba(62,207,142,0.15); color: var(--green);
+    animation: deltaIn 0.4s ease; opacity: 0; animation-fill-mode: forwards;
+  }
+  @keyframes deltaIn { 0% { opacity: 0; transform: translateY(4px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px); } }
+
+  /* RESULTS SCREEN */
+  #results-screen {
+    display: none; position: fixed; inset: 0; background: var(--bg);
+    z-index: 100; flex-direction: column; align-items: center; justify-content: flex-start;
+    padding: 40px 20px; overflow-y: auto;
+  }
+  .results-title { font-family: var(--font-display); font-size: 80px; letter-spacing: 6px; color: var(--accent); margin-bottom: 8px; }
+  .results-sub { color: var(--muted); letter-spacing: 3px; text-transform: uppercase; font-size: 13px; margin-bottom: 48px; }
+  .podium { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 40px; }
+  .podium-block { text-align: center; }
+  .podium-name { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .podium-score { font-family: var(--font-display); font-size: 32px; }
+  .podium-bar { width: 120px; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; }
+  .podium-bar.p1 { height: 160px; background: var(--accent); color: #000; font-family: var(--font-display); font-size: 48px; }
+  .podium-bar.p2 { height: 110px; background: #c0c0c0; color: #000; font-family: var(--font-display); font-size: 40px; }
+  .podium-bar.p3 { height: 80px; background: #b46428; color: #fff; font-family: var(--font-display); font-size: 36px; }
+
+  /* Full scoreboard on results screen */
+  .results-full-scoreboard { width: 100%; max-width: 480px; }
+  .results-full-scoreboard h3 { font-family: var(--font-display); font-size: 22px; letter-spacing: 3px; color: var(--muted); text-align: center; margin-bottom: 16px; }
+  .results-score-row {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 8px;
+  }
+  .results-score-row.r1 { border-color: var(--accent); background: rgba(240,192,64,0.08); }
+  .results-score-row.r2 { border-color: rgba(192,192,192,0.4); }
+  .results-score-row.r3 { border-color: rgba(180,100,40,0.4); }
+  .results-rank-num { font-family: var(--font-display); font-size: 26px; width: 32px; text-align: center; color: var(--muted); flex-shrink: 0; }
+  .results-score-row.r1 .results-rank-num { color: var(--accent); }
+  .results-score-row.r2 .results-rank-num { color: #c0c0c0; }
+  .results-score-row.r3 .results-rank-num { color: #b46428; }
+  .results-player-name { flex: 1; font-size: 15px; font-weight: 600; }
+  .results-player-pts { font-family: var(--font-display); font-size: 28px; color: var(--accent); }
+
+  /* Utility */
+  .hidden { display: none !important; }
+  .tag { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
+  .tag-green { background: rgba(62,207,142,0.15); color: var(--green); }
+  .tag-yellow { background: rgba(240,192,64,0.15); color: var(--accent); }
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 32px; width: 100%; max-width: 520px;
+  }
+  .modal h3 { font-family: var(--font-display); font-size: 28px; letter-spacing: 2px; color: var(--accent); margin-bottom: 24px; }
+
+  /* Animations */
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .pulse { animation: pulse 1.5s infinite; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .slide-up { animation: slideUp 0.4s ease; }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-logo">QUIZMASTER</div>
+  <div class="setup-sub">Multiplayer Kvíz Játék — Host Panel</div>
+  <div class="setup-card">
+    <h2>FIREBASE BEÁLLÍTÁS</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6;">
+      Illeszd be a Firebase projekted konfigurációját. Ezt a Firebase Console → Project Settings → Your Apps alatt találod.
+    </p>
+    <div class="field">
+      <label>API Key</label>
+      <input type="text" id="cfg-apiKey" placeholder="AIzaSy...">
+    </div>
+    <div class="field">
+      <label>Auth Domain</label>
+      <input type="text" id="cfg-authDomain" placeholder="projekt-id.firebaseapp.com">
+    </div>
+    <div class="field">
+      <label>Database URL</label>
+      <input type="text" id="cfg-databaseURL" placeholder="https://projekt-id-default-rtdb.europe-west1.firebasedatabase.app">
+    </div>
+    <div class="field">
+      <label>Project ID</label>
+      <input type="text" id="cfg-projectId" placeholder="projekt-id">
+    </div>
+    <div class="field">
+      <label>Szoba neve (egyedi azonosító)</label>
+      <input type="text" id="cfg-room" placeholder="pl. jatek2024" value="kvizjatek">
+    </div>
+    <button class="btn" onclick="initFirebase()">JÁTÉK INDÍTÁSA →</button>
+    <div style="margin-top:16px;padding:14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+      <p style="font-size:11px;color:var(--muted);line-height:1.6;">
+        💡 <strong style="color:var(--text);">Gyors teszt:</strong> Firebase nélkül is kipróbálhatod demo módban —
+        <span style="color:var(--accent);cursor:pointer;text-decoration:underline;" onclick="initDemo()">Demo mód indítása</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN SCREEN -->
+<div id="main-screen">
+  <div class="topbar">
+    <div class="topbar-logo">QUIZMASTER</div>
+    <div class="topbar-room">SZOBA: <span id="room-code-display">—</span></div>
+    <div class="topbar-actions">
+      <button class="btn-secondary" onclick="showAddQuestion()">+ Kérdés</button>
+      <button class="btn-secondary" onclick="exportQuestions()">Export</button>
+      <button class="btn-secondary" onclick="importQuestions()">Import</button>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <!-- LEFT: Questions -->
+    <div class="panel-left">
+      <div class="panel-header">
+        <h3>KÉRDÉSEK</h3>
+        <span class="tag tag-yellow" id="q-count">0 db</span>
+      </div>
+      <div class="panel-content">
+        <!-- Add form -->
+        <div class="add-q-form hidden" id="add-q-form">
+          <h4 id="form-title">Új kérdés</h4>
+          <textarea id="q-text-input" rows="3" placeholder="A kérdés szövege..."></textarea>
+          <div class="options-grid">
+            <div class="option-input-wrap">
+              <input type="text" id="opt-a" placeholder="A válasz">
+              <div class="correct-mark" data-opt="0" onclick="selectCorrect(0)"></div>
+            </div>
+            <div class="option-input-wrap">
+              <input type="text" id="opt-b" placeholder="B válasz">
+              <div class="correct-mark" data-opt="1" onclick="selectCorrect(1)"></div>
+            </div>
+            <div class="option-input-wrap">
+              <input type="text" id="opt-c" placeholder="C válasz">
+              <div class="correct-mark" data-opt="2" onclick="selectCorrect(2)"></div>
+            </div>
+            <div class="option-input-wrap">
+              <input type="text" id="opt-d" placeholder="D válasz">
+              <div class="correct-mark" data-opt="3" onclick="selectCorrect(3)"></div>
+            </div>
+          </div>
+          <div class="form-row">
+            <select id="q-cat-input">
+              <option value="Általános">Általános</option>
+              <option value="Bibliai">Bibliai</option>
+              <option value="Természet">Természet</option>
+              <option value="Történelem">Történelem</option>
+              <option value="Sport">Sport</option>
+              <option value="Tudomány">Tudomány</option>
+              <option value="Zene">Zene</option>
+              <option value="Földrajz">Földrajz</option>
+            </select>
+            <select id="q-time-input">
+              <option value="20">20 mp</option>
+              <option value="30" selected>30 mp</option>
+              <option value="45">45 mp</option>
+              <option value="60">60 mp</option>
+            </select>
+          </div>
+          <input type="hidden" id="edit-q-id" value="">
+          <div class="add-q-actions">
+            <button class="btn-save" onclick="saveQuestion()">✓ Mentés</button>
+            <button class="btn-cancel-form" onclick="hideAddQuestion()">Mégse</button>
+          </div>
+        </div>
+
+        <!-- Category filter -->
+        <div class="cat-tabs" id="cat-tabs">
+          <div class="cat-tab active" data-cat="all" onclick="filterCat('all')">Mind</div>
+        </div>
+
+        <!-- Question list -->
+        <div id="q-list"></div>
+      </div>
+    </div>
+
+    <!-- CENTER: Stage -->
+    <div class="panel-center">
+      <div class="stage" id="stage">
+
+        <!-- WAITING STATE -->
+        <div class="waiting-state" id="waiting-state">
+          <div class="waiting-title">VÁRAKOZÁS</div>
+          <p style="color:var(--muted);font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;">Játékosok csatlakoznak...</p>
+          <div class="qr-wrapper">
+            <div id="qr-code"></div>
+          </div>
+          <div class="waiting-url" id="player-url">—</div>
+          <div class="player-count">Csatlakozott: <span id="joined-count">0</span> játékos</div>
+          <div class="players-joined" id="players-joined"></div>
+        </div>
+
+        <!-- QUESTION STATE -->
+        <div class="question-state hidden" id="question-state">
+          <div class="timer-bar-wrap">
+            <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-bar" style="width:100%"></div></div>
+            <div class="timer-display" id="timer-display">30</div>
+          </div>
+          <div class="q-number" id="q-number">1. KÉRDÉS</div>
+          <div class="q-category-tag" id="q-cat-tag">—</div>
+          <div class="q-text" id="q-text-display">—</div>
+          <div class="answers-grid" id="answers-grid"></div>
+          <div class="answer-stats" id="answer-stats"></div>
+        </div>
+
+      </div>
+
+      <!-- Control bar -->
+      <div class="control-bar">
+        <div class="game-phase" id="phase-label">VÁRAKOZÁS</div>
+        <div style="display:flex;gap:10px;">
+          <button class="ctrl-btn ctrl-start" id="btn-start" onclick="openStartModal()">▶ JÁTÉK INDÍTÁSA</button>
+          <button class="ctrl-btn ctrl-reveal hidden" id="btn-reveal" onclick="revealAnswer()">👁 MEGOLDÁS</button>
+          <button class="ctrl-btn ctrl-next hidden" id="btn-next" onclick="nextQuestion()">KÖVETKEZŐ →</button>
+          <button class="ctrl-btn ctrl-end hidden" id="btn-end" onclick="endGame()">■ BEFEJEZÉS</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:12px;color:var(--muted);" id="answers-received">0/0 válasz</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Scoreboard -->
+    <div class="panel-right">
+      <div class="panel-header">
+        <h3>PONTÁLLÁS</h3>
+        <span class="tag tag-green" id="player-count-tag">0 játékos</span>
+      </div>
+      <div class="score-list" id="score-list">
+        <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">
+          Még nincsenek játékosok...
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div id="results-screen">
+  <div class="results-title">EREDMÉNYEK</div>
+  <div class="results-sub">A játék véget ért — Végső állás</div>
+  <div class="podium" id="podium"></div>
+  <div class="results-full-scoreboard" id="results-full-scoreboard"></div>
+  <button class="ctrl-btn ctrl-start" onclick="newGame()" style="padding:14px 48px;margin-top:24px;">↺ FŐMENÜBE VISSZA</button>
+</div>
+
+<!-- GAME START MODAL -->
+<div class="modal-overlay hidden" id="start-modal">
+  <div class="modal">
+    <h3>⚙️ JÁTÉK BEÁLLÍTÁSA</h3>
+
+    <div class="field" style="margin-bottom:20px;">
+      <label>Témakör</label>
+      <select id="start-cat-select" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-family:var(--font-body);font-size:15px;outline:none;">
+        <option value="all">🎲 Összes témakör (vegyesen)</option>
+      </select>
+    </div>
+
+    <div class="field" style="margin-bottom:8px;">
+      <label>Kérdések száma</label>
+      <select id="start-count-select" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-family:var(--font-body);font-size:15px;outline:none;">
+        <option value="5">5 kérdés</option>
+        <option value="10" selected>10 kérdés</option>
+        <option value="15">15 kérdés</option>
+        <option value="20">20 kérdés</option>
+        <option value="all">Mind (összes)</option>
+      </select>
+    </div>
+
+    <div id="start-modal-info" style="font-size:13px;color:var(--muted);margin:16px 0 20px;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+      Elérhető kérdések: —
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button class="btn-save" style="flex:1;font-size:16px;padding:14px;" onclick="confirmStartGame()">▶ INDÍTÁS</button>
+      <button class="btn-cancel-form" onclick="document.getElementById('start-modal').classList.add('hidden')">Mégse</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-overlay hidden" id="import-modal">
+  <div class="modal">
+    <h3>KÉRDÉSEK IMPORTÁLÁSA</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Illeszd be a JSON formátumú kérdéseket:</p>
+    <textarea id="import-textarea" rows="10" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:monospace;font-size:12px;outline:none;resize:vertical;" placeholder='[{"text":"Kérdés?","options":["A","B","C","D"],"correct":0,"category":"Általános","time":30}]'></textarea>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-save" style="flex:1;" onclick="doImport()">Importálás</button>
+      <button class="btn-cancel-form" onclick="document.getElementById('import-modal').classList.add('hidden')">Mégse</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let db = null;
+let roomRef = null;
+let roomCode = '';
+let questions = [];
+let players = {};
+let currentQIndex = -1;
+let currentTimerInterval = null;
+let currentTimerValue = 30;
+let gamePhase = 'waiting'; // waiting | question | revealed | ended
+let correctOptionIndex = -1;
+let selectedCat = 'all';
+let editingQId = null;
+let correctSelectedIndex = 0;
+let answerCounts = [0,0,0,0];
+let answeredPlayers = new Set();
+let answerOrder = 0; // tracks answer order for scoring
+
+// Color palette for player avatars
+const AVATAR_COLORS = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f','#5ae0d4','#e0c05a'];
+const LETTERS = ['A','B','C','D'];
+
+// ============================================================
+// FIREBASE INIT
+// ============================================================
+function initFirebase() {
+  const apiKey = document.getElementById('cfg-apiKey').value.trim();
+  const authDomain = document.getElementById('cfg-authDomain').value.trim();
+  const databaseURL = document.getElementById('cfg-databaseURL').value.trim();
+  const projectId = document.getElementById('cfg-projectId').value.trim();
+  roomCode = document.getElementById('cfg-room').value.trim() || 'kvizjatek';
+
+  if (!apiKey || !databaseURL) {
+    alert('Kérlek töltsd ki az API Key és Database URL mezőket!');
+    return;
+  }
+
+  try {
+    if (firebase.apps.length) firebase.app().delete();
+    firebase.initializeApp({ apiKey, authDomain, databaseURL, projectId });
+    db = firebase.database();
+    roomRef = db.ref('rooms/' + roomCode);
+    setupListeners();
+    showMain();
+  } catch(e) {
+    alert('Firebase hiba: ' + e.message);
+  }
+}
+
+function initDemo() {
+  roomCode = 'demo';
+  db = null;
+  questions = getDemoQuestions();
+  showMain();
+  setupDemoPlayers();
+}
+
+function getDemoQuestions() {
+  return [
+    { id: 'q1', text: 'Mi Magyarország fővárosa?', options: ['Bécs','Budapest','Prága','Varsó'], correct: 1, category: 'Földrajz', time: 30 },
+    { id: 'q2', text: 'Melyik évben volt a holdraszállás?', options: ['1965','1967','1969','1972'], correct: 2, category: 'Történelem', time: 30 },
+    { id: 'q3', text: 'Hány bolygó van a Naprendszerben?', options: ['7','8','9','10'], correct: 1, category: 'Tudomány', time: 30 },
+    { id: 'q4', text: 'Ki írta a Hamlet-et?', options: ['Goethe','Molière','Dickens','Shakespeare'], correct: 3, category: 'Általános', time: 30 },
+    { id: 'q5', text: 'Melyik a világ leghosszabb folyója?', options: ['Amazonas','Nílus','Jangce','Mississippi'], correct: 1, category: 'Földrajz', time: 30 },
+  ];
+}
+
+function setupDemoPlayers() {
+  const names = ['Anna','Béla','Csilla','Dani','Eszter','Feri'];
+  names.forEach((n,i) => {
+    players[`demo${i}`] = { name: n, score: 0, color: AVATAR_COLORS[i % AVATAR_COLORS.length] };
+  });
+  updateScoreboard();
+  updatePlayerChips();
+}
+
+// ============================================================
+// FIREBASE LISTENERS
+// ============================================================
+function setupListeners() {
+  if (!db) return;
+
+  // Players
+  roomRef.child('players').on('value', snap => {
+    players = snap.val() || {};
+    updateScoreboard();
+    updatePlayerChips();
+    document.getElementById('joined-count').textContent = Object.keys(players).length;
+    document.getElementById('player-count-tag').textContent = Object.keys(players).length + ' játékos';
+  });
+
+  // Answers
+  roomRef.child('answers').on('child_added', snap => {
+    const ans = snap.val();
+    if (!ans) return;
+    const pid = snap.key;
+    if (answeredPlayers.has(pid)) return;
+    answeredPlayers.add(pid);
+    answerOrder++;
+
+    // Score: first correct = 5pts, subsequent correct = 3pts, wrong = 1pt
+    const isCorrect = ans.answer === correctOptionIndex;
+    const pts = isCorrect ? (answerOrder === 1 ? 5 : 3) : 1;
+    if (players[pid]) {
+      players[pid].score = (players[pid].score || 0) + pts;
+      if (db) roomRef.child('players').child(pid).child('score').set(players[pid].score);
+      showScoreDelta(pid, pts);
+    }
+
+    if (ans.answer >= 0 && ans.answer <= 3) {
+      answerCounts[ans.answer]++;
+      updateAnswerStats();
+    }
+
+    const total = Object.keys(players).length;
+    document.getElementById('answers-received').textContent = answeredPlayers.size + '/' + total + ' válasz';
+
+    if (total > 0 && answeredPlayers.size >= total) {
+      // All answered
+      setTimeout(() => revealAnswer(), 500);
+    }
+  });
+
+  // Questions from DB
+  roomRef.child('questions').on('value', snap => {
+    const dbQ = snap.val();
+    if (dbQ) {
+      questions = Object.entries(dbQ).map(([id, q]) => ({ ...q, id }));
+      renderQuestions();
+    }
+  });
+}
+
+// ============================================================
+// SHOW MAIN
+// ============================================================
+function showMain() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display = 'block';
+  document.getElementById('room-code-display').textContent = roomCode.toUpperCase();
+
+  const playerUrl = window.location.origin + window.location.pathname.replace('quiz-host.html','quiz-player.html') + '?room=' + roomCode;
+  document.getElementById('player-url').textContent = playerUrl;
+
+  // QR code
+  try {
+    new QRCode(document.getElementById('qr-code'), {
+      text: playerUrl, width: 180, height: 180,
+      colorDark: '#000000', colorLight: '#ffffff',
+    });
+  } catch(e) {}
+
+  renderQuestions();
+}
+
+// ============================================================
+// QUESTION MANAGEMENT
+// ============================================================
+let correctSelectedOpt = 0;
+
+function selectCorrect(idx) {
+  correctSelectedOpt = idx;
+  document.querySelectorAll('.correct-mark').forEach((el, i) => {
+    el.classList.toggle('selected', i === idx);
+  });
+}
+
+function showAddQuestion(editId = null) {
+  editingQId = editId;
+  const form = document.getElementById('add-q-form');
+  form.classList.remove('hidden');
+  document.getElementById('form-title').textContent = editId ? 'Kérdés szerkesztése' : 'Új kérdés';
+
+  if (editId) {
+    const q = questions.find(x => x.id === editId);
+    if (q) {
+      document.getElementById('q-text-input').value = q.text;
+      document.getElementById('opt-a').value = q.options[0] || '';
+      document.getElementById('opt-b').value = q.options[1] || '';
+      document.getElementById('opt-c').value = q.options[2] || '';
+      document.getElementById('opt-d').value = q.options[3] || '';
+      document.getElementById('q-cat-input').value = q.category || 'Általános';
+      document.getElementById('q-time-input').value = q.time || 30;
+      selectCorrect(q.correct);
+    }
+  } else {
+    document.getElementById('q-text-input').value = '';
+    ['opt-a','opt-b','opt-c','opt-d'].forEach(id => document.getElementById(id).value = '');
+    selectCorrect(0);
+  }
+}
+
+function hideAddQuestion() {
+  document.getElementById('add-q-form').classList.add('hidden');
+  editingQId = null;
+}
+
+function saveQuestion() {
+  const text = document.getElementById('q-text-input').value.trim();
+  const opts = [
+    document.getElementById('opt-a').value.trim(),
+    document.getElementById('opt-b').value.trim(),
+    document.getElementById('opt-c').value.trim(),
+    document.getElementById('opt-d').value.trim(),
+  ];
+  const cat = document.getElementById('q-cat-input').value;
+  const time = parseInt(document.getElementById('q-time-input').value);
+
+  if (!text || opts.some(o => !o)) { alert('Töltsd ki az összes mezőt!'); return; }
+
+  const qData = { text, options: opts, correct: correctSelectedOpt, category: cat, time };
+
+  if (db) {
+    if (editingQId) {
+      roomRef.child('questions').child(editingQId).set(qData);
+    } else {
+      roomRef.child('questions').push(qData);
+    }
+  } else {
+    if (editingQId) {
+      const idx = questions.findIndex(q => q.id === editingQId);
+      if (idx >= 0) questions[idx] = { ...qData, id: editingQId };
+    } else {
+      questions.push({ ...qData, id: 'q' + Date.now() });
+    }
+    renderQuestions();
+  }
+  hideAddQuestion();
+}
+
+function deleteQuestion(id) {
+  if (!confirm('Törlöd ezt a kérdést?')) return;
+  if (db) {
+    roomRef.child('questions').child(id).remove();
+  } else {
+    questions = questions.filter(q => q.id !== id);
+    renderQuestions();
+  }
+}
+
+function filterCat(cat) {
+  selectedCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === cat));
+  renderQuestions();
+}
+
+function renderQuestions() {
+  // Update category tabs
+  const cats = ['all', ...new Set(questions.map(q => q.category))];
+  const tabsEl = document.getElementById('cat-tabs');
+  tabsEl.innerHTML = cats.map(c =>
+    `<div class="cat-tab${selectedCat===c?' active':''}" data-cat="${c}" onclick="filterCat('${c}')">${c==='all'?'Mind':c}</div>`
+  ).join('');
+
+  const filtered = selectedCat === 'all' ? questions : questions.filter(q => q.category === selectedCat);
+  document.getElementById('q-count').textContent = questions.length + ' db';
+
+  const list = document.getElementById('q-list');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Nincs kérdés ebben a kategóriában.<br><br><span style="color:var(--accent);cursor:pointer;" onclick="showAddQuestion()">+ Adj hozzá egyet</span></div>';
+    return;
+  }
+  list.innerHTML = filtered.map((q, i) => {
+    const used = currentQIndex >= 0 && questions.indexOf(q) <= currentQIndex;
+    return `
+    <div class="q-card${used?' used':''}" id="qcard-${q.id}">
+      <div class="q-actions">
+        <button class="q-btn-sm q-btn-edit" onclick="showAddQuestion('${q.id}')">✎</button>
+        <button class="q-btn-sm q-btn-del" onclick="deleteQuestion('${q.id}')">✕</button>
+      </div>
+      <div class="q-card-text">${q.text}</div>
+      <div class="q-card-meta">
+        <span class="q-cat-badge">${q.category}</span>
+        <span style="font-size:11px;color:var(--muted);">${q.time}mp</span>
+        <span style="font-size:11px;color:var(--green);">✓ ${q.options[q.correct]}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let activeQuestions = []; // a játékban ténylegesen használt, szűrt+kevert kérdések
+
+// ============================================================
+// GAME FLOW
+// ============================================================
+function openStartModal() {
+  if (questions.length === 0) { alert('Adj hozzá legalább egy kérdést!'); return; }
+
+  // Feltöltjük a kategória választót a meglévő kategóriákból
+  const cats = ['all', ...new Set(questions.map(q => q.category))];
+  const sel = document.getElementById('start-cat-select');
+  sel.innerHTML = cats.map(c =>
+    `<option value="${c}">${c === 'all' ? '🎲 Összes témakör (vegyesen)' : c}</option>`
+  ).join('');
+
+  // Frissítjük az infót amikor változtatják
+  sel.onchange = updateStartModalInfo;
+  document.getElementById('start-count-select').onchange = updateStartModalInfo;
+  updateStartModalInfo();
+
+  document.getElementById('start-modal').classList.remove('hidden');
+}
+
+function updateStartModalInfo() {
+  const cat = document.getElementById('start-cat-select').value;
+  const countVal = document.getElementById('start-count-select').value;
+
+  const filtered = cat === 'all' ? questions : questions.filter(q => q.category === cat);
+  const count = countVal === 'all' ? filtered.length : Math.min(parseInt(countVal), filtered.length);
+
+  const info = document.getElementById('start-modal-info');
+  if (filtered.length === 0) {
+    info.innerHTML = `<span style="color:var(--red);">⚠️ Ebben a témakörben nincs kérdés!</span>`;
+  } else {
+    info.innerHTML = `
+      Elérhető: <strong style="color:var(--text);">${filtered.length} kérdés</strong> a „${cat === 'all' ? 'Összes' : cat}" kategóriában
+      <br>Játékban: <strong style="color:var(--accent);">${count} véletlenszerűen kiválasztott</strong>
+    `;
+  }
+}
+
+function confirmStartGame() {
+  const cat = document.getElementById('start-cat-select').value;
+  const countVal = document.getElementById('start-count-select').value;
+
+  // Szűrés témakör szerint
+  let filtered = cat === 'all' ? [...questions] : questions.filter(q => q.category === cat);
+
+  if (filtered.length === 0) { alert('Ebben a témakörben nincs kérdés!'); return; }
+
+  // Véletlenszerű keverés (Fisher-Yates)
+  for (let i = filtered.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+  }
+
+  // Darabszám korlátozás
+  const count = countVal === 'all' ? filtered.length : Math.min(parseInt(countVal), filtered.length);
+  activeQuestions = filtered.slice(0, count);
+
+  document.getElementById('start-modal').classList.add('hidden');
+  startGame();
+}
+
+function startGame() {
+  currentQIndex = -1;
+  gamePhase = 'playing';
+  document.getElementById('btn-start').classList.add('hidden');
+  document.getElementById('btn-end').classList.remove('hidden');
+  if (db) roomRef.child('gameState').set({ phase: 'playing', questionIndex: -1 });
+  nextQuestion();
+}
+
+function nextQuestion() {
+  currentQIndex++;
+  if (currentQIndex >= activeQuestions.length) { endGame(); return; }
+
+  const q = activeQuestions[currentQIndex];
+  correctOptionIndex = q.correct;
+  answeredPlayers.clear();
+  answerCounts = [0,0,0,0];
+  answerOrder = 0;
+
+  if (db) {
+    roomRef.child('answers').remove();
+    roomRef.child('gameState').set({
+      phase: 'question',
+      questionIndex: currentQIndex,
+      question: { text: q.text, options: q.options, category: q.category, time: q.time },
+      startTime: firebase.database.ServerValue.TIMESTAMP
+    });
+  }
+
+  // UI
+  document.getElementById('waiting-state').classList.add('hidden');
+  document.getElementById('question-state').classList.remove('hidden');
+  document.getElementById('question-state').classList.add('slide-up');
+  document.getElementById('q-number').textContent = (currentQIndex + 1) + '. KÉRDÉS / ' + activeQuestions.length;
+  document.getElementById('q-cat-tag').textContent = q.category;
+  document.getElementById('q-text-display').textContent = q.text;
+  document.getElementById('phase-label').textContent = 'KÉRDÉS FOLYAMATBAN';
+
+  // Answer cards
+  const grid = document.getElementById('answers-grid');
+  grid.innerHTML = q.options.map((opt, i) => `
+    <div class="answer-card" id="ans-${i}">
+      <div class="answer-letter">${LETTERS[i]}</div>
+      <div class="answer-text">${opt}</div>
+    </div>
+  `).join('');
+
+  // Stats
+  updateAnswerStats();
+
+  // Buttons
+  document.getElementById('btn-reveal').classList.remove('hidden');
+  document.getElementById('btn-next').classList.add('hidden');
+  document.getElementById('answers-received').textContent = '0/' + Object.keys(players).length + ' válasz';
+
+  // Timer
+  startTimer(q.time);
+
+  // Mark used
+  renderQuestions();
+}
+
+function startTimer(seconds) {
+  clearInterval(currentTimerInterval);
+  currentTimerValue = seconds;
+  const bar = document.getElementById('timer-bar');
+  const display = document.getElementById('timer-display');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  bar.classList.remove('urgent');
+  display.classList.remove('urgent');
+
+  currentTimerInterval = setInterval(() => {
+    currentTimerValue--;
+    const pct = (currentTimerValue / seconds) * 100;
+    bar.style.transition = 'width 1s linear';
+    bar.style.width = pct + '%';
+    display.textContent = currentTimerValue;
+
+    if (currentTimerValue <= 10) {
+      bar.classList.add('urgent');
+      display.classList.add('urgent');
+    }
+    if (currentTimerValue <= 0) {
+      clearInterval(currentTimerInterval);
+      revealAnswer();
+    }
+  }, 1000);
+}
+
+function revealAnswer() {
+  clearInterval(currentTimerInterval);
+  gamePhase = 'revealed';
+
+  // Highlight correct/wrong
+  document.querySelectorAll('.answer-card').forEach((card, i) => {
+    card.classList.add(i === correctOptionIndex ? 'correct' : 'wrong');
+  });
+
+  if (db) roomRef.child('gameState').update({ phase: 'revealed', correctAnswer: correctOptionIndex });
+
+  document.getElementById('btn-reveal').classList.add('hidden');
+  document.getElementById('btn-next').classList.remove('hidden');
+  document.getElementById('phase-label').textContent = 'MEGOLDÁS MEGJELENÍTVE';
+
+  // Ha mindenki válaszolt, automatikusan továbblép 3 mp után
+  const total = Object.keys(players).length;
+  if (total > 0 && answeredPlayers.size >= total) {
+    let countdown = 3;
+    document.getElementById('phase-label').textContent = 'KÖVETKEZŐ: ' + countdown + '...';
+    const autoAdvTimer = setInterval(() => {
+      countdown--;
+      if (countdown > 0) {
+        document.getElementById('phase-label').textContent = 'KÖVETKEZŐ: ' + countdown + '...';
+      } else {
+        clearInterval(autoAdvTimer);
+        nextQuestion();
+      }
+    }, 1000);
+  }
+}
+
+function endGame() {
+  clearInterval(currentTimerInterval);
+  gamePhase = 'ended';
+  if (db) roomRef.child('gameState').update({ phase: 'ended' });
+  showResults();
+}
+
+function showResults() {
+  document.getElementById('results-screen').style.display = 'flex';
+  const sorted = Object.entries(players).sort((a,b) => (b[1].score||0) - (a[1].score||0));
+  const top3 = sorted.slice(0,3);
+
+  const podiumOrder = [1,0,2]; // 2nd, 1st, 3rd visually
+  const podiumHeights = ['p2','p1','p3'];
+
+  let podiumHTML = '';
+  podiumOrder.forEach((rank, vi) => {
+    const p = top3[rank];
+    if (!p) return;
+    podiumHTML += `
+      <div class="podium-block">
+        <div class="podium-name">${p[1].name}</div>
+        <div class="podium-score">${p[1].score || 0} pt</div>
+        <div class="podium-bar ${podiumHeights[vi]}">${rank+1}.</div>
+      </div>`;
+  });
+  document.getElementById('podium').innerHTML = podiumHTML;
+
+  // Full scoreboard
+  const medals = ['🥇','🥈','🥉'];
+  const rowClasses = ['r1','r2','r3'];
+  let fullHTML = '<h3>TELJES RANGLISTA</h3>';
+  fullHTML += sorted.map(([id, p], i) => `
+    <div class="results-score-row ${rowClasses[i]||''}">
+      <div class="results-rank-num">${medals[i] || (i+1) + '.'}</div>
+      <div class="results-player-name">${p.name || 'Névtelen'}</div>
+      <div class="results-player-pts">${p.score || 0} pt</div>
+    </div>`).join('');
+  document.getElementById('results-full-scoreboard').innerHTML = fullHTML;
+
+  // Push final scoreboard to players
+  if (db) {
+    roomRef.child('gameState').update({ phase: 'ended', finalScores: sorted.map(([id,p]) => ({ name: p.name, score: p.score||0 })) });
+  }
+}
+
+function newGame() {
+  document.getElementById('results-screen').style.display = 'none';
+  currentQIndex = -1;
+  activeQuestions = [];
+  gamePhase = 'waiting';
+  Object.keys(players).forEach(id => { if(players[id]) players[id].score = 0; });
+  if (db) {
+    roomRef.child('gameState').set({ phase: 'waiting' });
+    const updates = {};
+    Object.keys(players).forEach(id => { updates[id + '/score'] = 0; });
+    roomRef.child('players').update(updates);
+  }
+  document.getElementById('waiting-state').classList.remove('hidden');
+  document.getElementById('question-state').classList.add('hidden');
+  document.getElementById('btn-start').classList.remove('hidden');
+  document.getElementById('btn-reveal').classList.add('hidden');
+  document.getElementById('btn-next').classList.add('hidden');
+  document.getElementById('btn-end').classList.add('hidden');
+  updateScoreboard();
+}
+
+// ============================================================
+// UI UPDATES
+// ============================================================
+function updatePlayerChips() {
+  const container = document.getElementById('players-joined');
+  const count = Object.keys(players).length;
+  document.getElementById('joined-count').textContent = count;
+  document.getElementById('player-count-tag').textContent = count + ' játékos';
+  container.innerHTML = Object.entries(players).map(([id, p]) => `
+    <div class="player-chip">
+      <div class="player-avatar" style="background:${p.color||'#555'}">${(p.name||'?')[0].toUpperCase()}</div>
+      ${p.name || 'Ismeretlen'}
+    </div>`).join('');
+}
+
+function updateScoreboard() {
+  const sorted = Object.entries(players).sort((a,b) => (b[1].score||0) - (a[1].score||0));
+  const list = document.getElementById('score-list');
+  if (sorted.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">Még nincsenek játékosok...</div>';
+    return;
+  }
+  list.innerHTML = sorted.map(([id, p], i) => `
+    <div class="score-item ${i===0?'top1':i===1?'top2':i===2?'top3':''}" id="score-${id}">
+      <div class="rank-num">${i+1}</div>
+      <div class="player-info">
+        <div class="player-name">${p.name || 'Névtelen'}</div>
+      </div>
+      <div class="player-pts">${p.score || 0}</div>
+    </div>`).join('');
+}
+
+function showScoreDelta(pid, pts) {
+  const el = document.getElementById('score-' + pid);
+  if (!el) return;
+  const delta = document.createElement('div');
+  delta.className = 'score-delta';
+  delta.textContent = '+' + pts;
+  el.appendChild(delta);
+  setTimeout(() => delta.remove(), 1500);
+  updateScoreboard();
+}
+
+function updateAnswerStats() {
+  const stats = document.getElementById('answer-stats');
+  const total = Math.max(1, answerCounts.reduce((a,b) => a+b, 0));
+  const colors = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0'];
+  stats.innerHTML = answerCounts.map((cnt, i) => `
+    <div class="stat-bar">
+      <div class="stat-bar-label"><span>${LETTERS[i]}</span><span>${cnt}</span></div>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill" style="width:${Math.round(cnt/total*100)}%;background:${colors[i]}"></div>
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// IMPORT / EXPORT
+// ============================================================
+function exportQuestions() {
+  const data = JSON.stringify(questions.map(q => ({
+    text: q.text, options: q.options, correct: q.correct, category: q.category, time: q.time
+  })), null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'kerdések.json';
+  a.click();
+}
+
+function importQuestions() {
+  document.getElementById('import-modal').classList.remove('hidden');
+}
+
+function doImport() {
+  try {
+    const raw = document.getElementById('import-textarea').value.trim();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) throw new Error('Tömbnek kell lennie');
+    parsed.forEach(q => {
+      const qData = { text: q.text, options: q.options, correct: q.correct||0, category: q.category||'Általános', time: q.time||30 };
+      if (db) roomRef.child('questions').push(qData);
+      else questions.push({ ...qData, id: 'q'+Date.now()+Math.random() });
+    });
+    if (!db) renderQuestions();
+    document.getElementById('import-modal').classList.add('hidden');
+    alert(parsed.length + ' kérdés importálva!');
+  } catch(e) {
+    alert('Hiba: ' + e.message);
+  }
+}
+</script>
+</body>
+</html>
