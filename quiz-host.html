@@ -366,9 +366,11 @@
 <div id="main-screen">
   <div class="topbar">
     <div class="topbar-logo">QUIZMASTER</div>
-    <div class="topbar-room">SZOBA: <span id="room-code-display">—</span></div>
-    <div id="game-timer-wrap" style="display:none;font-family:var(--font-display);font-size:22px;letter-spacing:2px;color:var(--green);">
-      ⏱ <span id="game-timer-display">00:00</span>
+    <div style="display:flex;align-items:center;gap:28px;">
+      <div class="topbar-room">SZOBA: <span id="room-code-display">—</span></div>
+      <div id="game-timer-wrap" style="font-family:var(--font-display);font-size:22px;letter-spacing:2px;color:var(--green);">
+        ⏱ <span id="game-timer-display">00:00</span>
+      </div>
     </div>
     <div class="topbar-actions">
       <button class="btn-secondary" onclick="showAddQuestion()">+ Kérdés</button>
@@ -715,7 +717,6 @@ function showMain() {
   const playerUrl = window.location.origin + window.location.pathname.replace('quiz-host.html','quiz-player.html') + '?room=' + roomCode;
   document.getElementById('player-url').textContent = playerUrl;
 
-  // Mindig beírjuk a waiting állapotot, hogy a játékosok csatlakozni tudjanak
   if (db) {
     roomRef.child('gameState').set({ phase: 'waiting' });
   }
@@ -727,6 +728,20 @@ function showMain() {
       colorDark: '#000000', colorLight: '#ffffff',
     });
   } catch(e) {}
+
+  // SESSION TIMER — egyszer indul, soha nem áll le
+  if (!gameTimerInterval) {
+    gameStartTime = Date.now();
+    gameTimerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+      const h = Math.floor(elapsed / 3600);
+      const m = Math.floor((elapsed % 3600) / 60);
+      const s = elapsed % 60;
+      const pad = n => String(n).padStart(2, '0');
+      document.getElementById('game-timer-display').textContent =
+        h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+    }, 1000);
+  }
 
   renderQuestions();
 }
@@ -999,21 +1014,7 @@ function confirmStartGame() {
 function startGame() {
   currentQIndex = -1;
   gamePhase = 'playing';
-  usedQuestionIds = new Set(); // új játéknál töröljük a már feltett kérdések listáját
-
-  // Játékidő számláló indítása
-  gameStartTime = Date.now();
-  clearInterval(gameTimerInterval);
-  document.getElementById('game-timer-wrap').style.display = 'block';
-  gameTimerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
-    const h = Math.floor(elapsed / 3600);
-    const m = Math.floor((elapsed % 3600) / 60);
-    const s = elapsed % 60;
-    const pad = n => String(n).padStart(2, '0');
-    document.getElementById('game-timer-display').textContent =
-      h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
-  }, 1000);
+  // usedQuestionIds NEM resetelődik itt — session szinten gyűjtjük
 
   document.getElementById('btn-start').classList.add('hidden');
   document.getElementById('btn-end').classList.remove('hidden');
@@ -1136,7 +1137,7 @@ function revealAnswer() {
 
 function endGame() {
   clearInterval(currentTimerInterval);
-  clearInterval(gameTimerInterval);
+  // gameTimerInterval NEM áll le — session szinten megy tovább
   gamePhase = 'ended';
   if (db) roomRef.child('gameState').update({ phase: 'ended' });
   showResults();
@@ -1187,10 +1188,8 @@ function newGame() {
   activeQuestions = [];
   gamePhase = 'waiting';
   players = {};
-  usedQuestionIds = new Set();
-  clearInterval(gameTimerInterval);
-  document.getElementById('game-timer-wrap').style.display = 'none';
-  document.getElementById('game-timer-display').textContent = '00:00';
+  // usedQuestionIds MEGMARAD — session szinten gyűjtjük
+  // gameTimerInterval MEGMARAD — folyamatosan megy
   if (db) {
     roomRef.child('gameState').set({ phase: 'waiting' });
     roomRef.child('answers').remove();
