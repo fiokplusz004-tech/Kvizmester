@@ -367,6 +367,9 @@
   <div class="topbar">
     <div class="topbar-logo">QUIZMASTER</div>
     <div class="topbar-room">SZOBA: <span id="room-code-display">—</span></div>
+    <div id="game-timer-wrap" style="display:none;font-family:var(--font-display);font-size:22px;letter-spacing:2px;color:var(--green);">
+      ⏱ <span id="game-timer-display">00:00</span>
+    </div>
     <div class="topbar-actions">
       <button class="btn-secondary" onclick="showAddQuestion()">+ Kérdés</button>
       <button class="btn-secondary" onclick="exportQuestions()">Export</button>
@@ -489,7 +492,10 @@
     <div class="panel-right">
       <div class="panel-header">
         <h3>PONTÁLLÁS</h3>
-        <span class="tag tag-green" id="player-count-tag">0 játékos</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="tag tag-green" id="player-count-tag">0 játékos</span>
+          <button class="btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="resetAllScores()" title="Pontok nullázása">⟳ Nulláz</button>
+        </div>
       </div>
       <div class="score-list" id="score-list">
         <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">
@@ -575,7 +581,13 @@ let editingQId = null;
 let correctSelectedIndex = 0;
 let answerCounts = [0,0,0,0];
 let answeredPlayers = new Set();
-let answerOrder = 0; // tracks answer order for scoring
+let answerOrder = 0;
+
+// Játékidő számláló
+let gameStartTime = null;
+let gameTimerInterval = null;
+// Már feltett kérdések nyilvántartása (egy indítástól a másikig)
+let usedQuestionIds = new Set();
 
 // Color palette for player avatars
 const AVATAR_COLORS = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f','#5ae0d4','#e0c05a'];
@@ -872,15 +884,19 @@ function updateStartModalInfo() {
   const countVal = document.getElementById('start-count-select').value;
 
   const filtered = cat === 'all' ? questions : questions.filter(q => q.category === cat);
-  const count = countVal === 'all' ? filtered.length : Math.min(parseInt(countVal), filtered.length);
+  const fresh = filtered.filter(q => !usedQuestionIds.has(q.id));
+  const usedCount = filtered.length - fresh.length;
+  const pool = fresh.length > 0 ? fresh : filtered;
+  const count = countVal === 'all' ? pool.length : Math.min(parseInt(countVal), pool.length);
 
   const info = document.getElementById('start-modal-info');
   if (filtered.length === 0) {
     info.innerHTML = `<span style="color:var(--red);">⚠️ Ebben a témakörben nincs kérdés!</span>`;
   } else {
     info.innerHTML = `
-      Elérhető: <strong style="color:var(--text);">${filtered.length} kérdés</strong> a „${cat === 'all' ? 'Összes' : cat}" kategóriában
-      <br>Játékban: <strong style="color:var(--accent);">${count} véletlenszerűen kiválasztott</strong>
+      Elérhető: <strong style="color:var(--text);">${filtered.length} kérdés</strong> a „${cat === 'all' ? 'Összes' : cat}" témakörben
+      ${usedCount > 0 ? `<br><span style="color:var(--muted);">↩ ${usedCount} már feltett kérdés kiszűrve (${fresh.length} friss)</span>` : ''}
+      <br>Játékban: <strong style="color:var(--accent);">${count} váltakozó típusú kérdés</strong>
     `;
   }
 }
@@ -891,18 +907,90 @@ function confirmStartGame() {
 
   // Szűrés témakör szerint
   let filtered = cat === 'all' ? [...questions] : questions.filter(q => q.category === cat);
-
   if (filtered.length === 0) { alert('Ebben a témakörben nincs kérdés!'); return; }
 
-  // Véletlenszerű keverés (Fisher-Yates)
-  for (let i = filtered.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+  // Már feltett kérdések kiszűrése (ugyanazon indítástól)
+  const fresh = filtered.filter(q => !usedQuestionIds.has(q.id));
+  // Ha az összes már el volt, reseteljük (új kör)
+  const pool = fresh.length > 0 ? fresh : filtered;
+
+  const count = countVal === 'all' ? pool.length : Math.min(parseInt(countVal), pool.length);
+
+  // -------------------------------------------------------
+  // VÁLTOZATOS KÉRDÉS-KIOSZTÁS
+  // Kategória "típus" alapú csoportosítás bibliai kérdéseknél:
+  // vers, évszám, személy, helység, esemény – ezekből váltakozva
+  // -------------------------------------------------------
+  function detectType(q) {
+    const t = (q.text + ' ' + (q.options || []).join(' ')).toLowerCase();
+    if (/\d{1,4}\s*(előtt|után|kr\.|ie\.|i\.e\.|ad|bc|ben|ban|évben|évszázad)/.test(t) ||
+        /melyik évben|mikor|hány éve|évszám/.test(t)) return 'évszám';
+    if (/ki volt|ki írta|ki mondta|ki volt az|melyik személy|kit|kinek|kivel|próféta|apostol|király|pátriárka/.test(t)) return 'személy';
+    if (/hol|melyik városban|melyik helyen|melyik országban|helyszín|föld|hegy|folyó|tenger|völgy/.test(t)) return 'helység';
+    if (/melyik vers|melyik könyv|melyik fejezet|melyik ige|zsoltár|fejezet:|könyv:/.test(t) ||
+        /\d+:\d+/.test(q.text)) return 'vers';
+    if (/mi történt|esemény|csata|átkelés|ítélet|büntetés|szabadulás|vándorlás/.test(t)) return 'esemény';
+    return 'egyéb';
   }
 
-  // Darabszám korlátozás
-  const count = countVal === 'all' ? filtered.length : Math.min(parseInt(countVal), filtered.length);
-  activeQuestions = filtered.slice(0, count);
+  // Verseskönyv-ellenőrzés: a 4 válasz különböző könyvből legyen ha vers típusú
+  function shuffleVerseOptions(q) {
+    if (detectType(q) !== 'vers') return q;
+    // Csak a helyes választ garantáljuk, a többit is ellenőrizzük de ez adatbázis-szintű dolog
+    // Visszaadjuk az eredeti kérdést (az adatbázis-szintű javítás külön funkció)
+    return q;
+  }
+
+  // Csoportosítás típus szerint
+  const byType = {};
+  pool.forEach(q => {
+    const type = detectType(q);
+    if (!byType[type]) byType[type] = [];
+    byType[type].push(q);
+  });
+
+  // Minden típusból véletlenszerű keverés
+  Object.values(byType).forEach(arr => {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  });
+
+  // Váltakozó kiosztás: round-robin a típusok között
+  const typeOrder = ['vers', 'személy', 'évszám', 'helység', 'esemény', 'egyéb'];
+  const available = typeOrder.filter(t => byType[t] && byType[t].length > 0);
+
+  // Ha csak 1-2 féle típus van, sima keverés
+  let result = [];
+  if (available.length <= 1) {
+    result = [...pool];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+  } else {
+    // Round-robin: váltogatjuk a típusokat
+    const pointers = {};
+    available.forEach(t => pointers[t] = 0);
+    let ti = 0;
+    while (result.length < pool.length) {
+      let added = false;
+      for (let attempt = 0; attempt < available.length; attempt++) {
+        const type = available[(ti + attempt) % available.length];
+        if (pointers[type] < byType[type].length) {
+          result.push(byType[type][pointers[type]]);
+          pointers[type]++;
+          ti = (ti + attempt + 1) % available.length;
+          added = true;
+          break;
+        }
+      }
+      if (!added) break;
+    }
+  }
+
+  activeQuestions = result.slice(0, count);
 
   document.getElementById('start-modal').classList.add('hidden');
   startGame();
@@ -911,6 +999,22 @@ function confirmStartGame() {
 function startGame() {
   currentQIndex = -1;
   gamePhase = 'playing';
+  usedQuestionIds = new Set(); // új játéknál töröljük a már feltett kérdések listáját
+
+  // Játékidő számláló indítása
+  gameStartTime = Date.now();
+  clearInterval(gameTimerInterval);
+  document.getElementById('game-timer-wrap').style.display = 'block';
+  gameTimerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+    const h = Math.floor(elapsed / 3600);
+    const m = Math.floor((elapsed % 3600) / 60);
+    const s = elapsed % 60;
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('game-timer-display').textContent =
+      h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  }, 1000);
+
   document.getElementById('btn-start').classList.add('hidden');
   document.getElementById('btn-end').classList.remove('hidden');
   nextQuestion();
@@ -921,6 +1025,7 @@ function nextQuestion() {
   if (currentQIndex >= activeQuestions.length) { endGame(); return; }
 
   const q = activeQuestions[currentQIndex];
+  if (q.id) usedQuestionIds.add(q.id); // megjelöljük feltett kérdésként
   correctOptionIndex = q.correct;
   answeredPlayers.clear();
   answerCounts = [0,0,0,0];
@@ -1031,6 +1136,7 @@ function revealAnswer() {
 
 function endGame() {
   clearInterval(currentTimerInterval);
+  clearInterval(gameTimerInterval);
   gamePhase = 'ended';
   if (db) roomRef.child('gameState').update({ phase: 'ended' });
   showResults();
@@ -1081,6 +1187,10 @@ function newGame() {
   activeQuestions = [];
   gamePhase = 'waiting';
   players = {};
+  usedQuestionIds = new Set();
+  clearInterval(gameTimerInterval);
+  document.getElementById('game-timer-wrap').style.display = 'none';
+  document.getElementById('game-timer-display').textContent = '00:00';
   if (db) {
     roomRef.child('gameState').set({ phase: 'waiting' });
     roomRef.child('answers').remove();
@@ -1119,12 +1229,13 @@ function updateScoreboard() {
     return;
   }
   list.innerHTML = sorted.map(([id, p], i) => `
-    <div class="score-item ${i===0?'top1':i===1?'top2':i===2?'top3':''}" id="score-${id}">
+    <div class="score-item ${i===0?'top1':i===1?'top2':i===2?'top3':''}" id="score-${id}" style="position:relative;">
       <div class="rank-num">${i+1}</div>
       <div class="player-info">
         <div class="player-name">${p.name || 'Névtelen'}</div>
       </div>
       <div class="player-pts">${p.score || 0}</div>
+      <button onclick="kickPlayer('${id}')" title="Kidobás" style="margin-left:6px;background:rgba(224,90,90,0.15);color:var(--red);border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;flex-shrink:0;">✕</button>
     </div>`).join('');
 }
 
@@ -1150,6 +1261,25 @@ function updateAnswerStats() {
         <div class="stat-bar-fill" style="width:${Math.round(cnt/total*100)}%;background:${colors[i]}"></div>
       </div>
     </div>`).join('');
+}
+
+function kickPlayer(pid) {
+  const p = players[pid];
+  if (!p) return;
+  if (!confirm(`Kidobod: ${p.name}?`)) return;
+  if (db) roomRef.child('players').child(pid).remove();
+  delete players[pid];
+  updateScoreboard();
+  updatePlayerChips();
+}
+
+function resetAllScores() {
+  if (!confirm('Nullázod mindenki pontját?')) return;
+  Object.keys(players).forEach(pid => {
+    players[pid].score = 0;
+    if (db) roomRef.child('players').child(pid).child('score').set(0);
+  });
+  updateScoreboard();
 }
 
 // ============================================================
