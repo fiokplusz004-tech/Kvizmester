@@ -10,407 +10,282 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1c1c28;
-    --border: #2a2a3d;
-    --accent: #f0c040;
-    --accent2: #e05a2b;
-    --green: #3ecf8e;
-    --red: #e05a5a;
-    --text: #f0f0f8;
-    --muted: #6b6b8a;
-    --font-display: 'Bebas Neue', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
+    --bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c28;--border:#2a2a3d;
+    --accent:#f0c040;--accent2:#e05a2b;--green:#3ecf8e;--red:#e05a5a;
+    --text:#f0f0f8;--muted:#6b6b8a;
+    --font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;}
 
-  /* SETUP SCREEN */
-  #setup-screen {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 100vh; padding: 40px 20px;
-  }
-  .setup-logo { font-family: var(--font-display); font-size: 72px; letter-spacing: 4px; color: var(--accent); line-height: 1; margin-bottom: 8px; }
-  .setup-sub { color: var(--muted); font-size: 14px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 48px; }
-  .setup-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-    padding: 40px; width: 100%; max-width: 560px;
-  }
-  .setup-card h2 { font-family: var(--font-display); font-size: 28px; letter-spacing: 2px; margin-bottom: 24px; color: var(--accent); }
-  .field { margin-bottom: 20px; }
-  .field label { display: block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .field input, .field select, .field textarea {
-    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-    padding: 12px 16px; color: var(--text); font-family: var(--font-body); font-size: 15px;
-    outline: none; transition: border-color 0.2s;
-  }
-  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
-  .field select option { background: var(--bg); }
-  .btn {
-    width: 100%; padding: 16px; background: var(--accent); color: #000; border: none;
-    border-radius: 8px; font-family: var(--font-display); font-size: 22px; letter-spacing: 2px;
-    cursor: pointer; transition: transform 0.1s, opacity 0.2s;
-  }
-  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-  .btn:active { transform: translateY(0); }
-  .btn-secondary {
-    background: transparent; color: var(--accent); border: 1px solid var(--accent);
-    font-size: 14px; padding: 10px; letter-spacing: 1px; font-family: var(--font-body); font-weight: 600;
-    border-radius: 8px; cursor: pointer; transition: all 0.2s;
-  }
-  .btn-secondary:hover { background: var(--accent); color: #000; }
+  /* SETUP */
+  #setup-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;}
+  .setup-logo{font-family:var(--font-display);font-size:72px;letter-spacing:4px;color:var(--accent);line-height:1;margin-bottom:8px;}
+  .setup-sub{color:var(--muted);font-size:14px;letter-spacing:3px;text-transform:uppercase;margin-bottom:48px;}
+  .setup-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:560px;}
+  .setup-card h2{font-family:var(--font-display);font-size:28px;letter-spacing:2px;margin-bottom:24px;color:var(--accent);}
+  .field{margin-bottom:20px;}
+  .field label{display:block;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .field input,.field select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-family:var(--font-body);font-size:15px;outline:none;transition:border-color 0.2s;}
+  .field input:focus,.field select:focus{border-color:var(--accent);}
+  .btn{width:100%;padding:16px;background:var(--accent);color:#000;border:none;border-radius:8px;font-family:var(--font-display);font-size:22px;letter-spacing:2px;cursor:pointer;transition:transform 0.1s,opacity 0.2s;}
+  .btn:hover{opacity:0.9;transform:translateY(-1px);}
+  .btn-secondary{background:transparent;color:var(--accent);border:1px solid var(--accent);font-size:13px;padding:8px 13px;font-family:var(--font-body);font-weight:600;border-radius:8px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  .btn-secondary:hover{background:var(--accent);color:#000;}
+  .btn-danger{background:transparent;color:var(--red);border:1px solid var(--red);font-size:12px;padding:6px 10px;font-family:var(--font-body);font-weight:600;border-radius:7px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  .btn-danger:hover{background:var(--red);color:#fff;}
 
-  /* MAIN LAYOUT */
-  #main-screen { display: none; }
-  .topbar {
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 32px; height: 64px;
-  }
-  .topbar-logo { font-family: var(--font-display); font-size: 32px; letter-spacing: 3px; color: var(--accent); }
-  .topbar-room { font-size: 12px; color: var(--muted); letter-spacing: 2px; }
-  .topbar-room span { color: var(--accent); font-weight: 600; font-size: 16px; }
-  .topbar-actions { display: flex; gap: 12px; }
-  .main-grid { display: grid; grid-template-columns: 340px 1fr 300px; gap: 0; height: calc(100vh - 64px); }
+  /* LAYOUT */
+  #main-screen{display:none;}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:60px;gap:16px;}
+  .topbar-logo{font-family:var(--font-display);font-size:28px;letter-spacing:3px;color:var(--accent);}
+  .topbar-room{font-size:12px;color:var(--muted);letter-spacing:2px;}
+  .topbar-room span{color:var(--accent);font-weight:600;font-size:15px;}
+  .topbar-timer{font-family:var(--font-display);font-size:20px;color:var(--green);letter-spacing:2px;}
+  .topbar-actions{display:flex;gap:8px;}
+  .main-grid{display:grid;grid-template-columns:360px 1fr 290px;height:calc(100vh - 60px);}
 
-  /* LEFT PANEL — Questions */
-  .panel-left {
-    background: var(--surface); border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; overflow: hidden;
-  }
-  .panel-header {
-    padding: 20px 24px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .panel-header h3 { font-family: var(--font-display); font-size: 20px; letter-spacing: 2px; color: var(--accent); }
-  .panel-content { flex: 1; overflow-y: auto; padding: 16px; }
-  .panel-content::-webkit-scrollbar { width: 4px; }
-  .panel-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  /* LEFT */
+  .panel-left{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+  .panel-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+  .panel-header h3{font-family:var(--font-display);font-size:20px;letter-spacing:2px;color:var(--accent);}
+  .panel-content{flex:1;overflow-y:auto;padding:10px;}
+  .panel-content::-webkit-scrollbar{width:4px;}
+  .panel-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 
-  /* Category tabs */
-  .cat-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-  .cat-tab {
-    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
-    cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted);
-    transition: all 0.2s; letter-spacing: 0.5px;
-  }
-  .cat-tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  /* CAT TREE */
+  .cat-tree{margin-bottom:10px;}
+  .cat-tree-item{margin-bottom:3px;}
+  .cat-tree-header{display:flex;align-items:center;padding:7px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all 0.2s;gap:6px;}
+  .cat-tree-header:hover{border-color:var(--border);background:var(--surface2);}
+  .cat-tree-header.active{background:rgba(240,192,64,0.1);border-color:var(--accent);}
+  .cat-tree-label{font-size:13px;font-weight:600;flex:1;}
+  .cat-tree-count{font-size:11px;color:var(--muted);background:var(--surface2);padding:2px 7px;border-radius:10px;flex-shrink:0;}
+  .cat-tree-actions{display:flex;gap:4px;opacity:0;transition:opacity 0.2s;}
+  .cat-tree-header:hover .cat-tree-actions{opacity:1;}
+  .cat-mini-btn{width:22px;height:22px;border-radius:5px;border:none;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+  .cat-del-btn{background:rgba(224,90,90,0.15);color:var(--red);}
+  .cat-del-btn:hover{background:var(--red);color:#fff;}
+  .cat-exp-btn{background:rgba(240,192,64,0.15);color:var(--accent);}
+  .cat-exp-btn:hover{background:var(--accent);color:#000;}
+  .cat-chevron{font-size:9px;color:var(--muted);transition:transform 0.2s;flex-shrink:0;}
+  .cat-chevron.open{transform:rotate(90deg);}
 
-  /* Question cards */
-  .q-card {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;
-    position: relative;
-  }
-  .q-card:hover { border-color: var(--accent); }
-  .q-card.active { border-color: var(--accent); background: rgba(240,192,64,0.07); }
-  .q-card.used { opacity: 0.4; }
-  .q-card-text { font-size: 13px; line-height: 1.5; margin-bottom: 8px; }
-  .q-card-meta { display: flex; gap: 8px; align-items: center; }
-  .q-cat-badge {
-    font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px;
-    border-radius: 4px; background: var(--border); color: var(--muted);
-  }
-  .q-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s; }
-  .q-card:hover .q-actions { opacity: 1; }
-  .q-btn-sm {
-    width: 26px; height: 26px; border-radius: 6px; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all 0.15s;
-  }
-  .q-btn-del { background: rgba(224,90,90,0.15); color: var(--red); }
-  .q-btn-del:hover { background: var(--red); color: #fff; }
-  .q-btn-edit { background: rgba(240,192,64,0.15); color: var(--accent); }
-  .q-btn-edit:hover { background: var(--accent); color: #000; }
+  /* SUBTYPE TABS */
+  .subtype-tabs{display:flex;gap:5px;flex-wrap:wrap;padding:5px 8px 8px 18px;}
+  .subtype-tab{padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all 0.2s;}
+  .subtype-tab.active{background:var(--accent);color:#000;border-color:var(--accent);}
+  .subtype-tab:hover:not(.active){color:var(--text);}
 
-  /* ADD QUESTION FORM */
-  .add-q-form {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
-    padding: 16px; margin-bottom: 12px;
-  }
-  .add-q-form.hidden { display: none; }
-  .add-q-form h4 { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
-  .add-q-form input, .add-q-form select, .add-q-form textarea {
-    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
-    padding: 9px 12px; color: var(--text); font-family: var(--font-body); font-size: 13px;
-    outline: none; margin-bottom: 8px; transition: border-color 0.2s;
-  }
-  .add-q-form input:focus, .add-q-form select:focus, .add-q-form textarea:focus { border-color: var(--accent); }
-  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-  .option-input-wrap { position: relative; }
-  .option-input-wrap input { margin: 0; padding-right: 32px; }
-  .correct-mark {
-    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-    width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border);
-    cursor: pointer; transition: all 0.2s; background: transparent;
-  }
-  .correct-mark.selected { border-color: var(--green); background: var(--green); }
-  .form-row { display: flex; gap: 8px; }
-  .form-row input, .form-row select { flex: 1; }
-  .add-q-actions { display: flex; gap: 8px; margin-top: 4px; }
-  .btn-save { flex: 1; padding: 10px; background: var(--green); color: #000; border: none; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; transition: opacity 0.2s; }
-  .btn-save:hover { opacity: 0.85; }
-  .btn-cancel-form { padding: 10px 16px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; cursor: pointer; }
+  /* Q CARDS */
+  .q-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:7px;transition:border-color 0.2s;position:relative;}
+  .q-card:hover{border-color:rgba(240,192,64,0.4);}
+  .q-card.used{opacity:0.3;}
+  .q-card-text{font-size:13px;line-height:1.5;margin-bottom:7px;padding-right:58px;}
+  .q-card-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .q-cat-badge{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--border);color:var(--muted);}
+  .q-type-badge{font-size:10px;padding:2px 7px;border-radius:4px;}
+  .type-vers{background:rgba(90,143,224,0.2);color:#5a8fe0;}
+  .type-szemely{background:rgba(240,192,64,0.2);color:#f0c040;}
+  .type-evszam{background:rgba(224,90,43,0.2);color:#e05a2b;}
+  .type-helyseg{background:rgba(62,207,142,0.2);color:#3ecf8e;}
+  .type-esemeny{background:rgba(192,90,224,0.2);color:#c05ae0;}
+  .type-egyeb{background:rgba(107,107,138,0.2);color:#6b6b8a;}
+  .q-actions{position:absolute;top:9px;right:9px;display:flex;gap:5px;}
+  .q-btn-sm{width:25px;height:25px;border-radius:6px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all 0.15s;}
+  .q-btn-del{background:rgba(224,90,90,0.15);color:var(--red);}
+  .q-btn-del:hover{background:var(--red);color:#fff;}
+  .q-btn-edit{background:rgba(240,192,64,0.15);color:var(--accent);}
+  .q-btn-edit:hover{background:var(--accent);color:#000;}
 
-  /* CENTER — Game Stage */
-  .panel-center { display: flex; flex-direction: column; overflow: hidden; }
-  .stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; position: relative; }
+  /* FORMS */
+  .add-q-form{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:10px;}
+  .add-q-form.hidden{display:none;}
+  .add-q-form h4{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:11px;}
+  .inline-edit-form{background:var(--bg);border:1px solid var(--accent);border-radius:10px;padding:13px;margin-bottom:8px;margin-top:-4px;}
+  .inline-edit-form h4{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:11px;}
+  .form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;margin-bottom:7px;transition:border-color 0.2s;}
+  .add-q-form .form-input{background:var(--bg);}
+  .form-input:focus{border-color:var(--accent);}
+  .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px;}
+  .option-input-wrap{position:relative;}
+  .option-input-wrap .form-input{margin:0;padding-right:30px;}
+  .correct-mark{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;border:2px solid var(--border);cursor:pointer;transition:all 0.2s;background:transparent;}
+  .correct-mark.selected{border-color:var(--green);background:var(--green);}
+  .form-row{display:flex;gap:7px;margin-bottom:7px;}
+  .form-row .form-input{flex:1;margin:0;}
+  .form-actions{display:flex;gap:7px;margin-top:5px;}
+  .btn-save{flex:1;padding:9px;background:var(--green);color:#000;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;transition:opacity 0.2s;}
+  .btn-save:hover{opacity:0.85;}
+  .btn-cancel-form{padding:9px 13px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;font-size:13px;cursor:pointer;}
+  .correct-note{font-size:11px;color:var(--muted);margin-bottom:8px;padding:6px 10px;background:rgba(62,207,142,0.07);border:1px solid rgba(62,207,142,0.2);border-radius:6px;}
+  .correct-note span{color:var(--green);font-weight:600;}
 
-  /* Waiting state */
-  .waiting-state { text-align: center; }
-  .qr-wrapper {
-    background: #fff; border-radius: 16px; padding: 20px; display: inline-block;
-    margin-bottom: 24px; box-shadow: 0 0 60px rgba(240,192,64,0.15);
-  }
-  .waiting-title { font-family: var(--font-display); font-size: 48px; letter-spacing: 3px; color: var(--accent); margin-bottom: 8px; }
-  .waiting-url { font-size: 18px; color: var(--text); background: var(--surface2); padding: 12px 24px; border-radius: 8px; margin-bottom: 16px; font-weight: 500; }
-  .player-count { font-size: 14px; color: var(--muted); }
-  .player-count span { color: var(--green); font-size: 24px; font-weight: 700; }
-  .players-joined { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 20px; max-width: 600px; }
-  .player-chip {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 20px;
-    padding: 6px 16px; font-size: 13px; display: flex; align-items: center; gap: 8px;
-    animation: chipIn 0.3s ease;
-  }
-  @keyframes chipIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-  .player-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  /* CENTER */
+  .panel-center{display:flex;flex-direction:column;overflow:hidden;}
+  .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;overflow:auto;}
+  .waiting-state{text-align:center;}
+  .qr-wrapper{background:#fff;border-radius:16px;padding:18px;display:inline-block;margin-bottom:20px;box-shadow:0 0 60px rgba(240,192,64,0.15);}
+  .waiting-title{font-family:var(--font-display);font-size:44px;letter-spacing:3px;color:var(--accent);margin-bottom:8px;}
+  .waiting-url{font-size:15px;color:var(--text);background:var(--surface2);padding:10px 18px;border-radius:8px;margin-bottom:14px;font-weight:500;}
+  .player-count{font-size:13px;color:var(--muted);}
+  .player-count span{color:var(--green);font-size:22px;font-weight:700;}
+  .players-joined{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:16px;max-width:600px;}
+  .player-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 13px;font-size:13px;display:flex;align-items:center;gap:7px;animation:chipIn 0.3s ease;}
+  @keyframes chipIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+  .player-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;}
+  .question-state{width:100%;max-width:760px;}
+  .q-number{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .q-category-tag{display:inline-block;padding:4px 12px;border-radius:4px;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px;background:rgba(240,192,64,0.15);color:var(--accent);border:1px solid rgba(240,192,64,0.3);}
+  .q-text{font-family:var(--font-display);font-size:38px;letter-spacing:1px;line-height:1.15;margin-bottom:28px;}
+  .answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .answer-card{background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:14px;transition:all 0.3s;}
+  .answer-card.correct{border-color:var(--green);background:rgba(62,207,142,0.1);}
+  .answer-card.wrong{border-color:var(--red);background:rgba(224,90,90,0.08);opacity:0.5;}
+  .answer-letter{width:34px;height:34px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:19px;flex-shrink:0;}
+  .answer-card.correct .answer-letter{background:var(--green);color:#000;}
+  .answer-text{font-size:14px;line-height:1.4;}
+  .timer-bar-wrap{width:100%;max-width:760px;margin-bottom:20px;}
+  .timer-bar-bg{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+  .timer-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 1s linear,background 0.5s;}
+  .timer-bar-fill.urgent{background:var(--red);}
+  .timer-display{font-family:var(--font-display);font-size:44px;color:var(--accent);text-align:right;margin-top:4px;}
+  .timer-display.urgent{color:var(--red);}
+  .answer-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+  .stat-bar{background:var(--surface2);border-radius:8px;padding:9px 12px;}
+  .stat-bar-label{font-size:11px;color:var(--muted);margin-bottom:5px;display:flex;justify-content:space-between;}
+  .stat-bar-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+  .stat-bar-fill{height:100%;border-radius:2px;transition:width 0.4s ease;}
+  .control-bar{background:var(--surface);border-top:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .ctrl-btn{padding:11px 22px;border-radius:8px;border:none;font-family:var(--font-display);font-size:17px;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;}
+  .ctrl-start{background:var(--green);color:#000;}
+  .ctrl-next{background:var(--accent);color:#000;}
+  .ctrl-reveal{background:var(--accent2);color:#fff;}
+  .ctrl-end{background:var(--red);color:#fff;}
+  .ctrl-btn:hover{opacity:0.85;transform:translateY(-1px);}
+  .game-phase{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
 
-  /* Question display */
-  .question-state { width: 100%; max-width: 780px; }
-  .q-number { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
-  .q-category-tag {
-    display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 11px;
-    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px;
-    background: rgba(240,192,64,0.15); color: var(--accent); border: 1px solid rgba(240,192,64,0.3);
-  }
-  .q-text { font-family: var(--font-display); font-size: 42px; letter-spacing: 1px; line-height: 1.15; margin-bottom: 36px; }
-  .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .answer-card {
-    background: var(--surface2); border: 2px solid var(--border); border-radius: 12px;
-    padding: 18px 20px; display: flex; align-items: center; gap: 16px;
-    transition: all 0.3s;
-  }
-  .answer-card.correct { border-color: var(--green); background: rgba(62,207,142,0.1); }
-  .answer-card.wrong { border-color: var(--red); background: rgba(224,90,90,0.08); opacity: 0.5; }
-  .answer-letter {
-    width: 36px; height: 36px; border-radius: 8px; background: var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-display); font-size: 20px; flex-shrink: 0;
-  }
-  .answer-card.correct .answer-letter { background: var(--green); color: #000; }
-  .answer-text { font-size: 15px; line-height: 1.4; }
+  /* RIGHT */
+  .panel-right{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+  .score-list{flex:1;overflow-y:auto;padding:10px;}
+  .score-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;margin-bottom:5px;transition:all 0.3s;background:var(--surface2);border:1px solid transparent;}
+  .score-item.top1{border-color:var(--accent);background:rgba(240,192,64,0.08);}
+  .score-item.top2{border-color:rgba(192,192,192,0.4);}
+  .score-item.top3{border-color:rgba(180,100,40,0.4);}
+  .rank-num{font-family:var(--font-display);font-size:20px;width:26px;text-align:center;color:var(--muted);}
+  .score-item.top1 .rank-num{color:var(--accent);}
+  .score-item.top2 .rank-num{color:#c0c0c0;}
+  .score-item.top3 .rank-num{color:#b46428;}
+  .player-info{flex:1;min-width:0;}
+  .player-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .player-pts{font-family:var(--font-display);font-size:24px;color:var(--accent);}
+  .score-delta{font-size:12px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(62,207,142,0.15);color:var(--green);animation:deltaIn 1.5s ease forwards;}
+  @keyframes deltaIn{0%{opacity:0;transform:translateY(4px)}20%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
 
-  /* Timer */
-  .timer-bar-wrap { width: 100%; max-width: 780px; margin-bottom: 24px; }
-  .timer-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-  .timer-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 1s linear, background 0.5s; }
-  .timer-bar-fill.urgent { background: var(--red); }
-  .timer-display { font-family: var(--font-display); font-size: 48px; color: var(--accent); text-align: right; margin-top: 4px; }
-  .timer-display.urgent { color: var(--red); }
-
-  /* Answer stats bar */
-  .answer-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
-  .stat-bar { background: var(--surface2); border-radius: 8px; padding: 10px 14px; }
-  .stat-bar-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
-  .stat-bar-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .stat-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
-
-  /* Control bar */
-  .control-bar {
-    background: var(--surface); border-top: 1px solid var(--border);
-    padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  }
-  .ctrl-btn {
-    padding: 12px 28px; border-radius: 8px; border: none; font-family: var(--font-display);
-    font-size: 18px; letter-spacing: 1.5px; cursor: pointer; transition: all 0.2s;
-  }
-  .ctrl-start { background: var(--green); color: #000; }
-  .ctrl-next { background: var(--accent); color: #000; }
-  .ctrl-reveal { background: var(--accent2); color: #fff; }
-  .ctrl-end { background: var(--red); color: #fff; }
-  .ctrl-btn:hover { opacity: 0.85; transform: translateY(-1px); }
-  .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
-  .game-phase { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-
-  /* RIGHT PANEL — Scoreboard */
-  .panel-right {
-    background: var(--surface); border-left: 1px solid var(--border);
-    display: flex; flex-direction: column; overflow: hidden;
-  }
-  .score-list { flex: 1; overflow-y: auto; padding: 12px; }
-  .score-item {
-    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-    border-radius: 10px; margin-bottom: 6px; transition: all 0.3s;
-    background: var(--surface2); border: 1px solid transparent;
-  }
-  .score-item.top1 { border-color: var(--accent); background: rgba(240,192,64,0.08); }
-  .score-item.top2 { border-color: rgba(192,192,192,0.4); }
-  .score-item.top3 { border-color: rgba(180,100,40,0.4); }
-  .rank-num { font-family: var(--font-display); font-size: 22px; width: 28px; text-align: center; color: var(--muted); }
-  .score-item.top1 .rank-num { color: var(--accent); }
-  .score-item.top2 .rank-num { color: #c0c0c0; }
-  .score-item.top3 .rank-num { color: #b46428; }
-  .player-info { flex: 1; min-width: 0; }
-  .player-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .player-pts { font-family: var(--font-display); font-size: 26px; color: var(--accent); }
-  .score-delta {
-    font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
-    background: rgba(62,207,142,0.15); color: var(--green);
-    animation: deltaIn 0.4s ease; opacity: 0; animation-fill-mode: forwards;
-  }
-  @keyframes deltaIn { 0% { opacity: 0; transform: translateY(4px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px); } }
-
-  /* RESULTS SCREEN */
-  #results-screen {
-    display: none; position: fixed; inset: 0; background: var(--bg);
-    z-index: 100; flex-direction: column; align-items: center; justify-content: flex-start;
-    padding: 40px 20px; overflow-y: auto;
-  }
-  .results-title { font-family: var(--font-display); font-size: 80px; letter-spacing: 6px; color: var(--accent); margin-bottom: 8px; }
-  .results-sub { color: var(--muted); letter-spacing: 3px; text-transform: uppercase; font-size: 13px; margin-bottom: 48px; }
-  .podium { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 40px; }
-  .podium-block { text-align: center; }
-  .podium-name { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-  .podium-score { font-family: var(--font-display); font-size: 32px; }
-  .podium-bar { width: 120px; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; }
-  .podium-bar.p1 { height: 160px; background: var(--accent); color: #000; font-family: var(--font-display); font-size: 48px; }
-  .podium-bar.p2 { height: 110px; background: #c0c0c0; color: #000; font-family: var(--font-display); font-size: 40px; }
-  .podium-bar.p3 { height: 80px; background: #b46428; color: #fff; font-family: var(--font-display); font-size: 36px; }
-
-  /* Full scoreboard on results screen */
-  .results-full-scoreboard { width: 100%; max-width: 480px; }
-  .results-full-scoreboard h3 { font-family: var(--font-display); font-size: 22px; letter-spacing: 3px; color: var(--muted); text-align: center; margin-bottom: 16px; }
-  .results-score-row {
-    display: flex; align-items: center; gap: 14px;
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
-    padding: 12px 16px; margin-bottom: 8px;
-  }
-  .results-score-row.r1 { border-color: var(--accent); background: rgba(240,192,64,0.08); }
-  .results-score-row.r2 { border-color: rgba(192,192,192,0.4); }
-  .results-score-row.r3 { border-color: rgba(180,100,40,0.4); }
-  .results-rank-num { font-family: var(--font-display); font-size: 26px; width: 32px; text-align: center; color: var(--muted); flex-shrink: 0; }
-  .results-score-row.r1 .results-rank-num { color: var(--accent); }
-  .results-score-row.r2 .results-rank-num { color: #c0c0c0; }
-  .results-score-row.r3 .results-rank-num { color: #b46428; }
-  .results-player-name { flex: 1; font-size: 15px; font-weight: 600; }
-  .results-player-pts { font-family: var(--font-display); font-size: 28px; color: var(--accent); }
-
-  /* Utility */
-  .hidden { display: none !important; }
-  .tag { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
-  .tag-green { background: rgba(62,207,142,0.15); color: var(--green); }
-  .tag-yellow { background: rgba(240,192,64,0.15); color: var(--accent); }
-  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+  /* RESULTS */
+  #results-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:100;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;overflow-y:auto;}
+  .results-title{font-family:var(--font-display);font-size:72px;letter-spacing:6px;color:var(--accent);margin-bottom:8px;}
+  .results-sub{color:var(--muted);letter-spacing:3px;text-transform:uppercase;font-size:13px;margin-bottom:40px;}
+  .podium{display:flex;align-items:flex-end;gap:14px;margin-bottom:32px;}
+  .podium-block{text-align:center;}
+  .podium-name{font-size:15px;font-weight:600;margin-bottom:6px;}
+  .podium-score{font-family:var(--font-display);font-size:28px;}
+  .podium-bar{width:110px;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center;}
+  .podium-bar.p1{height:150px;background:var(--accent);color:#000;font-family:var(--font-display);font-size:44px;}
+  .podium-bar.p2{height:100px;background:#c0c0c0;color:#000;font-family:var(--font-display);font-size:36px;}
+  .podium-bar.p3{height:72px;background:#b46428;color:#fff;font-family:var(--font-display);font-size:32px;}
+  .results-full-scoreboard{width:100%;max-width:440px;}
+  .results-full-scoreboard h3{font-family:var(--font-display);font-size:20px;letter-spacing:3px;color:var(--muted);text-align:center;margin-bottom:14px;}
+  .results-score-row{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:7px;}
+  .results-score-row.r1{border-color:var(--accent);background:rgba(240,192,64,0.08);}
+  .results-score-row.r2{border-color:rgba(192,192,192,0.4);}
+  .results-score-row.r3{border-color:rgba(180,100,40,0.4);}
+  .results-rank-num{font-family:var(--font-display);font-size:24px;width:30px;text-align:center;color:var(--muted);flex-shrink:0;}
+  .results-score-row.r1 .results-rank-num{color:var(--accent);}
+  .results-score-row.r2 .results-rank-num{color:#c0c0c0;}
+  .results-score-row.r3 .results-rank-num{color:#b46428;}
+  .results-player-name{flex:1;font-size:14px;font-weight:600;}
+  .results-player-pts{font-family:var(--font-display);font-size:26px;color:var(--accent);}
 
   /* MODAL */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200;
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-  }
-  .modal-overlay.hidden { display: none; }
-  .modal {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-    padding: 32px; width: 100%; max-width: 520px;
-  }
-  .modal h3 { font-family: var(--font-display); font-size: 28px; letter-spacing: 2px; color: var(--accent); margin-bottom: 24px; }
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.hidden{display:none;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;}
+  .modal h3{font-family:var(--font-display);font-size:26px;letter-spacing:2px;color:var(--accent);margin-bottom:20px;}
+  .modal-field{margin-bottom:14px;}
+  .modal-field label{display:block;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+  .modal-field select,.modal-field textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none;}
+  .modal-field select:focus,.modal-field textarea:focus{border-color:var(--accent);}
 
-  /* Animations */
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-  .pulse { animation: pulse 1.5s infinite; }
-  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-  .slide-up { animation: slideUp 0.4s ease; }
+  .hidden{display:none!important;}
+  .tag{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:4px;}
+  .tag-green{background:rgba(62,207,142,0.15);color:var(--green);}
+  .tag-yellow{background:rgba(240,192,64,0.15);color:var(--accent);}
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .slide-up{animation:slideUp 0.4s ease;}
 </style>
 </head>
 <body>
 
-<!-- SETUP SCREEN -->
+<!-- SETUP -->
 <div id="setup-screen">
   <div class="setup-logo">QUIZMASTER</div>
   <div class="setup-sub">Multiplayer Kvíz Játék — Host Panel</div>
   <div class="setup-card">
     <h2>FIREBASE BEÁLLÍTÁS</h2>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6;">
-      Illeszd be a Firebase projekted konfigurációját. Ezt a Firebase Console → Project Settings → Your Apps alatt találod.
-    </p>
-    <div class="field">
-      <label>API Key</label>
-      <input type="text" id="cfg-apiKey" placeholder="AIzaSy...">
-    </div>
-    <div class="field">
-      <label>Auth Domain</label>
-      <input type="text" id="cfg-authDomain" placeholder="projekt-id.firebaseapp.com">
-    </div>
-    <div class="field">
-      <label>Database URL</label>
-      <input type="text" id="cfg-databaseURL" placeholder="https://projekt-id-default-rtdb.europe-west1.firebasedatabase.app">
-    </div>
-    <div class="field">
-      <label>Project ID</label>
-      <input type="text" id="cfg-projectId" placeholder="projekt-id">
-    </div>
-    <div class="field">
-      <label>Szoba neve (egyedi azonosító)</label>
-      <input type="text" id="cfg-room" placeholder="pl. jatek2024" value="kvizjatek">
-    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;">Illeszd be a Firebase projekted konfigurációját.</p>
+    <div class="field"><label>API Key</label><input type="text" id="cfg-apiKey" placeholder="AIzaSy..."></div>
+    <div class="field"><label>Auth Domain</label><input type="text" id="cfg-authDomain" placeholder="projekt-id.firebaseapp.com"></div>
+    <div class="field"><label>Database URL</label><input type="text" id="cfg-databaseURL" placeholder="https://projekt-id-default-rtdb.europe-west1.firebasedatabase.app"></div>
+    <div class="field"><label>Project ID</label><input type="text" id="cfg-projectId" placeholder="projekt-id"></div>
+    <div class="field"><label>Szoba neve</label><input type="text" id="cfg-room" placeholder="pl. jatek2024" value="kvizjatek"></div>
     <button class="btn" onclick="initFirebase()">JÁTÉK INDÍTÁSA →</button>
-    <div style="margin-top:16px;padding:14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
-      <p style="font-size:11px;color:var(--muted);line-height:1.6;">
-        💡 <strong style="color:var(--text);">Gyors teszt:</strong> Firebase nélkül is kipróbálhatod demo módban —
-        <span style="color:var(--accent);cursor:pointer;text-decoration:underline;" onclick="initDemo()">Demo mód indítása</span>
-      </p>
+    <div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+      <p style="font-size:11px;color:var(--muted);line-height:1.6;">💡 <strong style="color:var(--text);">Demo mód:</strong> <span style="color:var(--accent);cursor:pointer;text-decoration:underline;" onclick="initDemo()">Kattints ide</span></p>
     </div>
   </div>
 </div>
 
-<!-- MAIN SCREEN -->
+<!-- MAIN -->
 <div id="main-screen">
   <div class="topbar">
     <div class="topbar-logo">QUIZMASTER</div>
-    <div style="display:flex;align-items:center;gap:28px;">
+    <div style="display:flex;align-items:center;gap:20px;">
       <div class="topbar-room">SZOBA: <span id="room-code-display">—</span></div>
-      <div id="game-timer-wrap" style="font-family:var(--font-display);font-size:22px;letter-spacing:2px;color:var(--green);">
-        ⏱ <span id="game-timer-display">00:00</span>
-      </div>
+      <div class="topbar-timer">⏱ <span id="game-timer-display">00:00</span></div>
     </div>
     <div class="topbar-actions">
-      <button class="btn-secondary" onclick="showAddQuestion()">+ Kérdés</button>
-      <button class="btn-secondary" onclick="exportQuestions()">Export</button>
-      <button class="btn-secondary" onclick="importQuestions()">Import</button>
+      <button class="btn-secondary" onclick="showNewQuestionForm()">+ Kérdés</button>
+      <button class="btn-secondary" onclick="openExportModal()">⬇ Export</button>
+      <button class="btn-secondary" onclick="openImportModal()">⬆ Import</button>
     </div>
   </div>
 
   <div class="main-grid">
-    <!-- LEFT: Questions -->
+    <!-- LEFT -->
     <div class="panel-left">
       <div class="panel-header">
         <h3>KÉRDÉSEK</h3>
-        <span class="tag tag-yellow" id="q-count">0 db</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="tag tag-yellow" id="q-count">0 db</span>
+          <button class="btn-danger" onclick="deleteAllQuestions()">🗑 Mind törlése</button>
+        </div>
       </div>
-      <div class="panel-content">
-        <!-- Add form -->
+      <div class="panel-content" id="panel-content">
+
+        <!-- NEW Q FORM -->
         <div class="add-q-form hidden" id="add-q-form">
-          <h4 id="form-title">Új kérdés</h4>
-          <textarea id="q-text-input" rows="3" placeholder="A kérdés szövege..."></textarea>
+          <h4>Új kérdés hozzáadása</h4>
+          <div class="correct-note">💡 A zöld körre kattintva jelöld meg a <span>helyes választ</span> — A=1., B=2., C=3., D=4. (fentről lefele)</div>
+          <textarea class="form-input" id="nq-text" rows="2" placeholder="A kérdés szövege..."></textarea>
           <div class="options-grid">
-            <div class="option-input-wrap">
-              <input type="text" id="opt-a" placeholder="A válasz">
-              <div class="correct-mark" data-opt="0" onclick="selectCorrect(0)"></div>
-            </div>
-            <div class="option-input-wrap">
-              <input type="text" id="opt-b" placeholder="B válasz">
-              <div class="correct-mark" data-opt="1" onclick="selectCorrect(1)"></div>
-            </div>
-            <div class="option-input-wrap">
-              <input type="text" id="opt-c" placeholder="C válasz">
-              <div class="correct-mark" data-opt="2" onclick="selectCorrect(2)"></div>
-            </div>
-            <div class="option-input-wrap">
-              <input type="text" id="opt-d" placeholder="D válasz">
-              <div class="correct-mark" data-opt="3" onclick="selectCorrect(3)"></div>
-            </div>
+            <div class="option-input-wrap"><input class="form-input" type="text" id="nq-a" placeholder="A — 1. válasz"><div class="correct-mark" onclick="nqSelectCorrect(0)"></div></div>
+            <div class="option-input-wrap"><input class="form-input" type="text" id="nq-b" placeholder="B — 2. válasz"><div class="correct-mark" onclick="nqSelectCorrect(1)"></div></div>
+            <div class="option-input-wrap"><input class="form-input" type="text" id="nq-c" placeholder="C — 3. válasz"><div class="correct-mark" onclick="nqSelectCorrect(2)"></div></div>
+            <div class="option-input-wrap"><input class="form-input" type="text" id="nq-d" placeholder="D — 4. válasz"><div class="correct-mark" onclick="nqSelectCorrect(3)"></div></div>
           </div>
           <div class="form-row">
-            <select id="q-cat-input">
+            <select class="form-input" id="nq-cat" onchange="toggleBiblicalType('nq')">
               <option value="Általános">Általános</option>
               <option value="Bibliai">Bibliai</option>
               <option value="Természet">Természet</option>
@@ -420,47 +295,43 @@
               <option value="Zene">Zene</option>
               <option value="Földrajz">Földrajz</option>
             </select>
-            <select id="q-time-input">
+            <select class="form-input" id="nq-time">
               <option value="20">20 mp</option>
               <option value="30" selected>30 mp</option>
               <option value="45">45 mp</option>
               <option value="60">60 mp</option>
             </select>
           </div>
-          <input type="hidden" id="edit-q-id" value="">
-          <div class="add-q-actions">
-            <button class="btn-save" onclick="saveQuestion()">✓ Mentés</button>
-            <button class="btn-cancel-form" onclick="hideAddQuestion()">Mégse</button>
+          <select class="form-input hidden" id="nq-type">
+            <option value="egyéb">Bibliai típus: (általános)</option>
+            <option value="vers">📖 Vers felismerés</option>
+            <option value="személy">👤 Személy</option>
+            <option value="évszám">📅 Évszám / Időpont</option>
+            <option value="helység">📍 Helység</option>
+            <option value="esemény">⚡ Esemény</option>
+          </select>
+          <div class="form-actions">
+            <button class="btn-save" onclick="saveNewQuestion()">✓ Mentés</button>
+            <button class="btn-cancel-form" onclick="hideNewQuestionForm()">Mégse</button>
           </div>
         </div>
 
-        <!-- Category filter -->
-        <div class="cat-tabs" id="cat-tabs">
-          <div class="cat-tab active" data-cat="all" onclick="filterCat('all')">Mind</div>
-        </div>
-
-        <!-- Question list -->
+        <div class="cat-tree" id="cat-tree"></div>
         <div id="q-list"></div>
       </div>
     </div>
 
-    <!-- CENTER: Stage -->
+    <!-- CENTER -->
     <div class="panel-center">
       <div class="stage" id="stage">
-
-        <!-- WAITING STATE -->
         <div class="waiting-state" id="waiting-state">
           <div class="waiting-title">VÁRAKOZÁS</div>
-          <p style="color:var(--muted);font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;">Játékosok csatlakoznak...</p>
-          <div class="qr-wrapper">
-            <div id="qr-code"></div>
-          </div>
+          <p style="color:var(--muted);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;">Játékosok csatlakoznak...</p>
+          <div class="qr-wrapper"><div id="qr-code"></div></div>
           <div class="waiting-url" id="player-url">—</div>
           <div class="player-count">Csatlakozott: <span id="joined-count">0</span> játékos</div>
           <div class="players-joined" id="players-joined"></div>
         </div>
-
-        <!-- QUESTION STATE -->
         <div class="question-state hidden" id="question-state">
           <div class="timer-bar-wrap">
             <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-bar" style="width:100%"></div></div>
@@ -472,66 +343,68 @@
           <div class="answers-grid" id="answers-grid"></div>
           <div class="answer-stats" id="answer-stats"></div>
         </div>
-
       </div>
-
-      <!-- Control bar -->
       <div class="control-bar">
         <div class="game-phase" id="phase-label">VÁRAKOZÁS</div>
-        <div style="display:flex;gap:10px;">
+        <div style="display:flex;gap:9px;">
           <button class="ctrl-btn ctrl-start" id="btn-start" onclick="openStartModal()">▶ JÁTÉK INDÍTÁSA</button>
           <button class="ctrl-btn ctrl-reveal hidden" id="btn-reveal" onclick="revealAnswer()">👁 MEGOLDÁS</button>
           <button class="ctrl-btn ctrl-next hidden" id="btn-next" onclick="nextQuestion()">KÖVETKEZŐ →</button>
           <button class="ctrl-btn ctrl-end hidden" id="btn-end" onclick="endGame()">■ BEFEJEZÉS</button>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:12px;color:var(--muted);" id="answers-received">0/0 válasz</span>
-        </div>
+        <span style="font-size:12px;color:var(--muted);" id="answers-received">0/0 válasz</span>
       </div>
     </div>
 
-    <!-- RIGHT: Scoreboard -->
+    <!-- RIGHT -->
     <div class="panel-right">
       <div class="panel-header">
         <h3>PONTÁLLÁS</h3>
-        <div style="display:flex;gap:6px;align-items:center;">
+        <div style="display:flex;gap:6px;">
           <span class="tag tag-green" id="player-count-tag">0 játékos</span>
-          <button class="btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="resetAllScores()" title="Pontok nullázása">⟳ Nulláz</button>
+          <button class="btn-secondary" style="font-size:11px;padding:4px 9px;" onclick="resetAllScores()">⟳ Nulláz</button>
         </div>
       </div>
       <div class="score-list" id="score-list">
-        <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">
-          Még nincsenek játékosok...
-        </div>
+        <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">Még nincsenek játékosok...</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- RESULTS SCREEN -->
+<!-- RESULTS -->
 <div id="results-screen">
   <div class="results-title">EREDMÉNYEK</div>
   <div class="results-sub">A játék véget ért — Végső állás</div>
   <div class="podium" id="podium"></div>
   <div class="results-full-scoreboard" id="results-full-scoreboard"></div>
-  <button class="ctrl-btn ctrl-start" onclick="newGame()" style="padding:14px 48px;margin-top:24px;">↺ FŐMENÜBE VISSZA</button>
+  <button class="ctrl-btn ctrl-start" onclick="newGame()" style="padding:13px 44px;margin-top:22px;">↺ FŐMENÜBE VISSZA</button>
 </div>
 
-<!-- GAME START MODAL -->
+<!-- START MODAL -->
 <div class="modal-overlay hidden" id="start-modal">
   <div class="modal">
     <h3>⚙️ JÁTÉK BEÁLLÍTÁSA</h3>
-
-    <div class="field" style="margin-bottom:20px;">
+    <div class="modal-field">
       <label>Témakör</label>
-      <select id="start-cat-select" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-family:var(--font-body);font-size:15px;outline:none;">
+      <select id="start-cat-select" onchange="onStartCatChange()">
         <option value="all">🎲 Összes témakör (vegyesen)</option>
       </select>
     </div>
-
-    <div class="field" style="margin-bottom:8px;">
+    <div class="modal-field hidden" id="start-subtype-wrap">
+      <label>Bibliai altípus</label>
+      <select id="start-subtype-select" onchange="updateStartModalInfo()">
+        <option value="all">Összes altípus (váltakozva)</option>
+        <option value="vers">📖 Vers felismerés</option>
+        <option value="személy">👤 Személy</option>
+        <option value="évszám">📅 Évszám / Időpont</option>
+        <option value="helység">📍 Helység</option>
+        <option value="esemény">⚡ Esemény</option>
+      </select>
+    </div>
+    <div class="modal-field">
       <label>Kérdések száma</label>
-      <select id="start-count-select" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-family:var(--font-body);font-size:15px;outline:none;">
+      <select id="start-count-select" onchange="updateStartModalInfo()">
         <option value="5">5 kérdés</option>
         <option value="10" selected>10 kérdés</option>
         <option value="15">15 kérdés</option>
@@ -539,26 +412,54 @@
         <option value="all">Mind (összes)</option>
       </select>
     </div>
-
-    <div id="start-modal-info" style="font-size:13px;color:var(--muted);margin:16px 0 20px;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
-      Elérhető kérdések: —
-    </div>
-
-    <div style="display:flex;gap:10px;">
-      <button class="btn-save" style="flex:1;font-size:16px;padding:14px;" onclick="confirmStartGame()">▶ INDÍTÁS</button>
+    <div id="start-modal-info" style="font-size:13px;color:var(--muted);margin:12px 0 16px;padding:10px 13px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">—</div>
+    <div style="display:flex;gap:9px;">
+      <button class="btn-save" style="flex:1;font-size:15px;padding:13px;" onclick="confirmStartGame()">▶ INDÍTÁS</button>
       <button class="btn-cancel-form" onclick="document.getElementById('start-modal').classList.add('hidden')">Mégse</button>
     </div>
   </div>
 </div>
 
-<!-- Import Modal -->
+<!-- EXPORT MODAL -->
+<div class="modal-overlay hidden" id="export-modal">
+  <div class="modal">
+    <h3>⬇ EXPORTÁLÁS</h3>
+    <div class="modal-field">
+      <label>Melyik kategóriát exportálod?</label>
+      <select id="export-cat-select" onchange="updateExportInfo()">
+        <option value="all">Összes kérdés</option>
+      </select>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;" id="export-info">—</p>
+    <div style="display:flex;gap:9px;">
+      <button class="btn-save" style="flex:1;" onclick="doExport()">⬇ Letöltés (.json)</button>
+      <button class="btn-cancel-form" onclick="document.getElementById('export-modal').classList.add('hidden')">Mégse</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
 <div class="modal-overlay hidden" id="import-modal">
   <div class="modal">
-    <h3>KÉRDÉSEK IMPORTÁLÁSA</h3>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Illeszd be a JSON formátumú kérdéseket:</p>
-    <textarea id="import-textarea" rows="10" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:monospace;font-size:12px;outline:none;resize:vertical;" placeholder='[{"text":"Kérdés?","options":["A","B","C","D"],"correct":0,"category":"Általános","time":30}]'></textarea>
-    <div style="display:flex;gap:10px;margin-top:16px;">
-      <button class="btn-save" style="flex:1;" onclick="doImport()">Importálás</button>
+    <h3>⬆ IMPORTÁLÁS</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.6;">JSON formátum — a <code style="color:var(--accent);">correct</code> mező: <strong>0 = A (1. válasz), 1 = B (2. válasz), 2 = C (3. válasz), 3 = D (4. válasz)</strong></p>
+    <pre style="font-size:10px;color:var(--muted);background:var(--surface2);border-radius:6px;padding:10px;margin-bottom:12px;overflow-x:auto;border:1px solid var(--border);line-height:1.6;">[
+  {
+    "text": "Mennyi ideig volt Nóé a bárkában?",
+    "options": ["30 nap", "40 nap", "1 év", "7 év"],
+    "correct": 1,
+    "category": "Bibliai",
+    "type": "esemény",
+    "time": 30
+  }
+]
+→ correct:1 = B = "40 nap" ✓
+Bibliai type értékek: vers | személy | évszám | helység | esemény</pre>
+    <div class="modal-field">
+      <textarea id="import-textarea" rows="8" style="font-family:monospace;font-size:11px;" placeholder='[{"text":"...","options":["1.","2.","3.","4."],"correct":0,"category":"Bibliai","type":"vers","time":30}]'></textarea>
+    </div>
+    <div style="display:flex;gap:9px;">
+      <button class="btn-save" style="flex:1;" onclick="doImport()">⬆ Importálás</button>
       <button class="btn-cancel-form" onclick="document.getElementById('import-modal').classList.add('hidden')">Mégse</button>
     </div>
   </div>
@@ -566,456 +467,425 @@
 
 <script>
 // ============================================================
+// CONSTANTS
+// ============================================================
+const BIBLICAL_TYPES = ['vers','személy','évszám','helység','esemény'];
+const TYPE_LABELS = {vers:'📖 Vers',személy:'👤 Személy',évszám:'📅 Évszám',helység:'📍 Helység',esemény:'⚡ Esemény',egyéb:'Általános'};
+const TYPE_CLASSES = {vers:'type-vers',személy:'type-szemely',évszám:'type-evszam',helység:'type-helyseg',esemény:'type-esemeny',egyéb:'type-egyeb'};
+const LETTERS = ['A','B','C','D'];
+const AVATAR_COLORS = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f','#5ae0d4','#e0c05a'];
+
+// ============================================================
 // STATE
 // ============================================================
-let db = null;
-let roomRef = null;
-let roomCode = '';
-let questions = [];
-let players = {};
-let currentQIndex = -1;
-let currentTimerInterval = null;
-let currentTimerValue = 30;
-let gamePhase = 'waiting'; // waiting | question | revealed | ended
-let correctOptionIndex = -1;
-let selectedCat = 'all';
-let editingQId = null;
-let correctSelectedIndex = 0;
-let answerCounts = [0,0,0,0];
-let answeredPlayers = new Set();
-let answerOrder = 0;
-
-// Játékidő számláló
-let gameStartTime = null;
-let gameTimerInterval = null;
-// Már feltett kérdések nyilvántartása (egy indítástól a másikig)
-let usedQuestionIds = new Set();
-
-// Color palette for player avatars
-const AVATAR_COLORS = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f','#5ae0d4','#e0c05a'];
-const LETTERS = ['A','B','C','D'];
+let db=null,roomRef=null,roomCode='';
+let questions=[],players={};
+let currentQIndex=-1,correctOptionIndex=-1;
+let currentTimerInterval=null,currentTimerValue=30;
+let gamePhase='waiting';
+let selectedCat='all',selectedSubtype='all';
+let answerCounts=[0,0,0,0],answeredPlayers=new Set(),answerOrder=0;
+let activeQuestions=[],usedQuestionIds=new Set();
+let gameStartTime=null,gameTimerInterval=null;
+let nqCorrectOptVal=0;
+let currentInlineEditId=null,inlineCorrectOpt=0;
 
 // ============================================================
-// FIREBASE INIT
+// FIREBASE
 // ============================================================
 function initFirebase() {
-  const apiKey = document.getElementById('cfg-apiKey').value.trim();
-  const authDomain = document.getElementById('cfg-authDomain').value.trim();
-  const databaseURL = document.getElementById('cfg-databaseURL').value.trim();
-  const projectId = document.getElementById('cfg-projectId').value.trim();
-  roomCode = document.getElementById('cfg-room').value.trim() || 'kvizjatek';
-
-  if (!apiKey || !databaseURL) {
-    alert('Kérlek töltsd ki az API Key és Database URL mezőket!');
-    return;
-  }
-
-  try {
-    if (firebase.apps.length) firebase.app().delete();
-    firebase.initializeApp({ apiKey, authDomain, databaseURL, projectId });
-    db = firebase.database();
-    roomRef = db.ref('rooms/' + roomCode);
-    setupListeners();
-    showMain();
-  } catch(e) {
-    alert('Firebase hiba: ' + e.message);
-  }
+  const apiKey=document.getElementById('cfg-apiKey').value.trim();
+  const authDomain=document.getElementById('cfg-authDomain').value.trim();
+  const databaseURL=document.getElementById('cfg-databaseURL').value.trim();
+  const projectId=document.getElementById('cfg-projectId').value.trim();
+  roomCode=document.getElementById('cfg-room').value.trim()||'kvizjatek';
+  if(!apiKey||!databaseURL){alert('Kérlek töltsd ki az API Key és Database URL mezőket!');return;}
+  try{
+    if(firebase.apps.length)firebase.app().delete();
+    firebase.initializeApp({apiKey,authDomain,databaseURL,projectId});
+    db=firebase.database(); roomRef=db.ref('rooms/'+roomCode);
+    setupListeners(); showMain();
+  }catch(e){alert('Firebase hiba: '+e.message);}
 }
 
 function initDemo() {
-  roomCode = 'demo';
-  db = null;
-  questions = getDemoQuestions();
+  roomCode='demo';db=null;
+  questions=[
+    {id:'q1',text:'Mi Magyarország fővárosa?',options:['Bécs','Budapest','Prága','Varsó'],correct:1,category:'Földrajz',type:'egyéb',time:30},
+    {id:'q2',text:'Melyik évben volt a holdraszállás?',options:['1965','1967','1969','1972'],correct:2,category:'Történelem',type:'egyéb',time:30},
+    {id:'q3',text:'Ki volt Dávid apja?',options:['Mózes','Saul','Isai','Ábrahám'],correct:2,category:'Bibliai',type:'személy',time:30},
+    {id:'q4',text:'Hol született Jézus?',options:['Názáret','Jeruzsálem','Betlehem','Kapernaum'],correct:2,category:'Bibliai',type:'helység',time:30},
+    {id:'q5',text:'Mennyi ideig böjtölt Mózes a hegyen?',options:['20 nap','30 nap','40 nap','7 nap'],correct:2,category:'Bibliai',type:'évszám',time:30},
+  ];
   showMain();
-  setupDemoPlayers();
+  const names=['Anna','Béla','Csilla','Dani'];
+  names.forEach((n,i)=>{players[`demo${i}`]={name:n,score:0,color:AVATAR_COLORS[i]};});
+  updateScoreboard();updatePlayerChips();
 }
 
-function getDemoQuestions() {
-  return [
-    { id: 'q1', text: 'Mi Magyarország fővárosa?', options: ['Bécs','Budapest','Prága','Varsó'], correct: 1, category: 'Földrajz', time: 30 },
-    { id: 'q2', text: 'Melyik évben volt a holdraszállás?', options: ['1965','1967','1969','1972'], correct: 2, category: 'Történelem', time: 30 },
-    { id: 'q3', text: 'Hány bolygó van a Naprendszerben?', options: ['7','8','9','10'], correct: 1, category: 'Tudomány', time: 30 },
-    { id: 'q4', text: 'Ki írta a Hamlet-et?', options: ['Goethe','Molière','Dickens','Shakespeare'], correct: 3, category: 'Általános', time: 30 },
-    { id: 'q5', text: 'Melyik a világ leghosszabb folyója?', options: ['Amazonas','Nílus','Jangce','Mississippi'], correct: 1, category: 'Földrajz', time: 30 },
-  ];
-}
-
-function setupDemoPlayers() {
-  const names = ['Anna','Béla','Csilla','Dani','Eszter','Feri'];
-  names.forEach((n,i) => {
-    players[`demo${i}`] = { name: n, score: 0, color: AVATAR_COLORS[i % AVATAR_COLORS.length] };
-  });
-  updateScoreboard();
-  updatePlayerChips();
-}
-
-// ============================================================
-// FIREBASE LISTENERS
-// ============================================================
 function setupListeners() {
-  if (!db) return;
-
-  // Players
-  roomRef.child('players').on('value', snap => {
-    players = snap.val() || {};
-    updateScoreboard();
-    updatePlayerChips();
-    document.getElementById('joined-count').textContent = Object.keys(players).length;
-    document.getElementById('player-count-tag').textContent = Object.keys(players).length + ' játékos';
+  if(!db)return;
+  roomRef.child('players').on('value',snap=>{
+    players=snap.val()||{};
+    updateScoreboard();updatePlayerChips();
+    document.getElementById('joined-count').textContent=Object.keys(players).length;
+    document.getElementById('player-count-tag').textContent=Object.keys(players).length+' játékos';
   });
-
-  // Answers
-  roomRef.child('answers').on('child_added', snap => {
-    const ans = snap.val();
-    if (!ans) return;
-    const pid = snap.key;
-    if (answeredPlayers.has(pid)) return;
-    answeredPlayers.add(pid);
-    answerOrder++;
-
-    // Score: first correct = 5pts, subsequent correct = 3pts, wrong = 1pt
-    const isCorrect = ans.answer === correctOptionIndex;
-    const pts = isCorrect ? (answerOrder === 1 ? 5 : 3) : 1;
-    if (players[pid]) {
-      players[pid].score = (players[pid].score || 0) + pts;
-      if (db) roomRef.child('players').child(pid).child('score').set(players[pid].score);
-      showScoreDelta(pid, pts);
+  roomRef.child('answers').on('child_added',snap=>{
+    const ans=snap.val();if(!ans)return;
+    const pid=snap.key;
+    if(answeredPlayers.has(pid))return;
+    answeredPlayers.add(pid);answerOrder++;
+    const isCorrect=ans.answer===correctOptionIndex;
+    const pts=isCorrect?Math.max(1,5-Math.floor((answerOrder-1)*0.5)):0;
+    if(players[pid]){
+      players[pid].score=(players[pid].score||0)+pts;
+      if(db)roomRef.child('players').child(pid).child('score').set(players[pid].score);
+      if(pts>0)showScoreDelta(pid,pts);
     }
-
-    if (ans.answer >= 0 && ans.answer <= 3) {
-      answerCounts[ans.answer]++;
-      updateAnswerStats();
-    }
-
-    const total = Object.keys(players).length;
-    document.getElementById('answers-received').textContent = answeredPlayers.size + '/' + total + ' válasz';
-
-    if (total > 0 && answeredPlayers.size >= total) {
-      // All answered
-      setTimeout(() => revealAnswer(), 500);
-    }
+    if(ans.answer>=0&&ans.answer<=3){answerCounts[ans.answer]++;updateAnswerStats();}
+    const total=Object.keys(players).length;
+    document.getElementById('answers-received').textContent=answeredPlayers.size+'/'+total+' válasz';
+    if(total>0&&answeredPlayers.size>=total)setTimeout(()=>revealAnswer(),500);
   });
-
-  // Questions from DB
-  roomRef.child('questions').on('value', snap => {
-    const dbQ = snap.val();
-    if (dbQ) {
-      questions = Object.entries(dbQ).map(([id, q]) => ({ ...q, id }));
-      renderQuestions();
-    }
+  roomRef.child('questions').on('value',snap=>{
+    const dbQ=snap.val();
+    questions=dbQ?Object.entries(dbQ).map(([id,q])=>({...q,id,type:q.type||autoDetectType(q)})):[];
+    renderAll();
   });
 }
 
-// ============================================================
-// SHOW MAIN
-// ============================================================
 function showMain() {
-  document.getElementById('setup-screen').style.display = 'none';
-  document.getElementById('main-screen').style.display = 'block';
-  document.getElementById('room-code-display').textContent = roomCode.toUpperCase();
-
-  const playerUrl = window.location.origin + window.location.pathname.replace('quiz-host.html','quiz-player.html') + '?room=' + roomCode;
-  document.getElementById('player-url').textContent = playerUrl;
-
-  if (db) {
-    roomRef.child('gameState').set({ phase: 'waiting' });
+  document.getElementById('setup-screen').style.display='none';
+  document.getElementById('main-screen').style.display='block';
+  document.getElementById('room-code-display').textContent=roomCode.toUpperCase();
+  const playerUrl=window.location.origin+window.location.pathname.replace('quiz-host.html','quiz-player.html')+'?room='+roomCode;
+  document.getElementById('player-url').textContent=playerUrl;
+  if(db)roomRef.child('gameState').set({phase:'waiting'});
+  try{new QRCode(document.getElementById('qr-code'),{text:playerUrl,width:180,height:180,colorDark:'#000',colorLight:'#fff'});}catch(e){}
+  if(!gameTimerInterval){
+    gameStartTime=Date.now();
+    gameTimerInterval=setInterval(()=>{
+      const e=Math.floor((Date.now()-gameStartTime)/1000);
+      const h=Math.floor(e/3600),m=Math.floor((e%3600)/60),s=e%60;
+      const pad=n=>String(n).padStart(2,'0');
+      document.getElementById('game-timer-display').textContent=h>0?`${pad(h)}:${pad(m)}:${pad(s)}`:`${pad(m)}:${pad(s)}`;
+    },1000);
   }
-
-  // QR code
-  try {
-    new QRCode(document.getElementById('qr-code'), {
-      text: playerUrl, width: 180, height: 180,
-      colorDark: '#000000', colorLight: '#ffffff',
-    });
-  } catch(e) {}
-
-  // SESSION TIMER — egyszer indul, soha nem áll le
-  if (!gameTimerInterval) {
-    gameStartTime = Date.now();
-    gameTimerInterval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
-      const h = Math.floor(elapsed / 3600);
-      const m = Math.floor((elapsed % 3600) / 60);
-      const s = elapsed % 60;
-      const pad = n => String(n).padStart(2, '0');
-      document.getElementById('game-timer-display').textContent =
-        h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
-    }, 1000);
-  }
-
-  renderQuestions();
+  renderAll();
 }
 
 // ============================================================
-// QUESTION MANAGEMENT
+// AUTO DETECT TYPE
 // ============================================================
-let correctSelectedOpt = 0;
-
-function selectCorrect(idx) {
-  correctSelectedOpt = idx;
-  document.querySelectorAll('.correct-mark').forEach((el, i) => {
-    el.classList.toggle('selected', i === idx);
-  });
+function autoDetectType(q) {
+  if(q.category!=='Bibliai')return 'egyéb';
+  const t=(q.text+' '+(q.options||[]).join(' ')).toLowerCase();
+  if(/\d+:\d+/.test(q.text)||/melyik vers|melyik könyv|melyik fejezet|melyik ige/.test(t))return 'vers';
+  if(/ki volt|ki írta|ki mondta|melyik személy|kit|kinek|kivel|próféta|apostol|király/.test(t))return 'személy';
+  if(/\d{3,4}\s*(előtt|után|kr\.|ie\.|i\.e\.|ben|ban|évben)/.test(t)||/melyik évben|mikor|hány éve/.test(t))return 'évszám';
+  if(/hol|melyik városban|melyik helyen|helyszín|hegy|folyó|tenger/.test(t))return 'helység';
+  if(/mi történt|esemény|csata|átkelés|ítélet|büntetés|szabadulás|vándorlás/.test(t))return 'esemény';
+  return 'egyéb';
 }
 
-function showAddQuestion(editId = null) {
-  editingQId = editId;
-  const form = document.getElementById('add-q-form');
-  form.classList.remove('hidden');
-  document.getElementById('form-title').textContent = editId ? 'Kérdés szerkesztése' : 'Új kérdés';
-
-  if (editId) {
-    const q = questions.find(x => x.id === editId);
-    if (q) {
-      document.getElementById('q-text-input').value = q.text;
-      document.getElementById('opt-a').value = q.options[0] || '';
-      document.getElementById('opt-b').value = q.options[1] || '';
-      document.getElementById('opt-c').value = q.options[2] || '';
-      document.getElementById('opt-d').value = q.options[3] || '';
-      document.getElementById('q-cat-input').value = q.category || 'Általános';
-      document.getElementById('q-time-input').value = q.time || 30;
-      selectCorrect(q.correct);
-    }
-  } else {
-    document.getElementById('q-text-input').value = '';
-    ['opt-a','opt-b','opt-c','opt-d'].forEach(id => document.getElementById(id).value = '');
-    selectCorrect(0);
-  }
+// ============================================================
+// NEW QUESTION FORM
+// ============================================================
+function nqSelectCorrect(idx) {
+  nqCorrectOptVal=idx;
+  document.querySelectorAll('#add-q-form .correct-mark').forEach((el,i)=>el.classList.toggle('selected',i===idx));
 }
-
-function hideAddQuestion() {
+function toggleBiblicalType(prefix) {
+  const cat=document.getElementById(prefix+'-cat').value;
+  document.getElementById(prefix+'-type').classList.toggle('hidden',cat!=='Bibliai');
+}
+function showNewQuestionForm() {
+  document.getElementById('add-q-form').classList.remove('hidden');
+  nqSelectCorrect(0);
+  document.getElementById('panel-content').scrollTop=0;
+}
+function hideNewQuestionForm() {
   document.getElementById('add-q-form').classList.add('hidden');
-  editingQId = null;
+}
+function saveNewQuestion() {
+  const text=document.getElementById('nq-text').value.trim();
+  const opts=['nq-a','nq-b','nq-c','nq-d'].map(id=>document.getElementById(id).value.trim());
+  const cat=document.getElementById('nq-cat').value;
+  const time=parseInt(document.getElementById('nq-time').value);
+  const type=cat==='Bibliai'?document.getElementById('nq-type').value:'egyéb';
+  if(!text||opts.some(o=>!o)){alert('Töltsd ki az összes mezőt!');return;}
+  const qData={text,options:opts,correct:nqCorrectOptVal,category:cat,type,time};
+  if(db){roomRef.child('questions').push(qData);}
+  else{questions.push({...qData,id:'q'+Date.now()});renderAll();}
+  document.getElementById('nq-text').value='';
+  ['nq-a','nq-b','nq-c','nq-d'].forEach(id=>document.getElementById(id).value='');
+  nqSelectCorrect(0);
+  hideNewQuestionForm();
 }
 
-function saveQuestion() {
-  const text = document.getElementById('q-text-input').value.trim();
-  const opts = [
-    document.getElementById('opt-a').value.trim(),
-    document.getElementById('opt-b').value.trim(),
-    document.getElementById('opt-c').value.trim(),
-    document.getElementById('opt-d').value.trim(),
-  ];
-  const cat = document.getElementById('q-cat-input').value;
-  const time = parseInt(document.getElementById('q-time-input').value);
+// ============================================================
+// INLINE EDIT
+// ============================================================
+function openInlineEdit(id) {
+  closeInlineEdit();
+  currentInlineEditId=id;
+  const q=questions.find(x=>x.id===id);
+  if(!q)return;
+  inlineCorrectOpt=q.correct;
+  const isBib=q.category==='Bibliai';
+  const catOptions=['Általános','Bibliai','Természet','Történelem','Sport','Tudomány','Zene','Földrajz'];
+  const timeOptions=[20,30,45,60];
+  const form=document.createElement('div');
+  form.className='inline-edit-form';
+  form.id='inline-form-'+id;
+  form.innerHTML=`
+    <h4>✎ Kérdés szerkesztése</h4>
+    <div class="correct-note">💡 A zöld körre kattintva jelöld meg a <span>helyes választ</span> — A=1., B=2., C=3., D=4.</div>
+    <textarea class="form-input" id="ie-text" rows="2">${q.text}</textarea>
+    <div class="options-grid">
+      <div class="option-input-wrap"><input class="form-input" type="text" id="ie-a" value="${q.options[0]||''}"><div class="correct-mark${q.correct===0?' selected':''}" onclick="ieSelectCorrect(0)"></div></div>
+      <div class="option-input-wrap"><input class="form-input" type="text" id="ie-b" value="${q.options[1]||''}"><div class="correct-mark${q.correct===1?' selected':''}" onclick="ieSelectCorrect(1)"></div></div>
+      <div class="option-input-wrap"><input class="form-input" type="text" id="ie-c" value="${q.options[2]||''}"><div class="correct-mark${q.correct===2?' selected':''}" onclick="ieSelectCorrect(2)"></div></div>
+      <div class="option-input-wrap"><input class="form-input" type="text" id="ie-d" value="${q.options[3]||''}"><div class="correct-mark${q.correct===3?' selected':''}" onclick="ieSelectCorrect(3)"></div></div>
+    </div>
+    <div class="form-row">
+      <select class="form-input" id="ie-cat" onchange="ieToggleBiblical()">
+        ${catOptions.map(c=>`<option${q.category===c?' selected':''}>${c}</option>`).join('')}
+      </select>
+      <select class="form-input" id="ie-time">
+        ${timeOptions.map(t=>`<option${q.time===t?' selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
+    <select class="form-input${isBib?'':' hidden'}" id="ie-type">
+      <option value="egyéb"${q.type==='egyéb'?' selected':''}>Bibliai típus: (általános)</option>
+      <option value="vers"${q.type==='vers'?' selected':''}>📖 Vers felismerés</option>
+      <option value="személy"${q.type==='személy'?' selected':''}>👤 Személy</option>
+      <option value="évszám"${q.type==='évszám'?' selected':''}>📅 Évszám / Időpont</option>
+      <option value="helység"${q.type==='helység'?' selected':''}>📍 Helység</option>
+      <option value="esemény"${q.type==='esemény'?' selected':''}>⚡ Esemény</option>
+    </select>
+    <div class="form-actions">
+      <button class="btn-save" onclick="saveInlineEdit('${id}')">✓ Mentés</button>
+      <button class="btn-cancel-form" onclick="closeInlineEdit()">Mégse</button>
+    </div>`;
 
-  if (!text || opts.some(o => !o)) { alert('Töltsd ki az összes mezőt!'); return; }
-
-  const qData = { text, options: opts, correct: correctSelectedOpt, category: cat, time };
-
-  if (db) {
-    if (editingQId) {
-      roomRef.child('questions').child(editingQId).set(qData);
-    } else {
-      roomRef.child('questions').push(qData);
-    }
-  } else {
-    if (editingQId) {
-      const idx = questions.findIndex(q => q.id === editingQId);
-      if (idx >= 0) questions[idx] = { ...qData, id: editingQId };
-    } else {
-      questions.push({ ...qData, id: 'q' + Date.now() });
-    }
-    renderQuestions();
+  const card=document.getElementById('qcard-'+id);
+  if(card)card.after(form);
+  form.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function ieSelectCorrect(idx) {
+  inlineCorrectOpt=idx;
+  if(!currentInlineEditId)return;
+  document.querySelectorAll('#inline-form-'+currentInlineEditId+' .correct-mark').forEach((el,i)=>el.classList.toggle('selected',i===idx));
+}
+function ieToggleBiblical() {
+  const cat=document.getElementById('ie-cat').value;
+  document.getElementById('ie-type').classList.toggle('hidden',cat!=='Bibliai');
+}
+function saveInlineEdit(id) {
+  const text=document.getElementById('ie-text').value.trim();
+  const opts=['ie-a','ie-b','ie-c','ie-d'].map(eid=>document.getElementById(eid).value.trim());
+  const cat=document.getElementById('ie-cat').value;
+  const time=parseInt(document.getElementById('ie-time').value);
+  const type=cat==='Bibliai'?document.getElementById('ie-type').value:'egyéb';
+  if(!text||opts.some(o=>!o)){alert('Töltsd ki az összes mezőt!');return;}
+  const qData={text,options:opts,correct:inlineCorrectOpt,category:cat,type,time};
+  if(db){roomRef.child('questions').child(id).set(qData);}
+  else{const idx=questions.findIndex(q=>q.id===id);if(idx>=0)questions[idx]={...qData,id};renderAll();}
+  closeInlineEdit();
+}
+function closeInlineEdit() {
+  if(currentInlineEditId){
+    const f=document.getElementById('inline-form-'+currentInlineEditId);
+    if(f)f.remove();
+    currentInlineEditId=null;
   }
-  hideAddQuestion();
 }
 
+// ============================================================
+// DELETE
+// ============================================================
 function deleteQuestion(id) {
-  if (!confirm('Törlöd ezt a kérdést?')) return;
-  if (db) {
-    roomRef.child('questions').child(id).remove();
-  } else {
-    questions = questions.filter(q => q.id !== id);
-    renderQuestions();
-  }
+  if(!confirm('Törlöd ezt a kérdést?'))return;
+  closeInlineEdit();
+  if(db)roomRef.child('questions').child(id).remove();
+  else{questions=questions.filter(q=>q.id!==id);renderAll();}
+}
+function deleteAllQuestions() {
+  if(!confirm('Biztosan törlöd AZ ÖSSZES kérdést? Ez nem visszavonható!'))return;
+  closeInlineEdit();
+  if(db)roomRef.child('questions').remove();
+  else{questions=[];renderAll();}
+}
+function deleteCategoryQuestions(cat) {
+  if(!confirm(`Törlöd az összes "${cat}" kategóriájú kérdést?`))return;
+  closeInlineEdit();
+  const toDelete=questions.filter(q=>q.category===cat);
+  if(db){toDelete.forEach(q=>roomRef.child('questions').child(q.id).remove());}
+  else{questions=questions.filter(q=>q.category!==cat);renderAll();}
 }
 
-function filterCat(cat) {
-  selectedCat = cat;
-  document.querySelectorAll('.cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === cat));
+// ============================================================
+// FILTER & RENDER
+// ============================================================
+function filterCat(cat) {selectedCat=cat;selectedSubtype='all';renderAll();}
+function filterSubtype(sub) {selectedSubtype=sub;renderAll();}
+
+function renderAll() {
+  renderCatTree();
   renderQuestions();
+  document.getElementById('q-count').textContent=questions.length+' db';
+}
+
+function renderCatTree() {
+  const cats=[...new Set(questions.map(q=>q.category))];
+  let html=`<div class="cat-tree-item">
+    <div class="cat-tree-header${selectedCat==='all'?' active':''}" onclick="filterCat('all')">
+      <span class="cat-tree-label">📋 Összes kérdés</span>
+      <span class="cat-tree-count">${questions.length}</span>
+    </div>
+  </div>`;
+  cats.forEach(cat=>{
+    const catQs=questions.filter(q=>q.category===cat);
+    const isBib=cat==='Bibliai';
+    const isOpen=selectedCat===cat;
+    html+=`<div class="cat-tree-item">
+      <div class="cat-tree-header${isOpen?' active':''}" onclick="filterCat('${cat}')">
+        <span class="cat-chevron${isOpen?' open':''}">▶</span>
+        <span class="cat-tree-label">${cat}</span>
+        <span class="cat-tree-count">${catQs.length}</span>
+        <div class="cat-tree-actions">
+          <button class="cat-mini-btn cat-exp-btn" onclick="event.stopPropagation();exportCategory('${cat}')" title="Export">⬇</button>
+          <button class="cat-mini-btn cat-del-btn" onclick="event.stopPropagation();deleteCategoryQuestions('${cat}')" title="Mind törlése">🗑</button>
+        </div>
+      </div>`;
+    if(isBib&&isOpen){
+      const types=[...new Set(catQs.map(q=>q.type||'egyéb'))];
+      if(types.length>0){
+        html+=`<div class="subtype-tabs">
+          <div class="subtype-tab${selectedSubtype==='all'?' active':''}" onclick="filterSubtype('all')">Mind (${catQs.length})</div>
+          ${BIBLICAL_TYPES.filter(t=>types.includes(t)).map(t=>{
+            const cnt=catQs.filter(q=>(q.type||'egyéb')===t).length;
+            return `<div class="subtype-tab${selectedSubtype===t?' active':''}" onclick="filterSubtype('${t}')">${TYPE_LABELS[t]} (${cnt})</div>`;
+          }).join('')}
+        </div>`;
+      }
+    }
+    html+=`</div>`;
+  });
+  document.getElementById('cat-tree').innerHTML=html;
 }
 
 function renderQuestions() {
-  // Update category tabs
-  const cats = ['all', ...new Set(questions.map(q => q.category))];
-  const tabsEl = document.getElementById('cat-tabs');
-  tabsEl.innerHTML = cats.map(c =>
-    `<div class="cat-tab${selectedCat===c?' active':''}" data-cat="${c}" onclick="filterCat('${c}')">${c==='all'?'Mind':c}</div>`
-  ).join('');
-
-  const filtered = selectedCat === 'all' ? questions : questions.filter(q => q.category === selectedCat);
-  document.getElementById('q-count').textContent = questions.length + ' db';
-
-  const list = document.getElementById('q-list');
-  if (filtered.length === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Nincs kérdés ebben a kategóriában.<br><br><span style="color:var(--accent);cursor:pointer;" onclick="showAddQuestion()">+ Adj hozzá egyet</span></div>';
+  let filtered=selectedCat==='all'?questions:questions.filter(q=>q.category===selectedCat);
+  if(selectedSubtype!=='all')filtered=filtered.filter(q=>(q.type||'egyéb')===selectedSubtype);
+  const list=document.getElementById('q-list');
+  if(filtered.length===0){
+    list.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">Nincs kérdés.<br><br><span style="color:var(--accent);cursor:pointer;" onclick="showNewQuestionForm()">+ Adj hozzá egyet</span></div>';
     return;
   }
-  list.innerHTML = filtered.map((q, i) => {
-    const used = currentQIndex >= 0 && questions.indexOf(q) <= currentQIndex;
-    return `
-    <div class="q-card${used?' used':''}" id="qcard-${q.id}">
+  list.innerHTML=filtered.map(q=>{
+    const used=usedQuestionIds.has(q.id);
+    const typeBadge=q.category==='Bibliai'?`<span class="q-type-badge ${TYPE_CLASSES[q.type||'egyéb']||'type-egyeb'}">${TYPE_LABELS[q.type||'egyéb']||'?'}</span>`:'';
+    return `<div class="q-card${used?' used':''}" id="qcard-${q.id}">
       <div class="q-actions">
-        <button class="q-btn-sm q-btn-edit" onclick="showAddQuestion('${q.id}')">✎</button>
+        <button class="q-btn-sm q-btn-edit" onclick="openInlineEdit('${q.id}')">✎</button>
         <button class="q-btn-sm q-btn-del" onclick="deleteQuestion('${q.id}')">✕</button>
       </div>
       <div class="q-card-text">${q.text}</div>
       <div class="q-card-meta">
         <span class="q-cat-badge">${q.category}</span>
+        ${typeBadge}
         <span style="font-size:11px;color:var(--muted);">${q.time}mp</span>
-        <span style="font-size:11px;color:var(--green);">✓ ${q.options[q.correct]}</span>
+        <span style="font-size:11px;color:var(--green);">✓ ${LETTERS[q.correct]}: ${q.options[q.correct]}</span>
       </div>
     </div>`;
   }).join('');
 }
 
-let activeQuestions = []; // a játékban ténylegesen használt, szűrt+kevert kérdések
-
 // ============================================================
-// GAME FLOW
+// START MODAL
 // ============================================================
 function openStartModal() {
-  if (questions.length === 0) { alert('Adj hozzá legalább egy kérdést!'); return; }
-
-  // Feltöltjük a kategória választót a meglévő kategóriákból
-  const cats = ['all', ...new Set(questions.map(q => q.category))];
-  const sel = document.getElementById('start-cat-select');
-  sel.innerHTML = cats.map(c =>
-    `<option value="${c}">${c === 'all' ? '🎲 Összes témakör (vegyesen)' : c}</option>`
-  ).join('');
-
-  // Frissítjük az infót amikor változtatják
-  sel.onchange = updateStartModalInfo;
-  document.getElementById('start-count-select').onchange = updateStartModalInfo;
+  if(questions.length===0){alert('Adj hozzá legalább egy kérdést!');return;}
+  const cats=['all',...new Set(questions.map(q=>q.category))];
+  const sel=document.getElementById('start-cat-select');
+  sel.innerHTML=cats.map(c=>`<option value="${c}">${c==='all'?'🎲 Összes témakör (vegyesen)':c}</option>`).join('');
+  document.getElementById('start-subtype-wrap').classList.add('hidden');
   updateStartModalInfo();
-
   document.getElementById('start-modal').classList.remove('hidden');
 }
-
+function onStartCatChange() {
+  const cat=document.getElementById('start-cat-select').value;
+  document.getElementById('start-subtype-wrap').classList.toggle('hidden',cat!=='Bibliai');
+  updateStartModalInfo();
+}
 function updateStartModalInfo() {
-  const cat = document.getElementById('start-cat-select').value;
-  const countVal = document.getElementById('start-count-select').value;
-
-  const filtered = cat === 'all' ? questions : questions.filter(q => q.category === cat);
-  const fresh = filtered.filter(q => !usedQuestionIds.has(q.id));
-  const usedCount = filtered.length - fresh.length;
-  const pool = fresh.length > 0 ? fresh : filtered;
-  const count = countVal === 'all' ? pool.length : Math.min(parseInt(countVal), pool.length);
-
-  const info = document.getElementById('start-modal-info');
-  if (filtered.length === 0) {
-    info.innerHTML = `<span style="color:var(--red);">⚠️ Ebben a témakörben nincs kérdés!</span>`;
-  } else {
-    info.innerHTML = `
-      Elérhető: <strong style="color:var(--text);">${filtered.length} kérdés</strong> a „${cat === 'all' ? 'Összes' : cat}" témakörben
-      ${usedCount > 0 ? `<br><span style="color:var(--muted);">↩ ${usedCount} már feltett kérdés kiszűrve (${fresh.length} friss)</span>` : ''}
-      <br>Játékban: <strong style="color:var(--accent);">${count} váltakozó típusú kérdés</strong>
-    `;
-  }
+  const cat=document.getElementById('start-cat-select').value;
+  const subtype=document.getElementById('start-subtype-select').value;
+  const countVal=document.getElementById('start-count-select').value;
+  let filtered=cat==='all'?questions:questions.filter(q=>q.category===cat);
+  if(cat==='Bibliai'&&subtype!=='all')filtered=filtered.filter(q=>(q.type||'egyéb')===subtype);
+  const fresh=filtered.filter(q=>!usedQuestionIds.has(q.id));
+  const pool=fresh.length>0?fresh:filtered;
+  const count=countVal==='all'?pool.length:Math.min(parseInt(countVal),pool.length);
+  const info=document.getElementById('start-modal-info');
+  if(filtered.length===0){info.innerHTML='<span style="color:var(--red);">⚠️ Nincs kérdés ebben a szűrésben!</span>';return;}
+  info.innerHTML=`Elérhető: <strong style="color:var(--text);">${filtered.length} kérdés</strong>
+    ${fresh.length<filtered.length?`<br><span style="color:var(--muted);">↩ ${filtered.length-fresh.length} már feltett kiszűrve (${fresh.length} friss)</span>`:''}
+    <br>Játékban: <strong style="color:var(--accent);">${count} kérdés — változatosan kiosztva</strong>`;
 }
 
 function confirmStartGame() {
-  const cat = document.getElementById('start-cat-select').value;
-  const countVal = document.getElementById('start-count-select').value;
+  const cat=document.getElementById('start-cat-select').value;
+  const subtype=document.getElementById('start-subtype-select').value;
+  const countVal=document.getElementById('start-count-select').value;
+  let filtered=cat==='all'?[...questions]:questions.filter(q=>q.category===cat);
+  if(cat==='Bibliai'&&subtype!=='all')filtered=filtered.filter(q=>(q.type||'egyéb')===subtype);
+  if(filtered.length===0){alert('Nincs kérdés a kiválasztott szűrésben!');return;}
+  const fresh=filtered.filter(q=>!usedQuestionIds.has(q.id));
+  const pool=fresh.length>0?fresh:filtered;
+  const count=countVal==='all'?pool.length:Math.min(parseInt(countVal),pool.length);
 
-  // Szűrés témakör szerint
-  let filtered = cat === 'all' ? [...questions] : questions.filter(q => q.category === cat);
-  if (filtered.length === 0) { alert('Ebben a témakörben nincs kérdés!'); return; }
-
-  // Már feltett kérdések kiszűrése (ugyanazon indítástól)
-  const fresh = filtered.filter(q => !usedQuestionIds.has(q.id));
-  // Ha az összes már el volt, reseteljük (új kör)
-  const pool = fresh.length > 0 ? fresh : filtered;
-
-  const count = countVal === 'all' ? pool.length : Math.min(parseInt(countVal), pool.length);
-
-  // -------------------------------------------------------
-  // VÁLTOZATOS KÉRDÉS-KIOSZTÁS
-  // Kategória "típus" alapú csoportosítás bibliai kérdéseknél:
-  // vers, évszám, személy, helység, esemény – ezekből váltakozva
-  // -------------------------------------------------------
-  function detectType(q) {
-    const t = (q.text + ' ' + (q.options || []).join(' ')).toLowerCase();
-    if (/\d{1,4}\s*(előtt|után|kr\.|ie\.|i\.e\.|ad|bc|ben|ban|évben|évszázad)/.test(t) ||
-        /melyik évben|mikor|hány éve|évszám/.test(t)) return 'évszám';
-    if (/ki volt|ki írta|ki mondta|ki volt az|melyik személy|kit|kinek|kivel|próféta|apostol|király|pátriárka/.test(t)) return 'személy';
-    if (/hol|melyik városban|melyik helyen|melyik országban|helyszín|föld|hegy|folyó|tenger|völgy/.test(t)) return 'helység';
-    if (/melyik vers|melyik könyv|melyik fejezet|melyik ige|zsoltár|fejezet:|könyv:/.test(t) ||
-        /\d+:\d+/.test(q.text)) return 'vers';
-    if (/mi történt|esemény|csata|átkelés|ítélet|büntetés|szabadulás|vándorlás/.test(t)) return 'esemény';
-    return 'egyéb';
-  }
-
-  // Verseskönyv-ellenőrzés: a 4 válasz különböző könyvből legyen ha vers típusú
-  function shuffleVerseOptions(q) {
-    if (detectType(q) !== 'vers') return q;
-    // Csak a helyes választ garantáljuk, a többit is ellenőrizzük de ez adatbázis-szintű dolog
-    // Visszaadjuk az eredeti kérdést (az adatbázis-szintű javítás külön funkció)
-    return q;
-  }
-
-  // Csoportosítás típus szerint
-  const byType = {};
-  pool.forEach(q => {
-    const type = detectType(q);
-    if (!byType[type]) byType[type] = [];
-    byType[type].push(q);
+  // Group by type for round-robin
+  const byType={};
+  pool.forEach(q=>{
+    const t=q.type||'egyéb';
+    if(!byType[t])byType[t]=[];
+    byType[t].push(q);
   });
-
-  // Minden típusból véletlenszerű keverés
-  Object.values(byType).forEach(arr => {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
+  Object.values(byType).forEach(arr=>{
+    for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
   });
-
-  // Váltakozó kiosztás: round-robin a típusok között
-  const typeOrder = ['vers', 'személy', 'évszám', 'helység', 'esemény', 'egyéb'];
-  const available = typeOrder.filter(t => byType[t] && byType[t].length > 0);
-
-  // Ha csak 1-2 féle típus van, sima keverés
-  let result = [];
-  if (available.length <= 1) {
-    result = [...pool];
-    for (let i = result.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [result[i], result[j]] = [result[j], result[i]];
-    }
+  const typeOrder=['vers','személy','évszám','helység','esemény','egyéb'];
+  const available=typeOrder.filter(t=>byType[t]&&byType[t].length>0);
+  let result=[];
+  if(available.length<=1){
+    result=[...pool];
+    for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]];}
   } else {
-    // Round-robin: váltogatjuk a típusokat
-    const pointers = {};
-    available.forEach(t => pointers[t] = 0);
-    let ti = 0;
-    while (result.length < pool.length) {
-      let added = false;
-      for (let attempt = 0; attempt < available.length; attempt++) {
-        const type = available[(ti + attempt) % available.length];
-        if (pointers[type] < byType[type].length) {
-          result.push(byType[type][pointers[type]]);
-          pointers[type]++;
-          ti = (ti + attempt + 1) % available.length;
-          added = true;
-          break;
-        }
+    const ptrs={};available.forEach(t=>ptrs[t]=0);
+    let ti=0;
+    while(result.length<pool.length){
+      let added=false;
+      for(let a=0;a<available.length;a++){
+        const type=available[(ti+a)%available.length];
+        if(ptrs[type]<byType[type].length){result.push(byType[type][ptrs[type]]);ptrs[type]++;ti=(ti+a+1)%available.length;added=true;break;}
       }
-      if (!added) break;
+      if(!added)break;
     }
   }
-
-  activeQuestions = result.slice(0, count);
-
+  activeQuestions=result.slice(0,count);
   document.getElementById('start-modal').classList.add('hidden');
   startGame();
 }
 
+// ============================================================
+// GAME FLOW
+// ============================================================
 function startGame() {
-  currentQIndex = -1;
-  gamePhase = 'playing';
-  // usedQuestionIds NEM resetelődik itt — session szinten gyűjtjük
-
+  currentQIndex=-1;gamePhase='playing';
   document.getElementById('btn-start').classList.add('hidden');
   document.getElementById('btn-end').classList.remove('hidden');
   nextQuestion();
@@ -1023,298 +893,197 @@ function startGame() {
 
 function nextQuestion() {
   currentQIndex++;
-  if (currentQIndex >= activeQuestions.length) { endGame(); return; }
-
-  const q = activeQuestions[currentQIndex];
-  if (q.id) usedQuestionIds.add(q.id); // megjelöljük feltett kérdésként
-  correctOptionIndex = q.correct;
-  answeredPlayers.clear();
-  answerCounts = [0,0,0,0];
-  answerOrder = 0;
-
-  if (db) {
+  if(currentQIndex>=activeQuestions.length){endGame();return;}
+  const q=activeQuestions[currentQIndex];
+  if(q.id)usedQuestionIds.add(q.id);
+  correctOptionIndex=q.correct;
+  answeredPlayers.clear();answerCounts=[0,0,0,0];answerOrder=0;
+  if(db){
     roomRef.child('answers').remove();
     roomRef.child('gameState').set({
-      phase: 'question',
-      questionIndex: currentQIndex,
-      question: { text: q.text, options: q.options, category: q.category, time: q.time },
-      startTime: firebase.database.ServerValue.TIMESTAMP
+      phase:'question',questionIndex:currentQIndex,
+      question:{text:q.text,options:q.options,category:q.category,type:q.type||'egyéb',time:q.time},
+      startTime:firebase.database.ServerValue.TIMESTAMP
     });
   }
-
-  // UI
   document.getElementById('waiting-state').classList.add('hidden');
   document.getElementById('question-state').classList.remove('hidden');
   document.getElementById('question-state').classList.add('slide-up');
-  document.getElementById('q-number').textContent = (currentQIndex + 1) + '. KÉRDÉS / ' + activeQuestions.length;
-  document.getElementById('q-cat-tag').textContent = q.category;
-  document.getElementById('q-text-display').textContent = q.text;
-  document.getElementById('phase-label').textContent = 'KÉRDÉS FOLYAMATBAN';
-
-  // Answer cards
-  const grid = document.getElementById('answers-grid');
-  grid.innerHTML = q.options.map((opt, i) => `
+  const typeTag=q.category==='Bibliai'&&q.type&&q.type!=='egyéb'?' — '+TYPE_LABELS[q.type]:'';
+  document.getElementById('q-number').textContent=(currentQIndex+1)+'. KÉRDÉS / '+activeQuestions.length;
+  document.getElementById('q-cat-tag').textContent=q.category+typeTag;
+  document.getElementById('q-text-display').textContent=q.text;
+  document.getElementById('phase-label').textContent='KÉRDÉS FOLYAMATBAN';
+  document.getElementById('answers-grid').innerHTML=q.options.map((opt,i)=>`
     <div class="answer-card" id="ans-${i}">
       <div class="answer-letter">${LETTERS[i]}</div>
       <div class="answer-text">${opt}</div>
-    </div>
-  `).join('');
-
-  // Stats
+    </div>`).join('');
   updateAnswerStats();
-
-  // Buttons
   document.getElementById('btn-reveal').classList.remove('hidden');
   document.getElementById('btn-next').classList.add('hidden');
-  document.getElementById('answers-received').textContent = '0/' + Object.keys(players).length + ' válasz';
-
-  // Timer
+  document.getElementById('answers-received').textContent='0/'+Object.keys(players).length+' válasz';
   startTimer(q.time);
-
-  // Mark used
-  renderQuestions();
+  renderAll();
 }
 
 function startTimer(seconds) {
   clearInterval(currentTimerInterval);
-  currentTimerValue = seconds;
-  const bar = document.getElementById('timer-bar');
-  const display = document.getElementById('timer-display');
-  bar.style.transition = 'none';
-  bar.style.width = '100%';
-  bar.classList.remove('urgent');
-  display.classList.remove('urgent');
-
-  currentTimerInterval = setInterval(() => {
+  currentTimerValue=seconds;
+  const bar=document.getElementById('timer-bar'),disp=document.getElementById('timer-display');
+  bar.style.transition='none';bar.style.width='100%';
+  bar.classList.remove('urgent');disp.classList.remove('urgent');
+  currentTimerInterval=setInterval(()=>{
     currentTimerValue--;
-    const pct = (currentTimerValue / seconds) * 100;
-    bar.style.transition = 'width 1s linear';
-    bar.style.width = pct + '%';
-    display.textContent = currentTimerValue;
-
-    if (currentTimerValue <= 10) {
-      bar.classList.add('urgent');
-      display.classList.add('urgent');
-    }
-    if (currentTimerValue <= 0) {
-      clearInterval(currentTimerInterval);
-      revealAnswer();
-    }
-  }, 1000);
+    bar.style.transition='width 1s linear';bar.style.width=(currentTimerValue/seconds*100)+'%';
+    disp.textContent=currentTimerValue;
+    if(currentTimerValue<=10){bar.classList.add('urgent');disp.classList.add('urgent');}
+    if(currentTimerValue<=0){clearInterval(currentTimerInterval);revealAnswer();}
+  },1000);
 }
 
 function revealAnswer() {
-  clearInterval(currentTimerInterval);
-  gamePhase = 'revealed';
-
-  // Highlight correct/wrong
-  document.querySelectorAll('.answer-card').forEach((card, i) => {
-    card.classList.add(i === correctOptionIndex ? 'correct' : 'wrong');
-  });
-
-  if (db) roomRef.child('gameState').update({ phase: 'revealed', correctAnswer: correctOptionIndex });
-
+  clearInterval(currentTimerInterval);gamePhase='revealed';
+  document.querySelectorAll('.answer-card').forEach((card,i)=>card.classList.add(i===correctOptionIndex?'correct':'wrong'));
+  if(db)roomRef.child('gameState').update({phase:'revealed',correctAnswer:correctOptionIndex});
   document.getElementById('btn-reveal').classList.add('hidden');
   document.getElementById('btn-next').classList.remove('hidden');
-  document.getElementById('phase-label').textContent = 'MEGOLDÁS MEGJELENÍTVE';
-
-  // Ha mindenki válaszolt, automatikusan továbblép 3 mp után
-  const total = Object.keys(players).length;
-  if (total > 0 && answeredPlayers.size >= total) {
-    let countdown = 3;
-    document.getElementById('phase-label').textContent = 'KÖVETKEZŐ: ' + countdown + '...';
-    const autoAdvTimer = setInterval(() => {
-      countdown--;
-      if (countdown > 0) {
-        document.getElementById('phase-label').textContent = 'KÖVETKEZŐ: ' + countdown + '...';
-      } else {
-        clearInterval(autoAdvTimer);
-        nextQuestion();
-      }
-    }, 1000);
+  document.getElementById('phase-label').textContent='MEGOLDÁS MEGJELENÍTVE';
+  const total=Object.keys(players).length;
+  if(total>0&&answeredPlayers.size>=total){
+    let cd=3;document.getElementById('phase-label').textContent='KÖVETKEZŐ: '+cd+'...';
+    const t=setInterval(()=>{cd--;if(cd>0){document.getElementById('phase-label').textContent='KÖVETKEZŐ: '+cd+'...';}else{clearInterval(t);nextQuestion();}},1000);
   }
 }
 
 function endGame() {
-  clearInterval(currentTimerInterval);
-  // gameTimerInterval NEM áll le — session szinten megy tovább
-  gamePhase = 'ended';
-  if (db) roomRef.child('gameState').update({ phase: 'ended' });
+  clearInterval(currentTimerInterval);gamePhase='ended';
+  if(db)roomRef.child('gameState').update({phase:'ended'});
   showResults();
 }
 
 function showResults() {
-  document.getElementById('results-screen').style.display = 'flex';
-  const sorted = Object.entries(players).sort((a,b) => (b[1].score||0) - (a[1].score||0));
-  const top3 = sorted.slice(0,3);
-
-  const podiumOrder = [1,0,2]; // 2nd, 1st, 3rd visually
-  const podiumHeights = ['p2','p1','p3'];
-
-  let podiumHTML = '';
-  podiumOrder.forEach((rank, vi) => {
-    const p = top3[rank];
-    if (!p) return;
-    podiumHTML += `
-      <div class="podium-block">
-        <div class="podium-name">${p[1].name}</div>
-        <div class="podium-score">${p[1].score || 0} pt</div>
-        <div class="podium-bar ${podiumHeights[vi]}">${rank+1}.</div>
-      </div>`;
-  });
-  document.getElementById('podium').innerHTML = podiumHTML;
-
-  // Full scoreboard
-  const medals = ['🥇','🥈','🥉'];
-  const rowClasses = ['r1','r2','r3'];
-  let fullHTML = '<h3>TELJES RANGLISTA</h3>';
-  fullHTML += sorted.map(([id, p], i) => `
-    <div class="results-score-row ${rowClasses[i]||''}">
-      <div class="results-rank-num">${medals[i] || (i+1) + '.'}</div>
-      <div class="results-player-name">${p.name || 'Névtelen'}</div>
-      <div class="results-player-pts">${p.score || 0} pt</div>
-    </div>`).join('');
-  document.getElementById('results-full-scoreboard').innerHTML = fullHTML;
-
-  // Push final scoreboard to players
-  if (db) {
-    roomRef.child('gameState').update({ phase: 'ended', finalScores: sorted.map(([id,p]) => ({ name: p.name, score: p.score||0 })) });
-  }
+  document.getElementById('results-screen').style.display='flex';
+  const sorted=Object.entries(players).sort((a,b)=>(b[1].score||0)-(a[1].score||0));
+  const top3=sorted.slice(0,3);
+  const podiumOrder=[1,0,2],podiumH=['p2','p1','p3'];
+  let ph='';
+  podiumOrder.forEach((rank,vi)=>{const p=top3[rank];if(!p)return;ph+=`<div class="podium-block"><div class="podium-name">${p[1].name}</div><div class="podium-score">${p[1].score||0} pt</div><div class="podium-bar ${podiumH[vi]}">${rank+1}.</div></div>`;});
+  document.getElementById('podium').innerHTML=ph;
+  const medals=['🥇','🥈','🥉'],rc=['r1','r2','r3'];
+  let fh='<h3>TELJES RANGLISTA</h3>';
+  fh+=sorted.map(([id,p],i)=>`<div class="results-score-row ${rc[i]||''}"><div class="results-rank-num">${medals[i]||(i+1)+'.'}</div><div class="results-player-name">${p.name||'Névtelen'}</div><div class="results-player-pts">${p.score||0} pt</div></div>`).join('');
+  document.getElementById('results-full-scoreboard').innerHTML=fh;
+  if(db)roomRef.child('gameState').update({phase:'ended',finalScores:sorted.map(([id,p])=>({name:p.name,score:p.score||0}))});
 }
 
 function newGame() {
-  document.getElementById('results-screen').style.display = 'none';
-  currentQIndex = -1;
-  activeQuestions = [];
-  gamePhase = 'waiting';
-  players = {};
-  // usedQuestionIds MEGMARAD — session szinten gyűjtjük
-  // gameTimerInterval MEGMARAD — folyamatosan megy
-  if (db) {
-    roomRef.child('gameState').set({ phase: 'waiting' });
-    roomRef.child('answers').remove();
-    roomRef.child('players').remove();
-  }
+  document.getElementById('results-screen').style.display='none';
+  currentQIndex=-1;activeQuestions=[];gamePhase='waiting';players={};
+  if(db){roomRef.child('gameState').set({phase:'waiting'});roomRef.child('answers').remove();roomRef.child('players').remove();}
   document.getElementById('waiting-state').classList.remove('hidden');
   document.getElementById('question-state').classList.add('hidden');
-  document.getElementById('btn-start').classList.remove('hidden');
-  document.getElementById('btn-reveal').classList.add('hidden');
-  document.getElementById('btn-next').classList.add('hidden');
-  document.getElementById('btn-end').classList.add('hidden');
-  updateScoreboard();
-  updatePlayerChips();
+  ['btn-start'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
+  ['btn-reveal','btn-next','btn-end'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  updateScoreboard();updatePlayerChips();
 }
 
 // ============================================================
-// UI UPDATES
+// UI
 // ============================================================
 function updatePlayerChips() {
-  const container = document.getElementById('players-joined');
-  const count = Object.keys(players).length;
-  document.getElementById('joined-count').textContent = count;
-  document.getElementById('player-count-tag').textContent = count + ' játékos';
-  container.innerHTML = Object.entries(players).map(([id, p]) => `
-    <div class="player-chip">
-      <div class="player-avatar" style="background:${p.color||'#555'}">${(p.name||'?')[0].toUpperCase()}</div>
-      ${p.name || 'Ismeretlen'}
-    </div>`).join('');
+  const c=document.getElementById('players-joined'),cnt=Object.keys(players).length;
+  document.getElementById('joined-count').textContent=cnt;
+  document.getElementById('player-count-tag').textContent=cnt+' játékos';
+  c.innerHTML=Object.entries(players).map(([id,p])=>`<div class="player-chip"><div class="player-avatar" style="background:${p.color||'#555'}">${(p.name||'?')[0].toUpperCase()}</div>${p.name||'?'}</div>`).join('');
 }
-
 function updateScoreboard() {
-  const sorted = Object.entries(players).sort((a,b) => (b[1].score||0) - (a[1].score||0));
-  const list = document.getElementById('score-list');
-  if (sorted.length === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">Még nincsenek játékosok...</div>';
-    return;
-  }
-  list.innerHTML = sorted.map(([id, p], i) => `
-    <div class="score-item ${i===0?'top1':i===1?'top2':i===2?'top3':''}" id="score-${id}" style="position:relative;">
-      <div class="rank-num">${i+1}</div>
-      <div class="player-info">
-        <div class="player-name">${p.name || 'Névtelen'}</div>
-      </div>
-      <div class="player-pts">${p.score || 0}</div>
-      <button onclick="kickPlayer('${id}')" title="Kidobás" style="margin-left:6px;background:rgba(224,90,90,0.15);color:var(--red);border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;flex-shrink:0;">✕</button>
-    </div>`).join('');
+  const sorted=Object.entries(players).sort((a,b)=>(b[1].score||0)-(a[1].score||0));
+  const list=document.getElementById('score-list');
+  if(!sorted.length){list.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">Még nincsenek játékosok...</div>';return;}
+  list.innerHTML=sorted.map(([id,p],i)=>`<div class="score-item ${i===0?'top1':i===1?'top2':i===2?'top3':''}" id="score-${id}" style="position:relative;"><div class="rank-num">${i+1}</div><div class="player-info"><div class="player-name">${p.name||'Névtelen'}</div></div><div class="player-pts">${p.score||0}</div><button onclick="kickPlayer('${id}')" title="Kidobás" style="background:rgba(224,90,90,0.15);color:var(--red);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:12px;flex-shrink:0;">✕</button></div>`).join('');
 }
-
-function showScoreDelta(pid, pts) {
-  const el = document.getElementById('score-' + pid);
-  if (!el) return;
-  const delta = document.createElement('div');
-  delta.className = 'score-delta';
-  delta.textContent = '+' + pts;
-  el.appendChild(delta);
-  setTimeout(() => delta.remove(), 1500);
-  updateScoreboard();
+function showScoreDelta(pid,pts) {
+  const el=document.getElementById('score-'+pid);if(!el)return;
+  const d=document.createElement('div');d.className='score-delta';d.textContent='+'+pts;
+  el.appendChild(d);setTimeout(()=>d.remove(),1500);updateScoreboard();
 }
-
 function updateAnswerStats() {
-  const stats = document.getElementById('answer-stats');
-  const total = Math.max(1, answerCounts.reduce((a,b) => a+b, 0));
-  const colors = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0'];
-  stats.innerHTML = answerCounts.map((cnt, i) => `
-    <div class="stat-bar">
-      <div class="stat-bar-label"><span>${LETTERS[i]}</span><span>${cnt}</span></div>
-      <div class="stat-bar-track">
-        <div class="stat-bar-fill" style="width:${Math.round(cnt/total*100)}%;background:${colors[i]}"></div>
-      </div>
-    </div>`).join('');
+  const total=Math.max(1,answerCounts.reduce((a,b)=>a+b,0));
+  const colors=['#f0c040','#e05a2b','#3ecf8e','#5a8fe0'];
+  document.getElementById('answer-stats').innerHTML=answerCounts.map((cnt,i)=>`<div class="stat-bar"><div class="stat-bar-label"><span>${LETTERS[i]}</span><span>${cnt}</span></div><div class="stat-bar-track"><div class="stat-bar-fill" style="width:${Math.round(cnt/total*100)}%;background:${colors[i]}"></div></div></div>`).join('');
 }
-
 function kickPlayer(pid) {
-  const p = players[pid];
-  if (!p) return;
-  if (!confirm(`Kidobod: ${p.name}?`)) return;
-  if (db) roomRef.child('players').child(pid).remove();
-  delete players[pid];
-  updateScoreboard();
-  updatePlayerChips();
+  const p=players[pid];if(!p)return;
+  if(!confirm(`Kidobod: ${p.name}?`))return;
+  if(db)roomRef.child('players').child(pid).remove();
+  delete players[pid];updateScoreboard();updatePlayerChips();
 }
-
 function resetAllScores() {
-  if (!confirm('Nullázod mindenki pontját?')) return;
-  Object.keys(players).forEach(pid => {
-    players[pid].score = 0;
-    if (db) roomRef.child('players').child(pid).child('score').set(0);
-  });
+  if(!confirm('Nullázod mindenki pontját?'))return;
+  Object.keys(players).forEach(pid=>{players[pid].score=0;if(db)roomRef.child('players').child(pid).child('score').set(0);});
   updateScoreboard();
 }
 
 // ============================================================
-// IMPORT / EXPORT
+// EXPORT / IMPORT
 // ============================================================
-function exportQuestions() {
-  const data = JSON.stringify(questions.map(q => ({
-    text: q.text, options: q.options, correct: q.correct, category: q.category, time: q.time
-  })), null, 2);
-  const blob = new Blob([data], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'kerdések.json';
-  a.click();
+function openExportModal() {
+  const cats=['all',...new Set(questions.map(q=>q.category))];
+  const sel=document.getElementById('export-cat-select');
+  sel.innerHTML=cats.map(c=>`<option value="${c}">${c==='all'?'Összes kérdés':c}</option>`).join('');
+  updateExportInfo();
+  document.getElementById('export-modal').classList.remove('hidden');
 }
-
-function importQuestions() {
+function updateExportInfo() {
+  const cat=document.getElementById('export-cat-select').value;
+  const filtered=cat==='all'?questions:questions.filter(q=>q.category===cat);
+  document.getElementById('export-info').textContent=filtered.length+' kérdés lesz exportálva';
+}
+function exportCategory(cat) {
+  const filtered=cat==='all'?questions:questions.filter(q=>q.category===cat);
+  downloadJson(filtered,cat==='all'?'osszes-kerdes':cat.toLowerCase());
+}
+function doExport() {
+  const cat=document.getElementById('export-cat-select').value;
+  const filtered=cat==='all'?questions:questions.filter(q=>q.category===cat);
+  downloadJson(filtered,cat==='all'?'osszes-kerdes':cat.toLowerCase());
+  document.getElementById('export-modal').classList.add('hidden');
+}
+function downloadJson(qs,filename) {
+  const data=JSON.stringify(qs.map(q=>({text:q.text,options:q.options,correct:q.correct,category:q.category,type:q.type||'egyéb',time:q.time})),null,2);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+  a.download=filename+'.json';a.click();
+}
+function openImportModal() {
+  document.getElementById('import-textarea').value='';
   document.getElementById('import-modal').classList.remove('hidden');
 }
-
 function doImport() {
-  try {
-    const raw = document.getElementById('import-textarea').value.trim();
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) throw new Error('Tömbnek kell lennie');
-    parsed.forEach(q => {
-      const qData = { text: q.text, options: q.options, correct: q.correct||0, category: q.category||'Általános', time: q.time||30 };
-      if (db) roomRef.child('questions').push(qData);
-      else questions.push({ ...qData, id: 'q'+Date.now()+Math.random() });
+  try{
+    const raw=document.getElementById('import-textarea').value.trim();
+    const parsed=JSON.parse(raw);
+    if(!Array.isArray(parsed))throw new Error('Tömbnek kell lennie');
+    let count=0;
+    parsed.forEach(q=>{
+      if(!q.text||!q.options||q.options.length!==4)return;
+      // correct: 0=A(1.válasz), 1=B(2.válasz), 2=C(3.válasz), 3=D(4.válasz)
+      const correctIdx=typeof q.correct==='number'?Math.max(0,Math.min(3,q.correct)):0;
+      const qData={
+        text:q.text,options:q.options,correct:correctIdx,
+        category:q.category||'Általános',
+        type:q.type||'egyéb',
+        time:q.time||30
+      };
+      if(db)roomRef.child('questions').push(qData);
+      else questions.push({...qData,id:'q'+Date.now()+Math.random()});
+      count++;
     });
-    if (!db) renderQuestions();
+    if(!db)renderAll();
     document.getElementById('import-modal').classList.add('hidden');
-    alert(parsed.length + ' kérdés importálva!');
-  } catch(e) {
-    alert('Hiba: ' + e.message);
-  }
+    alert(count+' kérdés sikeresen importálva!');
+  }catch(e){alert('Import hiba: '+e.message);}
 }
 </script>
 </body>
