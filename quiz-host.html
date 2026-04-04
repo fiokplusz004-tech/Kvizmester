@@ -90,6 +90,7 @@
   .type-evszam{background:rgba(224,90,43,0.2);color:#e05a2b;}
   .type-helyseg{background:rgba(62,207,142,0.2);color:#3ecf8e;}
   .type-esemeny{background:rgba(192,90,224,0.2);color:#c05ae0;}
+  .type-idezet{background:rgba(224,192,90,0.2);color:#e0c05a;}
   .type-egyeb{background:rgba(107,107,138,0.2);color:#6b6b8a;}
   .q-actions{position:absolute;top:9px;right:9px;display:flex;gap:5px;}
   .q-btn-sm{width:25px;height:25px;border-radius:6px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all 0.15s;}
@@ -288,6 +289,7 @@
             <select class="form-input" id="nq-cat" onchange="toggleBiblicalType('nq')">
               <option value="Általános">Általános</option>
               <option value="Bibliai">Bibliai</option>
+              <option value="Film">Film</option>
               <option value="Természet">Természet</option>
               <option value="Történelem">Történelem</option>
               <option value="Sport">Sport</option>
@@ -470,8 +472,17 @@ Bibliai type értékek: vers | személy | évszám | helység | esemény</pre>
 // CONSTANTS
 // ============================================================
 const BIBLICAL_TYPES = ['vers','személy','évszám','helység','esemény'];
-const TYPE_LABELS = {vers:'📖 Vers',személy:'👤 Személy',évszám:'📅 Évszám',helység:'📍 Helység',esemény:'⚡ Esemény',egyéb:'Általános'};
-const TYPE_CLASSES = {vers:'type-vers',személy:'type-szemely',évszám:'type-evszam',helység:'type-helyseg',esemény:'type-esemeny',egyéb:'type-egyeb'};
+const FILM_TYPES     = ['idézet','személy','évszám','helység','esemény'];
+const CATEGORY_TYPES = { 'Bibliai': BIBLICAL_TYPES, 'Film': FILM_TYPES };
+const TYPE_LABELS = {
+  vers:'📖 Vers', személy:'👤 Személy', évszám:'📅 Évszám', helység:'📍 Helység',
+  esemény:'⚡ Esemény', idézet:'💬 Idézet', egyéb:'Általános'
+};
+const TYPE_CLASSES = {
+  vers:'type-vers', személy:'type-szemely', évszám:'type-evszam',
+  helység:'type-helyseg', esemény:'type-esemeny',
+  idézet:'type-idezet', egyéb:'type-egyeb'
+};
 const LETTERS = ['A','B','C','D'];
 const AVATAR_COLORS = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f','#5ae0d4','#e0c05a'];
 
@@ -579,13 +590,22 @@ function showMain() {
 // AUTO DETECT TYPE
 // ============================================================
 function autoDetectType(q) {
-  if(q.category!=='Bibliai')return 'egyéb';
+  if(!CATEGORY_TYPES[q.category])return 'egyéb';
   const t=(q.text+' '+(q.options||[]).join(' ')).toLowerCase();
-  if(/\d+:\d+/.test(q.text)||/melyik vers|melyik könyv|melyik fejezet|melyik ige/.test(t))return 'vers';
-  if(/ki volt|ki írta|ki mondta|melyik személy|kit|kinek|kivel|próféta|apostol|király/.test(t))return 'személy';
-  if(/\d{3,4}\s*(előtt|után|kr\.|ie\.|i\.e\.|ben|ban|évben)/.test(t)||/melyik évben|mikor|hány éve/.test(t))return 'évszám';
-  if(/hol|melyik városban|melyik helyen|helyszín|hegy|folyó|tenger/.test(t))return 'helység';
-  if(/mi történt|esemény|csata|átkelés|ítélet|büntetés|szabadulás|vándorlás/.test(t))return 'esemény';
+  if(q.category==='Bibliai'){
+    if(/\d+:\d+/.test(q.text)||/melyik vers|melyik könyv|melyik fejezet|melyik ige/.test(t))return 'vers';
+    if(/ki volt|ki írta|ki mondta|melyik személy|kit|kinek|kivel|próféta|apostol|király/.test(t))return 'személy';
+    if(/\d{3,4}\s*(előtt|után|kr\.|ie\.|i\.e\.|ben|ban|évben)/.test(t)||/melyik évben|mikor|hány éve/.test(t))return 'évszám';
+    if(/hol|melyik városban|melyik helyen|helyszín|hegy|folyó|tenger/.test(t))return 'helység';
+    if(/mi történt|esemény|csata|átkelés|ítélet|büntetés|szabadulás|vándorlás/.test(t))return 'esemény';
+  }
+  if(q.category==='Film'){
+    if(/ki mondta|melyik filmben hangzik|melyik szereplő mondja|idézet|mondat/.test(t))return 'idézet';
+    if(/ki játssza|ki alakítja|melyik színész|ki a főszereplő|kit alakít/.test(t))return 'személy';
+    if(/melyik évben|mikor jelent meg|hány-ben|premier/.test(t))return 'évszám';
+    if(/hol játszódik|melyik városban|melyik országban|helyszín/.test(t))return 'helység';
+    if(/mi történik|mi volt a|esemény|csata|jelenet/.test(t))return 'esemény';
+  }
   return 'egyéb';
 }
 
@@ -598,7 +618,14 @@ function nqSelectCorrect(idx) {
 }
 function toggleBiblicalType(prefix) {
   const cat=document.getElementById(prefix+'-cat').value;
-  document.getElementById(prefix+'-type').classList.toggle('hidden',cat!=='Bibliai');
+  const hasTypes = CATEGORY_TYPES[cat] !== undefined;
+  const typeSelect = document.getElementById(prefix+'-type');
+  typeSelect.classList.toggle('hidden', !hasTypes);
+  if (hasTypes) {
+    const types = CATEGORY_TYPES[cat];
+    typeSelect.innerHTML = `<option value="egyéb">${cat} típus: (általános)</option>` +
+      types.map(t => `<option value="${t}">${TYPE_LABELS[t]}</option>`).join('');
+  }
 }
 function showNewQuestionForm() {
   document.getElementById('add-q-form').classList.remove('hidden');
@@ -613,7 +640,8 @@ function saveNewQuestion() {
   const opts=['nq-a','nq-b','nq-c','nq-d'].map(id=>document.getElementById(id).value.trim());
   const cat=document.getElementById('nq-cat').value;
   const time=parseInt(document.getElementById('nq-time').value);
-  const type=cat==='Bibliai'?document.getElementById('nq-type').value:'egyéb';
+  const typeEl=document.getElementById('nq-type');
+  const type=CATEGORY_TYPES[cat]?typeEl.value:'egyéb';
   if(!text||opts.some(o=>!o)){alert('Töltsd ki az összes mezőt!');return;}
   const qData={text,options:opts,correct:nqCorrectOptVal,category:cat,type,time};
   if(db){roomRef.child('questions').push(qData);}
@@ -633,7 +661,8 @@ function openInlineEdit(id) {
   const q=questions.find(x=>x.id===id);
   if(!q)return;
   inlineCorrectOpt=q.correct;
-  const isBib=q.category==='Bibliai';
+  const isBib=CATEGORY_TYPES[q.category]!==undefined;
+  const catTypeDefs=CATEGORY_TYPES[q.category]||[];
   const catOptions=['Általános','Bibliai','Természet','Történelem','Sport','Tudomány','Zene','Földrajz'];
   const timeOptions=[20,30,45,60];
   const form=document.createElement('div');
@@ -658,12 +687,8 @@ function openInlineEdit(id) {
       </select>
     </div>
     <select class="form-input${isBib?'':' hidden'}" id="ie-type">
-      <option value="egyéb"${q.type==='egyéb'?' selected':''}>Bibliai típus: (általános)</option>
-      <option value="vers"${q.type==='vers'?' selected':''}>📖 Vers felismerés</option>
-      <option value="személy"${q.type==='személy'?' selected':''}>👤 Személy</option>
-      <option value="évszám"${q.type==='évszám'?' selected':''}>📅 Évszám / Időpont</option>
-      <option value="helység"${q.type==='helység'?' selected':''}>📍 Helység</option>
-      <option value="esemény"${q.type==='esemény'?' selected':''}>⚡ Esemény</option>
+      <option value="egyéb"${q.type==='egyéb'?' selected':''}>${q.category} típus: (általános)</option>
+      ${catTypeDefs.map(t=>`<option value="${t}"${q.type===t?' selected':''}>${TYPE_LABELS[t]}</option>`).join('')}
     </select>
     <div class="form-actions">
       <button class="btn-save" onclick="saveInlineEdit('${id}')">✓ Mentés</button>
@@ -681,14 +706,21 @@ function ieSelectCorrect(idx) {
 }
 function ieToggleBiblical() {
   const cat=document.getElementById('ie-cat').value;
-  document.getElementById('ie-type').classList.toggle('hidden',cat!=='Bibliai');
+  const hasTypes=CATEGORY_TYPES[cat]!==undefined;
+  const typeEl=document.getElementById('ie-type');
+  typeEl.classList.toggle('hidden',!hasTypes);
+  if(hasTypes){
+    const types=CATEGORY_TYPES[cat];
+    typeEl.innerHTML=`<option value="egyéb">${cat} típus: (általános)</option>`+
+      types.map(t=>`<option value="${t}">${TYPE_LABELS[t]}</option>`).join('');
+  }
 }
 function saveInlineEdit(id) {
   const text=document.getElementById('ie-text').value.trim();
   const opts=['ie-a','ie-b','ie-c','ie-d'].map(eid=>document.getElementById(eid).value.trim());
   const cat=document.getElementById('ie-cat').value;
   const time=parseInt(document.getElementById('ie-time').value);
-  const type=cat==='Bibliai'?document.getElementById('ie-type').value:'egyéb';
+  const type=CATEGORY_TYPES[cat]?document.getElementById('ie-type').value:'egyéb';
   if(!text||opts.some(o=>!o)){alert('Töltsd ki az összes mezőt!');return;}
   const qData={text,options:opts,correct:inlineCorrectOpt,category:cat,type,time};
   if(db){roomRef.child('questions').child(id).set(qData);}
@@ -748,7 +780,7 @@ function renderCatTree() {
   </div>`;
   cats.forEach(cat=>{
     const catQs=questions.filter(q=>q.category===cat);
-    const isBib=cat==='Bibliai';
+    const hasSubtypes = CATEGORY_TYPES[cat] !== undefined;
     const isOpen=selectedCat===cat;
     html+=`<div class="cat-tree-item">
       <div class="cat-tree-header${isOpen?' active':''}" onclick="filterCat('${cat}')">
@@ -760,12 +792,13 @@ function renderCatTree() {
           <button class="cat-mini-btn cat-del-btn" onclick="event.stopPropagation();deleteCategoryQuestions('${cat}')" title="Mind törlése">🗑</button>
         </div>
       </div>`;
-    if(isBib&&isOpen){
-      const types=[...new Set(catQs.map(q=>q.type||'egyéb'))];
-      if(types.length>0){
+    if(hasSubtypes&&isOpen){
+      const catTypeDefs = CATEGORY_TYPES[cat];
+      const usedTypes=[...new Set(catQs.map(q=>q.type||'egyéb'))];
+      if(usedTypes.length>0){
         html+=`<div class="subtype-tabs">
           <div class="subtype-tab${selectedSubtype==='all'?' active':''}" onclick="filterSubtype('all')">Mind (${catQs.length})</div>
-          ${BIBLICAL_TYPES.filter(t=>types.includes(t)).map(t=>{
+          ${catTypeDefs.filter(t=>usedTypes.includes(t)).map(t=>{
             const cnt=catQs.filter(q=>(q.type||'egyéb')===t).length;
             return `<div class="subtype-tab${selectedSubtype===t?' active':''}" onclick="filterSubtype('${t}')">${TYPE_LABELS[t]} (${cnt})</div>`;
           }).join('')}
@@ -787,7 +820,7 @@ function renderQuestions() {
   }
   list.innerHTML=filtered.map(q=>{
     const used=usedQuestionIds.has(q.id);
-    const typeBadge=q.category==='Bibliai'?`<span class="q-type-badge ${TYPE_CLASSES[q.type||'egyéb']||'type-egyeb'}">${TYPE_LABELS[q.type||'egyéb']||'?'}</span>`:'';
+    const typeBadge=CATEGORY_TYPES[q.category]?`<span class="q-type-badge ${TYPE_CLASSES[q.type||'egyéb']||'type-egyeb'}">${TYPE_LABELS[q.type||'egyéb']||'?'}</span>`:'';
     return `<div class="q-card${used?' used':''}" id="qcard-${q.id}">
       <div class="q-actions">
         <button class="q-btn-sm q-btn-edit" onclick="openInlineEdit('${q.id}')">✎</button>
@@ -818,7 +851,14 @@ function openStartModal() {
 }
 function onStartCatChange() {
   const cat=document.getElementById('start-cat-select').value;
-  document.getElementById('start-subtype-wrap').classList.toggle('hidden',cat!=='Bibliai');
+  const hasTypes=CATEGORY_TYPES[cat]!==undefined;
+  document.getElementById('start-subtype-wrap').classList.toggle('hidden',!hasTypes);
+  if(hasTypes){
+    const types=CATEGORY_TYPES[cat];
+    const sel=document.getElementById('start-subtype-select');
+    sel.innerHTML=`<option value="all">Összes altípus (váltakozva)</option>`+
+      types.map(t=>`<option value="${t}">${TYPE_LABELS[t]}</option>`).join('');
+  }
   updateStartModalInfo();
 }
 function updateStartModalInfo() {
@@ -826,7 +866,7 @@ function updateStartModalInfo() {
   const subtype=document.getElementById('start-subtype-select').value;
   const countVal=document.getElementById('start-count-select').value;
   let filtered=cat==='all'?questions:questions.filter(q=>q.category===cat);
-  if(cat==='Bibliai'&&subtype!=='all')filtered=filtered.filter(q=>(q.type||'egyéb')===subtype);
+  if(CATEGORY_TYPES[cat]&&subtype!=='all')filtered=filtered.filter(q=>(q.type||'egyéb')===subtype);
   const fresh=filtered.filter(q=>!usedQuestionIds.has(q.id));
   const pool=fresh.length>0?fresh:filtered;
   const count=countVal==='all'?pool.length:Math.min(parseInt(countVal),pool.length);
@@ -842,7 +882,7 @@ function confirmStartGame() {
   const subtype=document.getElementById('start-subtype-select').value;
   const countVal=document.getElementById('start-count-select').value;
   let filtered=cat==='all'?[...questions]:questions.filter(q=>q.category===cat);
-  if(cat==='Bibliai'&&subtype!=='all')filtered=filtered.filter(q=>(q.type||'egyéb')===subtype);
+  if(CATEGORY_TYPES[cat]&&subtype!=='all')filtered=filtered.filter(q=>(q.type||'egyéb')===subtype);
   if(filtered.length===0){alert('Nincs kérdés a kiválasztott szűrésben!');return;}
   const fresh=filtered.filter(q=>!usedQuestionIds.has(q.id));
   const pool=fresh.length>0?fresh:filtered;
@@ -909,7 +949,7 @@ function nextQuestion() {
   document.getElementById('waiting-state').classList.add('hidden');
   document.getElementById('question-state').classList.remove('hidden');
   document.getElementById('question-state').classList.add('slide-up');
-  const typeTag=q.category==='Bibliai'&&q.type&&q.type!=='egyéb'?' — '+TYPE_LABELS[q.type]:'';
+  const typeTag=CATEGORY_TYPES[q.category]&&q.type&&q.type!=='egyéb'?' — '+TYPE_LABELS[q.type]:'';
   document.getElementById('q-number').textContent=(currentQIndex+1)+'. KÉRDÉS / '+activeQuestions.length;
   document.getElementById('q-cat-tag').textContent=q.category+typeTag;
   document.getElementById('q-text-display').textContent=q.text;
@@ -1070,10 +1110,12 @@ function doImport() {
       if(!q.text||!q.options||q.options.length!==4)return;
       // correct: 0=A(1.válasz), 1=B(2.válasz), 2=C(3.válasz), 3=D(4.válasz)
       const correctIdx=typeof q.correct==='number'?Math.max(0,Math.min(3,q.correct)):0;
+      const importCat=q.category||'Általános';
+      const importType=(q.type&&(CATEGORY_TYPES[importCat]||[]).includes(q.type))?q.type:'egyéb';
       const qData={
         text:q.text,options:q.options,correct:correctIdx,
-        category:q.category||'Általános',
-        type:q.type||'egyéb',
+        category:importCat,
+        type:importType,
         time:q.time||30
       };
       if(db)roomRef.child('questions').push(qData);
