@@ -289,7 +289,7 @@
             <select class="form-input" id="nq-cat" onchange="toggleBiblicalType('nq')">
               <option value="Általános">Általános</option>
               <option value="Bibliai">Bibliai</option>
-              <option value="Film">Film</option>
+              <option value="Filmek">Filmek</option>
               <option value="Természet">Természet</option>
               <option value="Történelem">Történelem</option>
               <option value="Sport">Sport</option>
@@ -394,14 +394,9 @@
       </select>
     </div>
     <div class="modal-field hidden" id="start-subtype-wrap">
-      <label>Bibliai altípus</label>
+      <label id="start-subtype-label">Bibliai altípus</label>
       <select id="start-subtype-select" onchange="updateStartModalInfo()">
         <option value="all">Összes altípus (váltakozva)</option>
-        <option value="vers">📖 Vers felismerés</option>
-        <option value="személy">👤 Személy</option>
-        <option value="évszám">📅 Évszám / Időpont</option>
-        <option value="helység">📍 Helység</option>
-        <option value="esemény">⚡ Esemény</option>
       </select>
     </div>
     <div class="modal-field">
@@ -442,23 +437,19 @@
 
 <!-- IMPORT MODAL -->
 <div class="modal-overlay hidden" id="import-modal">
-  <div class="modal">
+  <div class="modal" style="max-width:580px;">
     <h3>⬆ IMPORTÁLÁS</h3>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.6;">JSON formátum — a <code style="color:var(--accent);">correct</code> mező: <strong>0 = A (1. válasz), 1 = B (2. válasz), 2 = C (3. válasz), 3 = D (4. válasz)</strong></p>
-    <pre style="font-size:10px;color:var(--muted);background:var(--surface2);border-radius:6px;padding:10px;margin-bottom:12px;overflow-x:auto;border:1px solid var(--border);line-height:1.6;">[
-  {
-    "text": "Mennyi ideig volt Nóé a bárkában?",
-    "options": ["30 nap", "40 nap", "1 év", "7 év"],
-    "correct": 1,
-    "category": "Bibliai",
-    "type": "esemény",
-    "time": 30
-  }
-]
-→ correct:1 = B = "40 nap" ✓
-Bibliai type értékek: vers | személy | évszám | helység | esemény</pre>
+    <div class="modal-field" style="margin-bottom:14px;">
+      <label>Milyen típusú kérdéseket importálsz?</label>
+      <div style="display:flex;gap:8px;">
+        <button id="import-tab-Bibliai" class="btn-save" style="flex:1;padding:10px;font-size:13px;" onclick="setImportTab('Bibliai')">📖 Bibliai</button>
+        <button id="import-tab-Filmek" class="btn-cancel-form" style="flex:1;padding:10px;font-size:13px;" onclick="setImportTab('Filmek')">🎬 Filmek</button>
+        <button id="import-tab-egyeb" class="btn-cancel-form" style="flex:1;padding:10px;font-size:13px;" onclick="setImportTab('egyéb')">📋 Egyéb</button>
+      </div>
+    </div>
+    <div id="import-guide" style="font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;line-height:1.8;white-space:pre-wrap;font-family:monospace;"></div>
     <div class="modal-field">
-      <textarea id="import-textarea" rows="8" style="font-family:monospace;font-size:11px;" placeholder='[{"text":"...","options":["1.","2.","3.","4."],"correct":0,"category":"Bibliai","type":"vers","time":30}]'></textarea>
+      <textarea id="import-textarea" rows="9" style="font-family:monospace;font-size:11px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);outline:none;resize:vertical;" placeholder="Ide illeszd be a JSON-t..."></textarea>
     </div>
     <div style="display:flex;gap:9px;">
       <button class="btn-save" style="flex:1;" onclick="doImport()">⬆ Importálás</button>
@@ -472,14 +463,14 @@ Bibliai type értékek: vers | személy | évszám | helység | esemény</pre>
 // CONSTANTS
 // ============================================================
 const BIBLICAL_TYPES = ['vers','személy','évszám','helység','esemény'];
-const FILM_TYPES     = ['idézet','személy','évszám','helység','esemény'];
-const CATEGORY_TYPES = { 'Bibliai': BIBLICAL_TYPES, 'Film': FILM_TYPES };
+const FILM_TYPES     = ['idézet','személy','évszám/időpont','helység','esemény'];
+const CATEGORY_TYPES = { 'Bibliai': BIBLICAL_TYPES, 'Filmek': FILM_TYPES };
 const TYPE_LABELS = {
-  vers:'📖 Vers', személy:'👤 Személy', évszám:'📅 Évszám', helység:'📍 Helység',
-  esemény:'⚡ Esemény', idézet:'💬 Idézet', egyéb:'Általános'
+  vers:'📖 Vers', személy:'👤 Személy', évszám:'📅 Évszám', 'évszám/időpont':'📅 Évszám/Időpont',
+  helység:'📍 Helység', esemény:'⚡ Esemény', idézet:'💬 Idézet', egyéb:'Általános'
 };
 const TYPE_CLASSES = {
-  vers:'type-vers', személy:'type-szemely', évszám:'type-evszam',
+  vers:'type-vers', személy:'type-szemely', évszám:'type-evszam', 'évszám/időpont':'type-evszam',
   helység:'type-helyseg', esemény:'type-esemeny',
   idézet:'type-idezet', egyéb:'type-egyeb'
 };
@@ -599,10 +590,10 @@ function autoDetectType(q) {
     if(/hol|melyik városban|melyik helyen|helyszín|hegy|folyó|tenger/.test(t))return 'helység';
     if(/mi történt|esemény|csata|átkelés|ítélet|büntetés|szabadulás|vándorlás/.test(t))return 'esemény';
   }
-  if(q.category==='Film'){
+  if(q.category==='Filmek'){
     if(/ki mondta|melyik filmben hangzik|melyik szereplő mondja|idézet|mondat/.test(t))return 'idézet';
     if(/ki játssza|ki alakítja|melyik színész|ki a főszereplő|kit alakít/.test(t))return 'személy';
-    if(/melyik évben|mikor jelent meg|hány-ben|premier/.test(t))return 'évszám';
+    if(/melyik évben|mikor jelent meg|hány-ben|premier/.test(t))return 'évszám/időpont';
     if(/hol játszódik|melyik városban|melyik országban|helyszín/.test(t))return 'helység';
     if(/mi történik|mi volt a|esemény|csata|jelenet/.test(t))return 'esemény';
   }
@@ -663,7 +654,7 @@ function openInlineEdit(id) {
   inlineCorrectOpt=q.correct;
   const isBib=CATEGORY_TYPES[q.category]!==undefined;
   const catTypeDefs=CATEGORY_TYPES[q.category]||[];
-  const catOptions=['Általános','Bibliai','Természet','Történelem','Sport','Tudomány','Zene','Földrajz'];
+  const catOptions=['Általános','Bibliai','Filmek','Természet','Történelem','Sport','Tudomány','Zene','Földrajz'];
   const timeOptions=[20,30,45,60];
   const form=document.createElement('div');
   form.className='inline-edit-form';
@@ -851,13 +842,14 @@ function openStartModal() {
 }
 function onStartCatChange() {
   const cat=document.getElementById('start-cat-select').value;
-  const hasTypes=CATEGORY_TYPES[cat]!==undefined;
-  document.getElementById('start-subtype-wrap').classList.toggle('hidden',!hasTypes);
-  if(hasTypes){
-    const types=CATEGORY_TYPES[cat];
+  const types=CATEGORY_TYPES[cat];
+  const wrap=document.getElementById('start-subtype-wrap');
+  wrap.classList.toggle('hidden',!types);
+  if(types){
+    document.getElementById('start-subtype-label').textContent = cat + ' altípus';
     const sel=document.getElementById('start-subtype-select');
     sel.innerHTML=`<option value="all">Összes altípus (váltakozva)</option>`+
-      types.map(t=>`<option value="${t}">${TYPE_LABELS[t]}</option>`).join('');
+      types.map(t=>`<option value="${t}">${TYPE_LABELS[t]||t}</option>`).join('');
   }
   updateStartModalInfo();
 }
@@ -898,7 +890,7 @@ function confirmStartGame() {
   Object.values(byType).forEach(arr=>{
     for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
   });
-  const typeOrder=['vers','személy','évszám','helység','esemény','egyéb'];
+  const typeOrder=['idézet','vers','személy','évszám','évszám/időpont','helység','esemény','egyéb'];
   const available=typeOrder.filter(t=>byType[t]&&byType[t].length>0);
   let result=[];
   if(available.length<=1){
@@ -1096,36 +1088,109 @@ function downloadJson(qs,filename) {
   a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));
   a.download=filename+'.json';a.click();
 }
+
+// Import minta szövegek
+const IMPORT_GUIDES = {
+  'Bibliai': `correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
+type értékek: vers | személy | évszám | helység | esemény
+
+[
+  {
+    "text": "Mennyi ideig volt Nóé és családja a bárkában?",
+    "options": ["30 nap", "40 nap", "1 év", "7 év"],
+    "correct": 2,
+    "category": "Bibliai",
+    "type": "esemény",
+    "time": 30
+  }
+]
+→ correct:2 = C = "1 év" ✓`,
+
+  'Filmek': `correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
+type értékek: idézet | személy | évszám/időpont | helység | esemény
+
+[
+  {
+    "text": "Melyik filmben hangzott el: \\"Én vagyok az apád\\"?",
+    "options": ["Apádra ütök", "Star Wars", "Bosszúállók", "Batman"],
+    "correct": 1,
+    "category": "Filmek",
+    "type": "idézet",
+    "time": 30
+  }
+]
+→ correct:1 = B = "Star Wars" ✓`,
+
+  'egyéb': `correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
+category: bármilyen szöveg (pl. "Általános", "Sport", "Zene", "Természet"...)
+
+[
+  {
+    "text": "Mi a kérdés szövege?",
+    "options": ["1. válasz", "2. válasz", "3. válasz", "4. válasz"],
+    "correct": 0,
+    "category": "Általános",
+    "type": "egyéb",
+    "time": 30
+  }
+]`
+};
+
+let currentImportTab = 'Bibliai';
+
 function openImportModal() {
   document.getElementById('import-textarea').value='';
   document.getElementById('import-modal').classList.remove('hidden');
+  setImportTab('Bibliai');
 }
+
+function setImportTab(tab) {
+  currentImportTab = tab;
+  // Gombok stílusa
+  ['Bibliai','Filmek','egyéb'].forEach(t => {
+    const btn = document.getElementById('import-tab-' + (t==='egyéb'?'egyeb':t));
+    if(!btn) return;
+    if(t===tab) {
+      btn.className='btn-save';
+      btn.style.cssText='flex:1;padding:10px;font-size:13px;';
+    } else {
+      btn.className='btn-cancel-form';
+      btn.style.cssText='flex:1;padding:10px;font-size:13px;';
+    }
+  });
+  // Minta szöveg
+  document.getElementById('import-guide').textContent = IMPORT_GUIDES[tab] || IMPORT_GUIDES['egyéb'];
+}
+
 function doImport() {
   try{
     const raw=document.getElementById('import-textarea').value.trim();
+    if(!raw){alert('Kérlek illeszd be a JSON-t!');return;}
     const parsed=JSON.parse(raw);
-    if(!Array.isArray(parsed))throw new Error('Tömbnek kell lennie');
+    if(!Array.isArray(parsed))throw new Error('Tömbnek kell lennie [ ... ]');
     let count=0;
     parsed.forEach(q=>{
       if(!q.text||!q.options||q.options.length!==4)return;
-      // correct: 0=A(1.válasz), 1=B(2.válasz), 2=C(3.válasz), 3=D(4.válasz)
       const correctIdx=typeof q.correct==='number'?Math.max(0,Math.min(3,q.correct)):0;
-      const importCat=q.category||'Általános';
-      const importType=(q.type&&(CATEGORY_TYPES[importCat]||[]).includes(q.type))?q.type:'egyéb';
+      // Kategória: ha nincs megadva, a tab alapján töltjük ki
+      const importCat = q.category || (currentImportTab!=='egyéb' ? currentImportTab : 'Általános');
+      // Típus: normalizáljuk
+      let importType = (q.type||'').toLowerCase().trim();
+      // Filmek esetén "évszám/időpont" ellenőrzés
+      const allowedTypes = CATEGORY_TYPES[importCat] || [];
+      if(!allowedTypes.includes(importType)) importType = 'egyéb';
       const qData={
-        text:q.text,options:q.options,correct:correctIdx,
-        category:importCat,
-        type:importType,
-        time:q.time||30
+        text:q.text, options:q.options, correct:correctIdx,
+        category:importCat, type:importType, time:q.time||30
       };
       if(db)roomRef.child('questions').push(qData);
-      else questions.push({...qData,id:'q'+Date.now()+Math.random()});
+      else questions.push({...qData,id:'q'+Date.now()+'_'+Math.random().toString(36).substr(2,4)});
       count++;
     });
     if(!db)renderAll();
     document.getElementById('import-modal').classList.add('hidden');
-    alert(count+' kérdés sikeresen importálva!');
-  }catch(e){alert('Import hiba: '+e.message);}
+    alert(`✅ ${count} kérdés sikeresen importálva!\n\nEmlékeztető:\ncorrect: 0=A, 1=B, 2=C, 3=D`);
+  }catch(e){alert('❌ Import hiba: '+e.message);}
 }
 </script>
 </body>
