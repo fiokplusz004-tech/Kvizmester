@@ -388,7 +388,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
 // ============================================================
 // STATE
 // ============================================================
-let db = null, roomRef = null, roomCode = '', playerId = '', playerName = '';
+let db = null, roomRef = null, roomCode = '', playerId = '', playerName = '', deviceId = '';
 let myScore = 0, myColor = '', currentQIndex = -1, hasAnswered = false;
 let timerInterval = null, timerValue = 30, totalTime = 30;
 let questions = [], players = {};
@@ -410,6 +410,16 @@ window.addEventListener('load', () => {
   if (saved) document.getElementById('name-input').value = saved;
 });
 
+// Generate or retrieve persistent device ID
+function getDeviceId() {
+  let did = localStorage.getItem('quizDeviceId');
+  if (!did) {
+    did = 'dev_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('quizDeviceId', did);
+  }
+  return did;
+}
+
 // ============================================================
 // JOIN
 // ============================================================
@@ -425,6 +435,7 @@ async function joinGame() {
   roomCode = room;
   playerName = name;
   playerId = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
+  deviceId = getDeviceId();
   myColor = COLORS[Math.floor(Math.random() * COLORS.length)];
   localStorage.setItem('quizPlayerName', name);
 
@@ -436,14 +447,32 @@ async function joinGame() {
     db = firebase.database();
     roomRef = db.ref('rooms/' + roomCode);
 
-    // Check room exists - ellenőrizzük hogy a host már beállította-e a szobát
-    // Ha gameState nincs, megpróbálunk csatlakozni és várunk
-    const snap = await roomRef.child('gameState').once('value');
-    // Nem blokkoljuk a belépést ha nincs gameState - lehet hogy a host még tölt
+    // Check if this device is blocked
+    const blockSnap = await db.ref('devices/' + roomCode + '/' + deviceId + '/blocked').once('value');
+    if (blockSnap.val() === true) {
+      err.innerHTML = '⛔ Ez az eszköz le van tiltva. Belépés nem lehetséges.';
+      return;
+    }
 
     // Register player
     await roomRef.child('players').child(playerId).set({
-      name: playerName, score: 0, color: myColor, joinedAt: firebase.database.ServerValue.TIMESTAMP
+      name: playerName, score: 0, color: myColor,
+      deviceId: deviceId,
+      joinedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    // Register / update device record
+    const deviceRef = db.ref('devices/' + roomCode + '/' + deviceId);
+    const devSnap = await deviceRef.once('value');
+    const existing = devSnap.val() || {};
+    const existingNames = existing.names || [];
+    if (!existingNames.includes(playerName)) existingNames.push(playerName);
+    await deviceRef.set({
+      names: existingNames,
+      firstSeen: existing.firstSeen || firebase.database.ServerValue.TIMESTAMP,
+      lastSeen: firebase.database.ServerValue.TIMESTAMP,
+      joinCount: (existing.joinCount || 0) + 1,
+      blocked: existing.blocked || false
     });
 
     // Handle disconnect
@@ -477,6 +506,22 @@ function initDemoMode(room, name) {
 // LISTENERS
 // ============================================================
 function setupGameListeners() {
+  // Listen for block status changes in real time
+  if (db && deviceId) {
+    db.ref('devices/' + roomCode + '/' + deviceId + '/blocked').on('value', snap => {
+      if (snap.val() === true) {
+        // Got blocked while in session
+        if (db && roomRef) roomRef.child('players').child(playerId).remove();
+        db.ref('devices/' + roomCode + '/' + deviceId + '/blocked').off();
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('waiting-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('join-screen').style.display = 'block';
+        document.getElementById('join-error').innerHTML = '⛔ Az eszközöd le lett tiltva a host által.';
+      }
+    });
+  }
+
   // Game state changes
   roomRef.child('gameState').on('value', snap => {
     const state = snap.val();
