@@ -48,7 +48,7 @@ self.addEventListener('fetch', event => {
           return res;
         })
         .catch(() => caches.match(event.request)
-          .then(cached => cached || caches.match('/Kvizmester/quiz-player.html'))
+          .then(cached => cached || caches.match('/kvizmester/quiz-player.html'))
         )
     );
     return;
