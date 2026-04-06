@@ -2,7 +2,7 @@
   "name": "QuizMaster Játékos",
   "short_name": "QuizMaster",
   "description": "Multiplayer kvíz játék — játékos alkalmazás",
-  "start_url": "https://fiokplusz004-tech.github.io/kvizmester/quiz-player.html",
+  "start_url": "https://fiokplusz004-tech.github.io/Kvizmester/quiz-player.html",
   "scope": "https://fiokplusz004-tech.github.io/kvizmester/",
   "display": "standalone",
   "orientation": "portrait",
