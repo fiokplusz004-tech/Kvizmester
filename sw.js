@@ -2,10 +2,10 @@
 const CACHE_NAME = 'quizmaster-v2';
 
 const CACHE_ASSETS = [
-  '/Kvizmester/quiz-player.html',
-  '/Kvizmester/manifest.json',
-  '/Kvizmester/icons/icon-192.png',
-  '/Kvizmester/icons/icon-512.png',
+  '/kvizmester/quiz-player.html',
+  '/kvizmester/manifest.json',
+  '/kvizmester/icons/icon-192.png',
+  '/kvizmester/icons/icon-512.png',
 ];
 
 self.addEventListener('install', event => {
