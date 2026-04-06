@@ -4,6 +4,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>QuizMaster — Játékos</title>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PWA META TAGEK                                  -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Téma szín (Android Chrome böngésző sávja) -->
+<meta name="theme-color" content="#f0c040">
+<meta name="background-color" content="#0a0a0f">
+
+<!-- iPhone / iPad (Safari) PWA beállítások -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QuizMaster">
+
+<!-- iPhone ikonok (Apple nem olvassa a manifest-et, ezért külön kell) -->
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png">
+<link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
+<link rel="apple-touch-icon" sizes="96x96"   href="icons/icon-96.png">
+<link rel="apple-touch-icon" sizes="72x72"   href="icons/icon-72.png">
+<link rel="apple-touch-icon"                 href="icons/icon-192.png">
+
+<!-- Favicon böngészőhöz -->
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32"   href="icons/icon-96.png">
+
+<!-- SEO / Leírás -->
+<meta name="description" content="QuizMaster multiplayer kvíz játék — játékos alkalmazás">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- ═══════════════════════════════════════════════ -->
+
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -713,6 +748,102 @@ function updateTimerUI() {
   fill.classList.toggle('urgent', urgent);
   num.classList.toggle('urgent', urgent);
 }
+
+// ============================================================
+// PWA — SERVICE WORKER REGISZTRÁCIÓ
+// ============================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('[PWA] Service Worker regisztrálva:', reg.scope))
+      .catch(err => console.warn('[PWA] Service Worker hiba:', err));
+  });
+}
+
+// ============================================================
+// PWA — TELEPÍTÉSI BANNER (Android Chrome)
+// ============================================================
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  const banner = document.getElementById('install-banner');
+  if (banner) {
+    banner.style.display = 'flex';
+    // 8 másodperc után automatikusan eltűnik
+    setTimeout(() => hideBanner(), 8000);
+  }
+}
+
+function hideBanner() {
+  const banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'none';
+}
+
+async function installApp() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const result = await deferredInstallPrompt.userChoice;
+  console.log('[PWA] Telepítési eredmény:', result.outcome);
+  deferredInstallPrompt = null;
+  hideBanner();
+}
+
+// Ha már telepítve van (standalone módban fut) → ne mutassuk a bannert
+window.addEventListener('appinstalled', () => {
+  console.log('[PWA] App telepítve!');
+  hideBanner();
+});
 </script>
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PWA TELEPÍTÉSI BANNER                               -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="install-banner" style="
+  display:none;
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#1c1c28;
+  border:1px solid #f0c040;
+  border-radius:16px;
+  padding:14px 18px;
+  display:none;
+  align-items:center;
+  gap:14px;
+  z-index:9999;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  max-width:340px;
+  width:calc(100% - 40px);
+  animation:slideUpBanner 0.4s ease;
+">
+  <img src="icons/icon-72.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0;" alt="QuizMaster">
+  <div style="flex:1;min-width:0;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:#f0c040;">TELEPÍTÉS</div>
+    <div style="font-size:12px;color:#6b6b8a;line-height:1.4;">Tedd a főképernyőre az appot!</div>
+  </div>
+  <button onclick="installApp()" style="
+    background:#f0c040;color:#000;border:none;border-radius:10px;
+    padding:9px 16px;font-family:'Bebas Neue',sans-serif;font-size:16px;
+    letter-spacing:1px;cursor:pointer;flex-shrink:0;
+  ">IGEN</button>
+  <button onclick="hideBanner()" style="
+    background:transparent;color:#6b6b8a;border:none;
+    font-size:20px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;
+  ">✕</button>
+</div>
+
+<style>
+@keyframes slideUpBanner {
+  from { opacity:0; transform:translateX(-50%) translateY(20px); }
+  to   { opacity:1; transform:translateX(-50%) translateY(0); }
+}
+</style>
+
 </body>
 </html>
