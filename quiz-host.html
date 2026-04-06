@@ -222,24 +222,6 @@
   .tag{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:4px;}
   .tag-green{background:rgba(62,207,142,0.15);color:var(--green);}
   .tag-yellow{background:rgba(240,192,64,0.15);color:var(--accent);}
-
-  /* DEVICES */
-  .device-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px;transition:all 0.2s;}
-  .device-row.blocked{border-color:rgba(224,90,90,0.5);background:rgba(224,90,90,0.06);opacity:0.75;}
-  .device-icon{width:36px;height:36px;border-radius:9px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-  .device-row.blocked .device-icon{filter:grayscale(1);}
-  .device-info{flex:1;min-width:0;}
-  .device-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .device-meta{font-size:11px;color:var(--muted);margin-top:2px;}
-  .device-status{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:6px;flex-shrink:0;}
-  .device-status.ok{background:rgba(62,207,142,0.15);color:var(--green);}
-  .device-status.blocked{background:rgba(224,90,90,0.15);color:var(--red);}
-  .btn-block{padding:6px 12px;border-radius:7px;border:none;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;letter-spacing:0.5px;}
-  .btn-block.do-block{background:rgba(224,90,90,0.15);color:var(--red);}
-  .btn-block.do-block:hover{background:var(--red);color:#fff;}
-  .btn-block.do-unblock{background:rgba(62,207,142,0.15);color:var(--green);}
-  .btn-block.do-unblock:hover{background:var(--green);color:#000;}
-
   @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
   .slide-up{animation:slideUp 0.4s ease;}
 </style>
@@ -277,7 +259,6 @@
       <button class="btn-secondary" onclick="showNewQuestionForm()">+ Kérdés</button>
       <button class="btn-secondary" onclick="openExportModal()">⬇ Export</button>
       <button class="btn-secondary" onclick="openImportModal()">⬆ Import</button>
-      <button class="btn-secondary" onclick="openDevicesModal()" id="btn-devices">🖥 Eszközök <span id="devices-badge" style="display:none;background:var(--red);color:#fff;border-radius:8px;padding:0 5px;font-size:10px;margin-left:2px;">0</span></button>
     </div>
   </div>
 
@@ -454,24 +435,6 @@
   </div>
 </div>
 
-<!-- DEVICES MODAL -->
-<div class="modal-overlay hidden" id="devices-modal">
-  <div class="modal" style="max-width:620px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-      <h3 style="margin:0;">🖥 ESZKÖZÖK</h3>
-      <button class="btn-cancel-form" onclick="document.getElementById('devices-modal').classList.add('hidden')">✕ Bezárás</button>
-    </div>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Minden eszköz ami valaha csatlakozott ehhez a szobához. Az eszköz azonosítója a böngészőben tárolódik.</p>
-    <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;">
-      <input type="text" id="devices-search" placeholder="🔍 Keresés név szerint..." style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;" oninput="renderDevicesList()">
-      <div style="font-size:12px;color:var(--muted);white-space:nowrap;" id="devices-count-label">0 eszköz</div>
-    </div>
-    <div style="max-height:420px;overflow-y:auto;" id="devices-list">
-      <div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Még nincs csatlakozott eszköz...</div>
-    </div>
-  </div>
-</div>
-
 <!-- IMPORT MODAL -->
 <div class="modal-overlay hidden" id="import-modal">
   <div class="modal" style="max-width:580px;">
@@ -564,7 +527,6 @@ function initDemo() {
 
 function setupListeners() {
   if(!db)return;
-  initDevicesTracking();
   roomRef.child('players').on('value',snap=>{
     players=snap.val()||{};
     updateScoreboard();updatePlayerChips();
@@ -1127,116 +1089,7 @@ function downloadJson(qs,filename) {
   a.download=filename+'.json';a.click();
 }
 
-// ============================================================
-// DEVICES (Eszközök)
-// ============================================================
-let knownDevices = {}; // deviceId -> {names:[], lastSeen, firstSeen, blocked}
-
-function setupDevicesListener() {
-  if (!db) return;
-  db.ref('devices/' + roomCode).on('value', snap => {
-    knownDevices = snap.val() || {};
-    updateDevicesBadge();
-    if (!document.getElementById('devices-modal').classList.contains('hidden')) {
-      renderDevicesList();
-    }
-  });
-}
-
-function updateDevicesBadge() {
-  const blocked = Object.values(knownDevices).filter(d => d.blocked).length;
-  const badge = document.getElementById('devices-badge');
-  if (blocked > 0) {
-    badge.style.display = 'inline';
-    badge.textContent = blocked;
-  } else {
-    badge.style.display = 'none';
-  }
-}
-
-function openDevicesModal() {
-  renderDevicesList();
-  document.getElementById('devices-modal').classList.remove('hidden');
-}
-
-function renderDevicesList() {
-  const search = (document.getElementById('devices-search').value || '').toLowerCase().trim();
-  const container = document.getElementById('devices-list');
-  let entries = Object.entries(knownDevices);
-
-  if (search) {
-    entries = entries.filter(([id, d]) => {
-      const names = (d.names || [d.name || '']).join(' ').toLowerCase();
-      return names.includes(search);
-    });
-  }
-
-  // Sort: blocked last, then by lastSeen desc
-  entries.sort((a, b) => {
-    if (a[1].blocked && !b[1].blocked) return 1;
-    if (!a[1].blocked && b[1].blocked) return -1;
-    return (b[1].lastSeen || 0) - (a[1].lastSeen || 0);
-  });
-
-  document.getElementById('devices-count-label').textContent = Object.keys(knownDevices).length + ' eszköz';
-
-  if (entries.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">' +
-      (search ? 'Nincs találat...' : 'Még nincs csatlakozott eszköz...') + '</div>';
-    return;
-  }
-
-  const deviceEmojis = ['💻', '📱', '🖥', '📟'];
-  container.innerHTML = entries.map(([deviceId, d]) => {
-    const names = d.names ? [...new Set(d.names)] : [d.name || 'Névtelen'];
-    const lastName = names[names.length - 1] || 'Névtelen';
-    const allNames = names.join(', ');
-    const isBlocked = !!d.blocked;
-    const lastSeenStr = d.lastSeen ? new Date(d.lastSeen).toLocaleString('hu-HU', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
-    const firstSeenStr = d.firstSeen ? new Date(d.firstSeen).toLocaleString('hu-HU', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
-    const emoji = deviceEmojis[Math.abs(deviceId.split('').reduce((a,c)=>a+c.charCodeAt(0),0)) % deviceEmojis.length];
-    const joinCount = d.joinCount || 1;
-
-    return `<div class="device-row${isBlocked ? ' blocked' : ''}">
-      <div class="device-icon">${emoji}</div>
-      <div class="device-info">
-        <div class="device-name" title="${allNames}">${lastName}${names.length > 1 ? ' <span style="color:var(--muted);font-size:11px;">(+' + (names.length-1) + ' korábbi név)</span>' : ''}</div>
-        <div class="device-meta">Első: ${firstSeenStr} · Utolsó: ${lastSeenStr} · ${joinCount}× belépett</div>
-        ${names.length > 1 ? '<div class="device-meta" style="margin-top:2px;">Összes név: ' + allNames + '</div>' : ''}
-      </div>
-      <div class="device-status ${isBlocked ? 'blocked' : 'ok'}">${isBlocked ? '⛔ TILTOTT' : '✅ OK'}</div>
-      <button class="btn-block ${isBlocked ? 'do-unblock' : 'do-block'}"
-        onclick="toggleBlockDevice('${deviceId}', ${isBlocked})">
-        ${isBlocked ? '🔓 Felold' : '🚫 Tiltás'}
-      </button>
-    </div>`;
-  }).join('');
-}
-
-function toggleBlockDevice(deviceId, currentlyBlocked) {
-  if (!db) { alert('Firebase nélkül ez a funkció nem elérhető.'); return; }
-  const newBlocked = !currentlyBlocked;
-  const confirmMsg = newBlocked
-    ? 'Biztosan blokkolod ezt az eszközt? Nem tud majd belépni.'
-    : 'Feloldod a blokkolást? Az eszköz újra beléphet.';
-  if (!confirm(confirmMsg)) return;
-  db.ref('devices/' + roomCode + '/' + deviceId + '/blocked').set(newBlocked);
-  // If currently in room, kick them
-  if (newBlocked) {
-    const matchingPlayers = Object.entries(players).filter(([pid, p]) => p.deviceId === deviceId);
-    matchingPlayers.forEach(([pid]) => {
-      roomRef.child('players').child(pid).remove();
-    });
-  }
-}
-
-// Call this from setupListeners
-function initDevicesTracking() {
-  if (!db) return;
-  setupDevicesListener();
-}
-
-
+// Import minta szövegek
 const IMPORT_GUIDES = {
   'Bibliai': `correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
 type értékek: vers | személy | évszám | helység | esemény
