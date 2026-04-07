@@ -106,57 +106,24 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .unavail-back { background:none; border:none; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; padding:8px; }
 
   /* ── VÁRÓTEREM ───────────────────────────── */
-  #lobby-screen { display:none; flex-direction:column; align-items:center; text-align:center; width:100%; max-width:380px; margin:auto; padding:32px 0 40px; animation:fadeIn 0.4s ease; }
-  .lobby-icon { font-size:52px; margin-bottom:14px; }
-  .lobby-title { font-family:var(--font-display); font-size:36px; letter-spacing:3px; color:var(--accent); margin-bottom:6px; }
+  #lobby-screen { display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; width:100%; max-width:360px; margin:auto; padding:40px 0; animation:fadeIn 0.4s ease; }
+  .lobby-icon { font-size:56px; margin-bottom:16px; }
+  .lobby-title { font-family:var(--font-display); font-size:36px; letter-spacing:3px; color:var(--accent); margin-bottom:8px; }
   .lobby-name { font-size:18px; font-weight:600; color:var(--text); margin-bottom:6px; }
-  .lobby-sub { font-size:13px; color:var(--muted); margin-bottom:24px; line-height:1.6; }
-  .lobby-dots { display:flex; gap:8px; justify-content:center; margin-bottom:24px; }
-
-  /* Játékos lista — közös stílus lobby és waiting képernyőhöz */
-  .player-list-section { width:100%; margin-bottom:20px; }
-  .player-list-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; text-align:center; }
-  .player-list-grid { display:flex; flex-direction:column; gap:6px; width:100%; }
-  .player-list-item {
-    display:flex; align-items:center; gap:10px;
-    background:var(--surface2); border:1px solid var(--border);
-    border-radius:10px; padding:9px 13px; transition:all 0.3s;
-  }
-  .player-list-item.me { border-color:var(--accent); background:rgba(240,192,64,0.07); }
-  .player-list-item.active-player { border-color:rgba(62,207,142,0.4); }
-  .pli-avatar {
-    width:32px; height:32px; border-radius:50%; flex-shrink:0;
-    display:flex; align-items:center; justify-content:center;
-    font-family:var(--font-display); font-size:16px; font-weight:700;
-  }
-  .pli-name { flex:1; font-size:13px; font-weight:600; text-align:left; }
-  .pli-badge {
-    font-size:10px; letter-spacing:1px; padding:3px 8px;
-    border-radius:10px; font-weight:600; flex-shrink:0;
-  }
-  .pli-badge-lobby { background:rgba(107,107,138,0.2); color:var(--muted); }
-  .pli-badge-active { background:rgba(62,207,142,0.15); color:var(--green); }
-  .pli-badge-me { background:rgba(240,192,64,0.15); color:var(--accent); }
-
-  /* Vissza gomb a váróteremben */
-  .lobby-back-btn {
-    background:none; border:none; color:var(--muted); font-size:13px;
-    font-weight:600; cursor:pointer; padding:8px; margin-top:4px;
-    transition:color 0.2s;
-  }
-  .lobby-back-btn:active { color:var(--accent); }
+  .lobby-sub { font-size:13px; color:var(--muted); margin-bottom:32px; line-height:1.6; }
+  .lobby-dots { display:flex; gap:8px; justify-content:center; margin-bottom:16px; }
   .dot { width:10px; height:10px; border-radius:50%; background:var(--accent); animation:bounce 1.2s infinite; }
   .dot:nth-child(2) { animation-delay:0.2s; }
   .dot:nth-child(3) { animation-delay:0.4s; }
 
   /* ── VÁRAKOZÁS (játékra) ─────────────────── */
-  #waiting-screen { display:none; flex-direction:column; align-items:center; text-align:center; width:100%; max-width:380px; margin:auto; padding:32px 0 40px; animation:fadeIn 0.4s ease; }
-  .waiting-avatar { width:72px; height:72px; border-radius:50%; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:36px; border:3px solid; }
-  .waiting-player-name { font-family:var(--font-display); font-size:34px; letter-spacing:2px; margin-bottom:6px; }
-  .waiting-room { font-size:12px; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-bottom:20px; }
+  #waiting-screen { display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; width:100%; max-width:400px; margin:auto; padding:40px 0; animation:fadeIn 0.4s ease; }
+  .waiting-avatar { width:80px; height:80px; border-radius:50%; margin:0 auto 20px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:40px; border:3px solid; }
+  .waiting-player-name { font-family:var(--font-display); font-size:36px; letter-spacing:2px; margin-bottom:8px; }
+  .waiting-room { font-size:12px; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-bottom:40px; }
   .waiting-room span { color:var(--accent); }
   .waiting-dots { display:flex; gap:8px; justify-content:center; }
-  .waiting-msg { color:var(--muted); font-size:13px; letter-spacing:1px; margin-top:12px; margin-bottom:24px; }
+  .waiting-msg { color:var(--muted); font-size:13px; letter-spacing:1px; margin-top:16px; }
 
   /* ── JÁTÉK ───────────────────────────────── */
   #game-screen { display:none; width:100%; max-width:420px; min-height:100vh; min-height:100dvh; flex-direction:column; }
@@ -229,6 +196,43 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .btn-lobby:active { background:var(--accent); color:#000; }
 
   .hidden { display:none !important; }
+
+  /* ── EREDMÉNYEIM ─────────────────────────────── */
+  #my-results-screen { display:none; width:100%; max-width:420px; padding:24px 0 48px; margin:0 auto; }
+  .myres-back { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; margin-bottom:24px; background:none; border:none; padding:0; }
+  .myres-back:active { color:var(--accent); }
+  .myres-title { font-family:var(--font-display); font-size:38px; letter-spacing:3px; color:var(--accent); margin-bottom:4px; }
+  .myres-subtitle { font-size:12px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:20px; }
+  .myres-summary { display:flex; gap:12px; margin-bottom:24px; }
+  .myres-stat { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px 12px; text-align:center; }
+  .myres-stat-val { font-family:var(--font-display); font-size:32px; line-height:1; margin-bottom:4px; }
+  .myres-stat-label { font-size:10px; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; }
+  .myres-list { display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+  .myres-item { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px 16px; transition:all 0.2s; }
+  .myres-item.correct { border-color:var(--green); }
+  .myres-item.wrong { border-color:var(--red); opacity:0.85; }
+  .myres-item.timeout { border-color:var(--muted); opacity:0.7; }
+  .myres-item-top { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+  .myres-qnum { font-size:10px; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; flex-shrink:0; }
+  .myres-badge { font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; flex-shrink:0; }
+  .myres-badge.correct { background:rgba(62,207,142,0.15); color:var(--green); }
+  .myres-badge.wrong { background:rgba(224,90,90,0.15); color:var(--red); }
+  .myres-badge.timeout { background:rgba(107,107,138,0.2); color:var(--muted); }
+  .myres-pts { font-family:var(--font-display); font-size:20px; flex-shrink:0; }
+  .myres-pts.positive { color:var(--green); }
+  .myres-pts.neutral { color:var(--muted); }
+  .myres-qtext { font-size:13px; font-weight:600; color:var(--text); line-height:1.4; margin-bottom:10px; }
+  .myres-answers { display:flex; flex-direction:column; gap:5px; }
+  .myres-ans { display:flex; align-items:center; gap:8px; font-size:12px; padding:5px 8px; border-radius:7px; }
+  .myres-ans.my-correct { background:rgba(62,207,142,0.12); color:var(--green); font-weight:600; }
+  .myres-ans.my-wrong { background:rgba(224,90,90,0.1); color:var(--red); text-decoration:line-through; opacity:0.8; }
+  .myres-ans.correct-ans { background:rgba(62,207,142,0.08); color:var(--green); font-weight:600; }
+  .myres-ans.other { color:var(--muted); }
+  .myres-ans-letter { width:20px; height:20px; border-radius:5px; background:var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:12px; flex-shrink:0; }
+  .myres-ans.my-correct .myres-ans-letter { background:var(--green); color:#000; }
+  .myres-ans.my-wrong .myres-ans-letter { background:var(--red); color:#fff; }
+  .myres-ans.correct-ans .myres-ans-letter { background:rgba(62,207,142,0.3); color:var(--green); }
+  .myres-empty { text-align:center; color:var(--muted); font-size:14px; padding:40px 20px; }
 </style>
 </head>
 <body>
@@ -306,14 +310,6 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div class="lobby-dots">
     <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
-
-  <!-- Játékos lista -->
-  <div class="player-list-section" id="lobby-player-list-section">
-    <div class="player-list-title">CSATLAKOZOTT JÁTÉKOSOK</div>
-    <div class="player-list-grid" id="lobby-player-list"></div>
-  </div>
-
-  <button class="lobby-back-btn" onclick="backToMenu()">← Vissza a főmenübe</button>
 </div>
 
 <!-- VÁRAKOZÁS -->
@@ -325,11 +321,8 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
   <div class="waiting-msg" id="waiting-msg">Várakozás az új játék kezdésére...</div>
-
-  <!-- Játékos lista -->
-  <div class="player-list-section" id="waiting-player-list-section">
-    <div class="player-list-title">JÁTÉKOSOK A SZOBÁBAN</div>
-    <div class="player-list-grid" id="waiting-player-list"></div>
+  <div style="margin-top:32px;width:100%;max-width:320px;">
+    <button class="btn-back-game" onclick="backToMenu()">← Vissza a főmenübe</button>
   </div>
 </div>
 
@@ -375,6 +368,17 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div class="result-pts">pont</div>
   <div class="result-rank" id="final-rank">Végső helyezés: <strong>#1</strong></div>
   <div class="result-scoreboard" id="result-scoreboard"></div>
+  <button class="btn-lobby" onclick="showMyResults()" style="margin-bottom:10px;">📊 EREDMÉNYEIM</button>
+  <button class="btn-lobby" onclick="backToMenu()">↺ FŐMENÜBE VISSZA</button>
+</div>
+
+<!-- EREDMÉNYEIM -->
+<div id="my-results-screen">
+  <button class="myres-back" onclick="showResultsFromHistory()">← Vissza az eredményekhez</button>
+  <div class="myres-title">EREDMÉNYEIM</div>
+  <div class="myres-subtitle" id="myres-subtitle">—</div>
+  <div class="myres-summary" id="myres-summary"></div>
+  <div class="myres-list" id="myres-list"></div>
   <button class="btn-lobby" onclick="backToMenu()">↺ FŐMENÜBE VISSZA</button>
 </div>
 
@@ -398,6 +402,8 @@ let myScore = 0, myColor = '', currentQIndex = -1, hasAnswered = false;
 let timerInterval = null, timerValue = 30, totalTime = 30;
 let questions = [], players = {};
 let answeredNamesThisRound = new Set();
+let myAnswerHistory = []; // [{qText, myAnswer, correctAnswer, options, pts, isCorrect, timedOut}]
+let currentQuestionData = null, myCurrentAnswer = -1;
 const LETTERS = ['A','B','C','D'];
 const COLORS = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f','#5ae0d4','#e0c05a'];
 const CIRCUMFERENCE = 175.9;
@@ -412,7 +418,7 @@ window.addEventListener('load', () => {
 // ── KÉPERNYŐ VÁLTÁS ──────────────────────────────────────────
 function hideAll() {
   ['menu-screen','guide-screen','unavailable-screen','lobby-screen',
-   'waiting-screen','game-screen','result-screen']
+   'waiting-screen','game-screen','result-screen','my-results-screen']
     .forEach(id => document.getElementById(id).style.display = 'none');
 }
 function showMenu() {
@@ -431,26 +437,19 @@ function showUnavailable() {
 }
 function showLobby() {
   hideAll();
-  const ls = document.getElementById('lobby-screen');
-  ls.style.display = 'flex';
-  ls.style.flexDirection = 'column';
-  ls.style.alignItems = 'center';
+  document.getElementById('lobby-screen').style.display = 'flex';
   document.getElementById('lobby-name').textContent = playerName;
-  updatePlayerLists();
 }
 function showWaiting() {
   hideAll();
   const ws = document.getElementById('waiting-screen');
   ws.style.display = 'flex';
-  ws.style.flexDirection = 'column';
-  ws.style.alignItems = 'center';
   document.getElementById('w-avatar').textContent = playerName[0].toUpperCase();
   document.getElementById('w-avatar').style.background = myColor + '22';
   document.getElementById('w-avatar').style.borderColor = myColor;
   document.getElementById('w-avatar').style.color = myColor;
   document.getElementById('w-name').textContent = playerName;
   document.getElementById('w-room').textContent = roomCode;
-  updatePlayerLists();
 }
 
 // ── ÚJ JÁTÉK gomb ────────────────────────────────────────────
@@ -589,17 +588,20 @@ function setupListeners() {
     if (newScore > myScore) {
       const diff = newScore - myScore;
       showScoreDelta('+' + diff, diff > 1);
+      // Frissítjük az utolsó kérdés pontszámát
+      if (myAnswerHistory.length > 0) {
+        myAnswerHistory[myAnswerHistory.length - 1].pts = diff;
+      }
     }
     myScore = newScore;
     document.getElementById('my-score').textContent = myScore;
   });
 
-  // Játékos lista (rangsor + lobby/waiting listák)
+  // Játékos lista (rangsor)
   roomRef.child('players').on('value', snap => {
     players = snap.val() || {};
     updateRank();
     updatePlayersChips(answeredNamesThisRound);
-    updatePlayerLists();
   });
 
   // Válasz chipek
@@ -631,6 +633,9 @@ function showQuestion(q, idx) {
   document.getElementById('q-cat-player').textContent = q.category || '';
   document.getElementById('q-text-player').textContent = q.text;
 
+  currentQuestionData = q;
+  myCurrentAnswer = -1;
+
   const container = document.getElementById('answers-player');
   container.innerHTML = q.options.map((opt, i) => `
     <button class="ans-btn" id="abtn-${i}" onclick="submitAnswer(${i})">
@@ -647,6 +652,7 @@ function showQuestion(q, idx) {
 function submitAnswer(idx) {
   if (hasAnswered) return;
   hasAnswered = true;
+  myCurrentAnswer = idx;
   document.querySelectorAll('.ans-btn').forEach((btn, i) => {
     btn.classList.add('disabled');
     if (i === idx) btn.classList.add('selected');
@@ -675,6 +681,22 @@ function revealAnswers(correctIdx) {
   });
   const wr = document.querySelector('.wait-reveal');
   if (wr) wr.remove();
+
+  // Rögzítjük a kérdés eredményét
+  if (currentQuestionData) {
+    const timedOut = myCurrentAnswer === -1 && !hasAnswered;
+    const isCorrect = hasAnswered && myCurrentAnswer === correctIdx;
+    myAnswerHistory.push({
+      qText: currentQuestionData.text,
+      options: currentQuestionData.options,
+      myAnswer: myCurrentAnswer,
+      correctAnswer: correctIdx,
+      isCorrect: isCorrect,
+      timedOut: myCurrentAnswer === -1,
+      category: currentQuestionData.category || '',
+      ptsSnapshot: myScore // pontszámot a score listener frissíti
+    });
+  }
 }
 
 function showResults() {
@@ -699,7 +721,84 @@ function showResults() {
   document.getElementById('result-scoreboard').innerHTML = sbHTML;
 }
 
-function backToMenu() {
+function showResultsFromHistory() {
+  hideAll();
+  document.getElementById('result-screen').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function showMyResults() {
+  hideAll();
+  const screen = document.getElementById('my-results-screen');
+  screen.style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+
+  const LETTERS = ['A','B','C','D'];
+  const history = myAnswerHistory;
+
+  document.getElementById('myres-subtitle').textContent = playerName + ' • ' + history.length + ' kérdés';
+
+  // Összesítő
+  const correctCount = history.filter(h => h.isCorrect).length;
+  const wrongCount = history.filter(h => !h.isCorrect && h.myAnswer !== -1).length;
+  const timeoutCount = history.filter(h => h.myAnswer === -1).length;
+  const totalPts = history.reduce((sum, h) => sum + (h.pts || 0), 0);
+
+  document.getElementById('myres-summary').innerHTML = `
+    <div class="myres-stat">
+      <div class="myres-stat-val" style="color:var(--green)">${correctCount}</div>
+      <div class="myres-stat-label">Helyes</div>
+    </div>
+    <div class="myres-stat">
+      <div class="myres-stat-val" style="color:var(--red)">${wrongCount}</div>
+      <div class="myres-stat-label">Helytelen</div>
+    </div>
+    <div class="myres-stat">
+      <div class="myres-stat-val" style="color:var(--muted)">${timeoutCount}</div>
+      <div class="myres-stat-label">Lejárt</div>
+    </div>
+    <div class="myres-stat">
+      <div class="myres-stat-val" style="color:var(--accent)">${totalPts}</div>
+      <div class="myres-stat-label">Pont</div>
+    </div>`;
+
+  if (history.length === 0) {
+    document.getElementById('myres-list').innerHTML = '<div class="myres-empty">Nincs rögzített kérdés.</div>';
+    return;
+  }
+
+  document.getElementById('myres-list').innerHTML = history.map((h, i) => {
+    const statusClass = h.myAnswer === -1 ? 'timeout' : (h.isCorrect ? 'correct' : 'wrong');
+    const badgeText = h.myAnswer === -1 ? '⏱ LEJÁRT' : (h.isCorrect ? '✓ HELYES' : '✗ HELYTELEN');
+    const pts = h.pts !== undefined ? h.pts : (h.isCorrect ? '?' : (h.myAnswer === -1 ? 0 : 1));
+    const ptsClass = pts > 0 ? 'positive' : 'neutral';
+
+    const answersHTML = (h.options || []).map((opt, ai) => {
+      let cls = 'other';
+      if (ai === h.correctAnswer && ai === h.myAnswer) cls = 'my-correct';
+      else if (ai === h.myAnswer && ai !== h.correctAnswer) cls = 'my-wrong';
+      else if (ai === h.correctAnswer) cls = 'correct-ans';
+      return `<div class="myres-ans ${cls}">
+        <div class="myres-ans-letter">${LETTERS[ai]}</div>
+        <div>${opt}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="myres-item ${statusClass}">
+      <div class="myres-item-top">
+        <div class="myres-qnum">${i+1}. kérdés${h.category ? ' • ' + h.category : ''}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <span class="myres-badge ${statusClass}">${badgeText}</span>
+          <span class="myres-pts ${ptsClass}">+${pts} pt</span>
+        </div>
+      </div>
+      <div class="myres-qtext">${h.qText}</div>
+      <div class="myres-answers">${answersHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+
   stopTimer();
   if (roomRef) {
     roomRef.child('gameState').off();
@@ -713,6 +812,7 @@ function backToMenu() {
   }
   hasAnswered = false; myScore = 0; currentQIndex = -1;
   players = {}; questions = []; answeredNamesThisRound = new Set();
+  myAnswerHistory = []; currentQuestionData = null; myCurrentAnswer = -1;
   document.getElementById('my-score').textContent = '0';
   document.getElementById('my-rank').textContent = '#—';
   showMenu();
@@ -747,53 +847,6 @@ function updateRank() {
     .sort((a,b) => (b.score||0)-(a.score||0));
   const rank = activeSorted.findIndex(p => p.name === playerName) + 1;
   document.getElementById('my-rank').textContent = '#' + (rank > 0 ? rank : '—');
-}
-
-function updatePlayerLists() {
-  const allPlayers = Object.values(players);
-  if (allPlayers.length === 0) return;
-
-  // Rendezés: én elsőnek, utána ábécé sorrendben
-  const sorted = [...allPlayers].sort((a, b) => {
-    if (a.name === playerName) return -1;
-    if (b.name === playerName) return 1;
-    return (a.name||'').localeCompare(b.name||'', 'hu');
-  });
-
-  function buildItem(p) {
-    const isMe = p.name === playerName;
-    const isActive = p.status === 'active';
-    const initials = (p.name||'?')[0].toUpperCase();
-    let badgeHTML = '';
-    if (isMe) {
-      badgeHTML = '<span class="pli-badge pli-badge-me">Te</span>';
-    } else if (isActive) {
-      badgeHTML = '<span class="pli-badge pli-badge-active">✓ Bent</span>';
-    } else {
-      badgeHTML = '<span class="pli-badge pli-badge-lobby">Vár</span>';
-    }
-    return `
-      <div class="player-list-item${isMe ? ' me' : isActive ? ' active-player' : ''}">
-        <div class="pli-avatar" style="background:${p.color||'#444'}22;color:${p.color||'#888'};border:2px solid ${p.color||'#444'};">
-          ${initials}
-        </div>
-        <div class="pli-name">${p.name||'Névtelen'}</div>
-        ${badgeHTML}
-      </div>`;
-  }
-
-  // LOBBY képernyő listája — mindenki látható
-  const lobbyList = document.getElementById('lobby-player-list');
-  if (lobbyList) {
-    lobbyList.innerHTML = sorted.map(buildItem).join('');
-  }
-
-  // WAITING képernyő listája — csak az active játékosok
-  const waitingList = document.getElementById('waiting-player-list');
-  if (waitingList) {
-    const activePlayers = sorted.filter(p => p.status === 'active');
-    waitingList.innerHTML = activePlayers.map(buildItem).join('');
-  }
 }
 
 function updateProgress(currentIdx) {

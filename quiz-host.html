@@ -577,7 +577,8 @@ function setupListeners() {
     if(answeredPlayers.has(pid))return;
     answeredPlayers.add(pid);answerOrder++;
     const isCorrect=ans.answer===correctOptionIndex;
-    const pts=isCorrect?Math.max(1,5-Math.floor((answerOrder-1)*0.5)):0;
+    const isTimeout=ans.answer===-1;
+    const pts=isTimeout?0:(isCorrect?Math.max(2,5-(answerOrder-1)):1);
     if(players[pid]){
       players[pid].score=(players[pid].score||0)+pts;
       if(db)roomRef.child('players').child(pid).child('score').set(players[pid].score);
