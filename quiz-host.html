@@ -183,6 +183,30 @@
   .score-delta{font-size:12px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(62,207,142,0.15);color:var(--green);animation:deltaIn 1.5s ease forwards;}
   @keyframes deltaIn{0%{opacity:0;transform:translateY(4px)}20%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
 
+  /* LOBBY PANEL */
+  .lobby-section { border-bottom: 1px solid var(--border); padding: 12px 16px; }
+  .lobby-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .lobby-header h4 { font-family:var(--font-display); font-size:16px; letter-spacing:2px; color:var(--muted); }
+  .lobby-admit-all { padding:5px 12px; background:var(--green); color:#000; border:none; border-radius:7px; font-family:var(--font-display); font-size:14px; letter-spacing:1px; cursor:pointer; transition:opacity 0.2s; white-space:nowrap; }
+  .lobby-admit-all:hover { opacity:0.85; }
+  .lobby-list { display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto; }
+  .lobby-list:empty::after { content:'Nincs várakozó játékos'; font-size:12px; color:var(--muted); text-align:center; padding:8px 0; display:block; }
+  .lobby-item { display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; }
+  .lobby-item-name { flex:1; font-size:13px; font-weight:600; }
+  .lobby-admit-btn { padding:4px 12px; background:var(--green); color:#000; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; transition:opacity 0.2s; white-space:nowrap; }
+  .lobby-admit-btn:hover { opacity:0.85; }
+
+  /* 3-PONT MENÜ a pontállásban */
+  .player-menu-wrap { position:relative; }
+  .player-menu-btn { width:26px; height:26px; background:transparent; border:none; color:var(--muted); font-size:16px; cursor:pointer; border-radius:6px; display:flex; align-items:center; justify-content:center; transition:all 0.15s; flex-shrink:0; letter-spacing:1px; }
+  .player-menu-btn:hover { background:var(--surface2); color:var(--text); }
+  .player-dropdown { position:absolute; right:0; top:30px; background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.4); z-index:50; min-width:160px; overflow:hidden; }
+  .player-dropdown.hidden { display:none; }
+  .player-dropdown-item { display:flex; align-items:center; gap:10px; padding:11px 14px; font-size:13px; font-weight:500; cursor:pointer; transition:background 0.15s; white-space:nowrap; border:none; background:transparent; color:var(--text); width:100%; text-align:left; }
+  .player-dropdown-item:hover { background:var(--surface2); }
+  .player-dropdown-item.danger { color:var(--red); }
+  .player-dropdown-item.danger:hover { background:rgba(224,90,90,0.1); }
+
   /* RESULTS */
   #results-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:100;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;overflow-y:auto;}
   .results-title{font-family:var(--font-display);font-size:72px;letter-spacing:6px;color:var(--accent);margin-bottom:8px;}
@@ -367,6 +391,15 @@
           <button class="btn-secondary" style="font-size:11px;padding:4px 9px;" onclick="resetAllScores()">⟳ Nulláz</button>
         </div>
       </div>
+      <!-- VÁRÓTEREM -->
+      <div class="lobby-section" id="lobby-section">
+        <div class="lobby-header">
+          <h4>⏳ VÁRÓTEREM</h4>
+          <button class="lobby-admit-all" onclick="admitAllPlayers()">✓ Mindenki beenged</button>
+        </div>
+        <div class="lobby-list" id="lobby-list"></div>
+      </div>
+      <!-- PONTÁLLÁS -->
       <div class="score-list" id="score-list">
         <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">Még nincsenek játékosok...</div>
       </div>
@@ -522,16 +555,21 @@ function initDemo() {
   showMain();
   const names=['Anna','Béla','Csilla','Dani'];
   names.forEach((n,i)=>{players[`demo${i}`]={name:n,score:0,color:AVATAR_COLORS[i]};});
-  updateScoreboard();updatePlayerChips();
+  updateScoreboard();updatePlayerChips();updateLobbyPanel();
 }
 
 function setupListeners() {
   if(!db)return;
   roomRef.child('players').on('value',snap=>{
     players=snap.val()||{};
-    updateScoreboard();updatePlayerChips();
-    document.getElementById('joined-count').textContent=Object.keys(players).length;
-    document.getElementById('player-count-tag').textContent=Object.keys(players).length+' játékos';
+    updateScoreboard();
+    updatePlayerChips();
+    updateLobbyPanel();
+    const activeCnt = Object.values(players).filter(p=>p.status==='active').length;
+    const lobbyCnt  = Object.values(players).filter(p=>p.status==='lobby').length;
+    const total = Object.keys(players).length;
+    document.getElementById('joined-count').textContent=activeCnt;
+    document.getElementById('player-count-tag').textContent=activeCnt+' játékos'+(lobbyCnt>0?' (+'+lobbyCnt+' vár)':'');
   });
   roomRef.child('answers').on('child_added',snap=>{
     const ans=snap.val();if(!ans)return;
@@ -546,7 +584,8 @@ function setupListeners() {
       if(pts>0)showScoreDelta(pid,pts);
     }
     if(ans.answer>=0&&ans.answer<=3){answerCounts[ans.answer]++;updateAnswerStats();}
-    const total=Object.keys(players).length;
+    const activePlayers=Object.entries(players).filter(([id,p])=>p.status==='active');
+    const total=activePlayers.length;
     document.getElementById('answers-received').textContent=answeredPlayers.size+'/'+total+' válasz';
     if(total>0&&answeredPlayers.size>=total)setTimeout(()=>revealAnswer(),500);
   });
@@ -954,7 +993,8 @@ function nextQuestion() {
   updateAnswerStats();
   document.getElementById('btn-reveal').classList.remove('hidden');
   document.getElementById('btn-next').classList.add('hidden');
-  document.getElementById('answers-received').textContent='0/'+Object.keys(players).length+' válasz';
+  const activeCount=Object.values(players).filter(p=>p.status==='active').length;
+  document.getElementById('answers-received').textContent='0/'+activeCount+' válasz';
   startTimer(q.time);
   renderAll();
 }
@@ -1012,7 +1052,11 @@ function showResults() {
 function newGame() {
   document.getElementById('results-screen').style.display='none';
   currentQIndex=-1;activeQuestions=[];gamePhase='waiting';players={};
-  if(db){roomRef.child('gameState').set({phase:'waiting'});roomRef.child('answers').remove();roomRef.child('players').remove();}
+  if(db){
+    roomRef.child('gameState').set({phase:'waiting'});
+    roomRef.child('answers').remove();
+    roomRef.child('players').remove();
+  }
   document.getElementById('waiting-state').classList.remove('hidden');
   document.getElementById('question-state').classList.add('hidden');
   ['btn-start'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
@@ -1024,16 +1068,86 @@ function newGame() {
 // UI
 // ============================================================
 function updatePlayerChips() {
-  const c=document.getElementById('players-joined'),cnt=Object.keys(players).length;
-  document.getElementById('joined-count').textContent=cnt;
-  document.getElementById('player-count-tag').textContent=cnt+' játékos';
-  c.innerHTML=Object.entries(players).map(([id,p])=>`<div class="player-chip"><div class="player-avatar" style="background:${p.color||'#555'}">${(p.name||'?')[0].toUpperCase()}</div>${p.name||'?'}</div>`).join('');
+  const c=document.getElementById('players-joined');
+  if (!c) return;
+  const activePlayers=Object.entries(players).filter(([id,p])=>p.status==='active');
+  const activeCnt=activePlayers.length;
+  document.getElementById('joined-count').textContent=activeCnt;
+  // Waiting area: csak az active játékosokat mutatjuk
+  c.innerHTML=activePlayers.map(([id,p])=>`<div class="player-chip"><div class="player-avatar" style="background:${p.color||'#555'}">${(p.name||'?')[0].toUpperCase()}</div>${p.name||'?'}</div>`).join('');
 }
 function updateScoreboard() {
-  const sorted=Object.entries(players).sort((a,b)=>(b[1].score||0)-(a[1].score||0));
+  // Csak az active játékosok jelennek meg a pontállásban
+  const sorted=Object.entries(players)
+    .filter(([id,p])=>p.status==='active')
+    .sort((a,b)=>(b[1].score||0)-(a[1].score||0));
   const list=document.getElementById('score-list');
-  if(!sorted.length){list.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">Még nincsenek játékosok...</div>';return;}
-  list.innerHTML=sorted.map(([id,p],i)=>`<div class="score-item ${i===0?'top1':i===1?'top2':i===2?'top3':''}" id="score-${id}" style="position:relative;"><div class="rank-num">${i+1}</div><div class="player-info"><div class="player-name">${p.name||'Névtelen'}</div></div><div class="player-pts">${p.score||0}</div><button onclick="kickPlayer('${id}')" title="Kidobás" style="background:rgba(224,90,90,0.15);color:var(--red);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:12px;flex-shrink:0;">✕</button></div>`).join('');
+  if(!sorted.length){
+    list.innerHTML='<div style="text-align:center;padding:24px 20px;color:var(--muted);font-size:13px;">Még nincs aktív játékos...</div>';
+    return;
+  }
+  list.innerHTML=sorted.map(([id,p],i)=>`
+    <div class="score-item ${i===0?'top1':i===1?'top2':i===2?'top3':''}" id="score-${id}" style="position:relative;">
+      <div class="rank-num">${i+1}</div>
+      <div class="player-info"><div class="player-name">${p.name||'Névtelen'}</div></div>
+      <div class="player-pts">${p.score||0}</div>
+      <div class="player-menu-wrap">
+        <button class="player-menu-btn" onclick="togglePlayerMenu('${id}',event)" title="Műveletek">•••</button>
+        <div class="player-dropdown hidden" id="pmenu-${id}">
+          <button class="player-dropdown-item" onclick="moveToLobby('${id}')">⏳ Váróterembe</button>
+          <button class="player-dropdown-item danger" onclick="kickPlayer('${id}')">✕ Kirúgás</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function updateLobbyPanel() {
+  const lobbyPlayers = Object.entries(players).filter(([id,p])=>p.status==='lobby');
+  const list = document.getElementById('lobby-list');
+  if (!list) return;
+  if (lobbyPlayers.length === 0) {
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = lobbyPlayers.map(([id,p]) => `
+    <div class="lobby-item">
+      <div class="player-avatar" style="background:${p.color||'#555'};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">${(p.name||'?')[0].toUpperCase()}</div>
+      <div class="lobby-item-name">${p.name||'Ismeretlen'}</div>
+      <button class="lobby-admit-btn" onclick="admitPlayer('${id}')">✓ Beenged</button>
+    </div>`).join('');
+}
+
+function togglePlayerMenu(pid, event) {
+  event.stopPropagation();
+  // Zárjuk be az összes többi menüt
+  document.querySelectorAll('.player-dropdown').forEach(d => {
+    if (d.id !== 'pmenu-'+pid) d.classList.add('hidden');
+  });
+  document.getElementById('pmenu-'+pid)?.classList.toggle('hidden');
+}
+
+// Kattintás bárhova → menük bezárása
+document.addEventListener('click', () => {
+  document.querySelectorAll('.player-dropdown').forEach(d => d.classList.add('hidden'));
+});
+
+function admitPlayer(pid) {
+  if (!db || !players[pid]) return;
+  roomRef.child('players').child(pid).child('status').set('active');
+}
+
+function admitAllPlayers() {
+  const lobbyPlayers = Object.entries(players).filter(([id,p])=>p.status==='lobby');
+  if (lobbyPlayers.length === 0) { alert('Nincs várakozó játékos!'); return; }
+  lobbyPlayers.forEach(([id]) => {
+    if (db) roomRef.child('players').child(id).child('status').set('active');
+  });
+}
+
+function moveToLobby(pid) {
+  document.querySelectorAll('.player-dropdown').forEach(d => d.classList.add('hidden'));
+  if (!db || !players[pid]) return;
+  roomRef.child('players').child(pid).child('status').set('lobby');
 }
 function showScoreDelta(pid,pts) {
   const el=document.getElementById('score-'+pid);if(!el)return;
@@ -1046,10 +1160,11 @@ function updateAnswerStats() {
   document.getElementById('answer-stats').innerHTML=answerCounts.map((cnt,i)=>`<div class="stat-bar"><div class="stat-bar-label"><span>${LETTERS[i]}</span><span>${cnt}</span></div><div class="stat-bar-track"><div class="stat-bar-fill" style="width:${Math.round(cnt/total*100)}%;background:${colors[i]}"></div></div></div>`).join('');
 }
 function kickPlayer(pid) {
+  document.querySelectorAll('.player-dropdown').forEach(d => d.classList.add('hidden'));
   const p=players[pid];if(!p)return;
-  if(!confirm(`Kidobod: ${p.name}?`))return;
+  if(!confirm(`Kirúgod: ${p.name}?`))return;
   if(db)roomRef.child('players').child(pid).remove();
-  delete players[pid];updateScoreboard();updatePlayerChips();
+  delete players[pid];updateScoreboard();updatePlayerChips();updateLobbyPanel();
 }
 function resetAllScores() {
   if(!confirm('Nullázod mindenki pontját?'))return;

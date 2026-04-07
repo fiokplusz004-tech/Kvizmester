@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>QuizMaster — Játékos</title>
-
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f0c040">
 <meta name="background-color" content="#0a0a0f">
@@ -19,9 +18,8 @@
 <link rel="apple-touch-icon"                 href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32"   href="icons/icon-96.png">
-<meta name="description" content="QuizMaster multiplayer kvíz játék — játékos alkalmazás">
+<meta name="description" content="QuizMaster multiplayer kvíz játék">
 <meta name="mobile-web-app-capable" content="yes">
-
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -33,17 +31,16 @@ const FIREBASE_CONFIG = {
   projectId:     "kvizmester-50358",
 };
 const DEFAULT_ROOM = "kvizjatek";
-
 if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   firebase.initializeApp(FIREBASE_CONFIG);
 }
 </script>
 <style>
   :root {
-    --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c28; --border: #2a2a3d;
-    --accent: #f0c040; --accent2: #e05a2b; --green: #3ecf8e; --red: #e05a5a;
-    --blue: #5a8fe0; --text: #f0f0f8; --muted: #6b6b8a;
-    --font-display: 'Bebas Neue', sans-serif; --font-body: 'DM Sans', sans-serif;
+    --bg:#0a0a0f; --surface:#13131a; --surface2:#1c1c28; --border:#2a2a3d;
+    --accent:#f0c040; --accent2:#e05a2b; --green:#3ecf8e; --red:#e05a5a;
+    --blue:#5a8fe0; --text:#f0f0f8; --muted:#6b6b8a;
+    --font-display:'Bebas Neue',sans-serif; --font-body:'DM Sans',sans-serif;
   }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
@@ -52,173 +49,84 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
     padding:20px; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
   }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes bounce { 0%,80%,100%{transform:scale(0.6);opacity:0.4} 40%{transform:scale(1);opacity:1} }
+  @keyframes correctPulse { 0%{transform:scale(1)} 30%{transform:scale(1.04)} 60%{transform:scale(0.98)} 100%{transform:scale(1)} }
+  @keyframes scoreFloat { 0%{opacity:1;transform:translate(-50%,-50%) scale(0.5)} 30%{opacity:1;transform:translate(-50%,-60%) scale(1.1)} 100%{opacity:0;transform:translate(-50%,-90%) scale(0.9)} }
+  @keyframes slideUpBanner { from{opacity:0;transform:translateX(-50%) translateY(20px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
-  /* ═══════════════════════════════════════
-     FŐMENÜ
-  ═══════════════════════════════════════ */
+  /* ── FŐMENÜ ─────────────────────────────── */
   #menu-screen {
     display:flex; flex-direction:column; align-items:center;
     width:100%; max-width:360px; margin:auto; padding:20px 0 40px;
     animation:fadeIn 0.4s ease;
   }
-  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-
-  .menu-logo {
-    font-family:var(--font-display); font-size:64px; letter-spacing:5px;
-    color:var(--accent); line-height:1; margin-bottom:4px;
-    text-shadow: 0 0 40px rgba(240,192,64,0.3);
-  }
-  .menu-sub {
-    color:var(--muted); font-size:11px; letter-spacing:4px;
-    text-transform:uppercase; margin-bottom:12px;
-  }
-
-  /* Névbekérő */
-  .menu-name-wrap { width:100%; margin-bottom:32px; }
-  .menu-name-label {
-    display:block; font-size:11px; letter-spacing:2px; text-transform:uppercase;
-    color:var(--muted); margin-bottom:8px; text-align:center;
-  }
-  .menu-name-input {
-    width:100%; background:var(--surface); border:1px solid var(--border);
-    border-radius:12px; padding:14px 18px; color:var(--text);
-    font-family:var(--font-body); font-size:18px; font-weight:600;
-    outline:none; transition:border-color 0.2s; text-align:center;
-  }
+  .menu-logo { font-family:var(--font-display); font-size:64px; letter-spacing:5px; color:var(--accent); line-height:1; margin-bottom:4px; text-shadow:0 0 40px rgba(240,192,64,0.3); }
+  .menu-sub { color:var(--muted); font-size:11px; letter-spacing:4px; text-transform:uppercase; margin-bottom:28px; }
+  .menu-name-wrap { width:100%; margin-bottom:28px; }
+  .menu-name-label { display:block; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; text-align:center; }
+  .menu-name-input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 18px; color:var(--text); font-family:var(--font-body); font-size:18px; font-weight:600; outline:none; transition:border-color 0.2s; text-align:center; }
   .menu-name-input:focus { border-color:var(--accent); }
-
-  /* Fő gombok */
   .menu-buttons { display:flex; flex-direction:column; gap:14px; width:100%; margin-bottom:16px; }
-  .menu-btn-primary {
-    width:100%; padding:20px; background:var(--accent); color:#000; border:none;
-    border-radius:14px; font-family:var(--font-display); font-size:28px;
-    letter-spacing:3px; cursor:pointer; transition:all 0.15s;
-    display:flex; align-items:center; justify-content:center; gap:12px;
-    box-shadow: 0 4px 20px rgba(240,192,64,0.25);
-  }
+  .menu-btn-primary { width:100%; padding:20px; background:var(--accent); color:#000; border:none; border-radius:14px; font-family:var(--font-display); font-size:28px; letter-spacing:3px; cursor:pointer; transition:all 0.15s; box-shadow:0 4px 20px rgba(240,192,64,0.25); }
   .menu-btn-primary:active { transform:scale(0.97); opacity:0.9; }
-  .menu-btn-secondary {
-    width:100%; padding:18px; background:transparent; color:var(--text);
-    border:2px solid var(--border); border-radius:14px;
-    font-family:var(--font-display); font-size:24px; letter-spacing:2px;
-    cursor:pointer; transition:all 0.15s;
-    display:flex; align-items:center; justify-content:center; gap:12px;
-  }
+  .menu-btn-secondary { width:100%; padding:18px; background:transparent; color:var(--text); border:2px solid var(--border); border-radius:14px; font-family:var(--font-display); font-size:24px; letter-spacing:2px; cursor:pointer; transition:all 0.15s; }
   .menu-btn-secondary:active { border-color:var(--accent); color:var(--accent); transform:scale(0.97); }
+  .menu-error { color:var(--red); font-size:13px; text-align:center; margin-top:8px; min-height:18px; }
 
-  .menu-error {
-    color:var(--red); font-size:13px; text-align:center;
-    margin-top:8px; min-height:18px;
-  }
-
-  /* ═══════════════════════════════════════
-     ÚTMUTATÓ KÉPERNYŐ
-  ═══════════════════════════════════════ */
-  #guide-screen {
-    display:none; flex-direction:column; width:100%; max-width:400px;
-    margin:auto; padding:24px 0 48px; animation:fadeIn 0.3s ease;
-  }
-  .guide-back {
-    display:flex; align-items:center; gap:8px; color:var(--muted);
-    font-size:13px; font-weight:600; cursor:pointer; margin-bottom:28px;
-    background:none; border:none; padding:0;
-  }
+  /* ── ÚTMUTATÓ ────────────────────────────── */
+  #guide-screen { display:none; flex-direction:column; width:100%; max-width:400px; margin:auto; padding:24px 0 48px; animation:fadeIn 0.3s ease; }
+  .guide-back { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; margin-bottom:28px; background:none; border:none; padding:0; }
   .guide-back:active { color:var(--accent); }
-  .guide-title {
-    font-family:var(--font-display); font-size:42px; letter-spacing:3px;
-    color:var(--accent); margin-bottom:6px;
-  }
+  .guide-title { font-family:var(--font-display); font-size:42px; letter-spacing:3px; color:var(--accent); margin-bottom:6px; }
   .guide-subtitle { font-size:12px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:28px; }
-
-  .guide-notice {
-    background:rgba(240,192,64,0.08); border:1px solid rgba(240,192,64,0.25);
-    border-radius:12px; padding:16px 18px; margin-bottom:24px;
-    font-size:14px; line-height:1.7; color:var(--text);
-  }
+  .guide-notice { background:rgba(240,192,64,0.08); border:1px solid rgba(240,192,64,0.25); border-radius:12px; padding:16px 18px; margin-bottom:24px; font-size:14px; line-height:1.7; color:var(--text); }
   .guide-notice strong { color:var(--accent); }
-
   .guide-section { margin-bottom:24px; }
-  .guide-section-title {
-    font-family:var(--font-display); font-size:18px; letter-spacing:2px;
-    color:var(--accent); margin-bottom:10px; display:flex; align-items:center; gap:8px;
-  }
+  .guide-section-title { font-family:var(--font-display); font-size:18px; letter-spacing:2px; color:var(--accent); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
   .guide-section p { font-size:14px; color:var(--muted); line-height:1.75; }
   .guide-section p + p { margin-top:8px; }
-
   .guide-score-table { width:100%; margin-top:10px; border-collapse:collapse; }
-  .guide-score-table td {
-    padding:8px 12px; font-size:13px; border-bottom:1px solid var(--border);
-    vertical-align:middle;
-  }
+  .guide-score-table td { padding:8px 12px; font-size:13px; border-bottom:1px solid var(--border); vertical-align:middle; }
   .guide-score-table tr:last-child td { border-bottom:none; }
   .guide-score-table td:first-child { color:var(--muted); }
-  .guide-score-table td:last-child { color:var(--text); font-weight:600; text-align:right; }
-  .score-pill {
-    display:inline-block; padding:3px 10px; border-radius:20px;
-    font-family:var(--font-display); font-size:16px;
-  }
+  .guide-score-table td:last-child { text-align:right; }
+  .score-pill { display:inline-block; padding:3px 10px; border-radius:20px; font-family:var(--font-display); font-size:16px; }
   .pill-green { background:rgba(62,207,142,0.15); color:var(--green); }
   .pill-red   { background:rgba(224,90,90,0.15);  color:var(--red); }
-
   .guide-divider { height:1px; background:var(--border); margin:6px 0 20px; }
 
-  /* ═══════════════════════════════════════
-     NEM ELÉRHETŐ KÉPERNYŐ
-  ═══════════════════════════════════════ */
-  #unavailable-screen {
-    display:none; flex-direction:column; align-items:center; justify-content:center;
-    text-align:center; width:100%; max-width:360px; margin:auto; padding:40px 0;
-    animation:fadeIn 0.4s ease;
-  }
+  /* ── NEM ELÉRHETŐ ────────────────────────── */
+  #unavailable-screen { display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; width:100%; max-width:360px; margin:auto; padding:40px 0; animation:fadeIn 0.4s ease; }
   .unavail-icon { font-size:72px; margin-bottom:20px; }
-  .unavail-title {
-    font-family:var(--font-display); font-size:32px; letter-spacing:3px;
-    color:var(--accent); margin-bottom:14px;
-  }
+  .unavail-title { font-family:var(--font-display); font-size:32px; letter-spacing:3px; color:var(--accent); margin-bottom:14px; }
   .unavail-text { font-size:15px; color:var(--muted); line-height:1.75; margin-bottom:36px; }
-  .unavail-btn {
-    padding:14px 36px; background:transparent; color:var(--accent);
-    border:2px solid var(--accent); border-radius:12px;
-    font-family:var(--font-display); font-size:20px; letter-spacing:2px;
-    cursor:pointer; transition:all 0.2s; margin-bottom:14px; width:100%;
-  }
+  .unavail-btn { padding:14px 36px; background:transparent; color:var(--accent); border:2px solid var(--accent); border-radius:12px; font-family:var(--font-display); font-size:20px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; margin-bottom:14px; width:100%; }
   .unavail-btn:active { background:var(--accent); color:#000; }
-  .unavail-back {
-    background:none; border:none; color:var(--muted); font-size:13px;
-    font-weight:600; cursor:pointer; padding:8px;
-  }
-  .unavail-back:active { color:var(--text); }
+  .unavail-back { background:none; border:none; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; padding:8px; }
 
-  /* ═══════════════════════════════════════
-     VÁRAKOZÓ KÉPERNYŐ
-  ═══════════════════════════════════════ */
-  #waiting-screen {
-    display:none; flex-direction:column; align-items:center; justify-content:center;
-    width:100%; max-width:400px; text-align:center; margin:auto; padding:40px 0;
-    animation:fadeIn 0.4s ease;
-  }
-  .waiting-avatar {
-    width:80px; height:80px; border-radius:50%; margin:0 auto 20px;
-    display:flex; align-items:center; justify-content:center;
-    font-family:var(--font-display); font-size:40px; border:3px solid;
-  }
+  /* ── VÁRÓTEREM ───────────────────────────── */
+  #lobby-screen { display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; width:100%; max-width:360px; margin:auto; padding:40px 0; animation:fadeIn 0.4s ease; }
+  .lobby-icon { font-size:56px; margin-bottom:16px; }
+  .lobby-title { font-family:var(--font-display); font-size:36px; letter-spacing:3px; color:var(--accent); margin-bottom:8px; }
+  .lobby-name { font-size:18px; font-weight:600; color:var(--text); margin-bottom:6px; }
+  .lobby-sub { font-size:13px; color:var(--muted); margin-bottom:32px; line-height:1.6; }
+  .lobby-dots { display:flex; gap:8px; justify-content:center; margin-bottom:16px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--accent); animation:bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay:0.2s; }
+  .dot:nth-child(3) { animation-delay:0.4s; }
+
+  /* ── VÁRAKOZÁS (játékra) ─────────────────── */
+  #waiting-screen { display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; width:100%; max-width:400px; margin:auto; padding:40px 0; animation:fadeIn 0.4s ease; }
+  .waiting-avatar { width:80px; height:80px; border-radius:50%; margin:0 auto 20px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:40px; border:3px solid; }
   .waiting-player-name { font-family:var(--font-display); font-size:36px; letter-spacing:2px; margin-bottom:8px; }
   .waiting-room { font-size:12px; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-bottom:40px; }
   .waiting-room span { color:var(--accent); }
   .waiting-dots { display:flex; gap:8px; justify-content:center; }
-  .dot { width:10px; height:10px; border-radius:50%; background:var(--accent); animation:bounce 1.2s infinite; }
-  .dot:nth-child(2) { animation-delay:0.2s; }
-  .dot:nth-child(3) { animation-delay:0.4s; }
-  @keyframes bounce { 0%,80%,100%{transform:scale(0.6);opacity:0.4} 40%{transform:scale(1);opacity:1} }
   .waiting-msg { color:var(--muted); font-size:13px; letter-spacing:1px; margin-top:16px; }
 
-  /* ═══════════════════════════════════════
-     JÁTÉK KÉPERNYŐ
-  ═══════════════════════════════════════ */
-  #game-screen {
-    display:none; width:100%; max-width:420px;
-    min-height:100vh; min-height:100dvh; flex-direction:column;
-  }
+  /* ── JÁTÉK ───────────────────────────────── */
+  #game-screen { display:none; width:100%; max-width:420px; min-height:100vh; min-height:100dvh; flex-direction:column; }
   .game-topbar { display:flex; align-items:center; justify-content:space-between; padding:16px 0 12px; }
   .my-score-label { font-size:11px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
   .my-score-val { font-family:var(--font-display); font-size:36px; color:var(--accent); line-height:1; }
@@ -236,26 +144,19 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .q-cat { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; text-align:center; }
   .q-text-player { font-family:var(--font-display); font-size:28px; letter-spacing:0.5px; line-height:1.2; text-align:center; margin-bottom:28px; }
   .answers-player { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .ans-btn {
-    background:var(--surface2); border:2px solid var(--border); border-radius:14px;
-    padding:16px 12px; cursor:pointer; transition:all 0.15s;
-    display:flex; flex-direction:column; align-items:center; gap:8px;
-    min-height:80px; justify-content:center; -webkit-user-select:none; user-select:none;
-  }
+  .ans-btn { background:var(--surface2); border:2px solid var(--border); border-radius:14px; padding:16px 12px; cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column; align-items:center; gap:8px; min-height:80px; justify-content:center; -webkit-user-select:none; user-select:none; }
   .ans-btn:active { transform:scale(0.95); }
   .ans-btn.selected { border-color:var(--accent); background:rgba(240,192,64,0.12); }
   .ans-btn.correct { border-color:var(--green); background:rgba(62,207,142,0.15); animation:correctPulse 0.5s ease; }
   .ans-btn.wrong { border-color:var(--red); background:rgba(224,90,90,0.1); opacity:0.6; }
   .ans-btn.correct-highlight { border-color:var(--green); background:rgba(62,207,142,0.15); }
   .ans-btn.disabled { pointer-events:none; }
-  @keyframes correctPulse { 0%{transform:scale(1)} 30%{transform:scale(1.04)} 60%{transform:scale(0.98)} 100%{transform:scale(1)} }
   .ans-letter { width:32px; height:32px; border-radius:8px; background:var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:18px; }
   .ans-btn.selected .ans-letter { background:var(--accent); color:#000; }
   .ans-btn.correct .ans-letter { background:var(--green); color:#000; }
-  .ans-text { font-size:13px; text-align:center; line-height:1.3; font-weight:600; color:#ffffff; }
+  .ans-text { font-size:13px; text-align:center; line-height:1.3; font-weight:600; color:#fff; }
   .score-delta-overlay { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-family:var(--font-display); font-size:72px; color:var(--green); pointer-events:none; z-index:100; opacity:0; text-shadow:0 0 40px rgba(62,207,142,0.5); }
   .score-delta-overlay.show { animation:scoreFloat 1.5s ease forwards; }
-  @keyframes scoreFloat { 0%{opacity:1;transform:translate(-50%,-50%) scale(0.5)} 30%{opacity:1;transform:translate(-50%,-60%) scale(1.1)} 100%{opacity:0;transform:translate(-50%,-90%) scale(0.9)} }
   .wait-reveal { display:flex; flex-direction:column; align-items:center; padding:20px 0; color:var(--muted); font-size:13px; letter-spacing:1px; }
   .wait-dots { display:flex; gap:6px; margin-top:12px; }
   .wait-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); animation:bounce 1.2s infinite; }
@@ -275,9 +176,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .btn-back-game { width:100%; padding:10px; background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:10px; font-size:12px; letter-spacing:1px; font-weight:600; cursor:pointer; transition:all 0.2s; }
   .btn-back-game:active { border-color:var(--accent); color:var(--accent); }
 
-  /* ═══════════════════════════════════════
-     EREDMÉNY KÉPERNYŐ
-  ═══════════════════════════════════════ */
+  /* ── EREDMÉNY ────────────────────────────── */
   #result-screen { display:none; width:100%; max-width:420px; text-align:center; padding:24px 0 48px; margin:0 auto; }
   .result-trophy { font-size:80px; margin-bottom:16px; }
   .result-title { font-family:var(--font-display); font-size:52px; letter-spacing:3px; color:var(--accent); margin-bottom:8px; }
@@ -297,130 +196,86 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .btn-lobby:active { background:var(--accent); color:#000; }
 
   .hidden { display:none !important; }
-
-  @keyframes slideUpBanner {
-    from{opacity:0;transform:translateX(-50%) translateY(20px)}
-    to{opacity:1;transform:translateX(-50%) translateY(0)}
-  }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════ -->
-<!-- FŐMENÜ                                  -->
-<!-- ═══════════════════════════════════════ -->
+<!-- FŐMENÜ -->
 <div id="menu-screen">
   <div class="menu-logo">QUIZ</div>
   <div class="menu-sub">Multiplayer Kvíz Játék</div>
-
   <div class="menu-name-wrap">
     <label class="menu-name-label">A neved</label>
     <input type="text" class="menu-name-input" id="menu-name-input"
       placeholder="pl. Anna" maxlength="20" autocomplete="off"
       onkeydown="if(event.key==='Enter')startGame()">
   </div>
-
   <div class="menu-buttons">
-    <button class="menu-btn-primary" onclick="startGame()">
-      🎮 ÚJ JÁTÉK
-    </button>
-    <button class="menu-btn-secondary" onclick="showGuide()">
-      📖 ÚTMUTATÓ
-    </button>
+    <button class="menu-btn-primary" onclick="startGame()">🎮 ÚJ JÁTÉK</button>
+    <button class="menu-btn-secondary" onclick="showGuide()">📖 ÚTMUTATÓ</button>
   </div>
-
   <div class="menu-error" id="menu-error"></div>
 </div>
 
-<!-- ═══════════════════════════════════════ -->
-<!-- ÚTMUTATÓ                                -->
-<!-- ═══════════════════════════════════════ -->
+<!-- ÚTMUTATÓ -->
 <div id="guide-screen">
   <button class="guide-back" onclick="showMenu()">← Vissza</button>
-
   <div class="guide-title">ÚTMUTATÓ</div>
   <div class="guide-subtitle">Hogyan működik a QuizMaster?</div>
-
   <div class="guide-notice">
     Ezt a játékot azért hoztam létre, hogy <strong>többen együtt tudjunk játszani.</strong>
     Ezért jelenleg csak úgy működik, ha én <strong>manuálisan elindítom.</strong>
     Ha a játék nem elérhető, gyere vissza később! 🙂
   </div>
-
   <div class="guide-divider"></div>
-
   <div class="guide-section">
     <div class="guide-section-title">🎯 A játék lényege</div>
-    <p>A QuizMaster egy <strong style="color:var(--text)">valós idejű multiplayer kvíz,</strong> ahol egyszerre akár 10 játékos verseng egymással. A host (én) feltesz egy kérdést, ti pedig 4 lehetőség közül választjátok ki a szerintetek helyes választ.</p>
+    <p>A QuizMaster egy <strong style="color:var(--text)">valós idejű multiplayer kvíz,</strong> ahol egyszerre akár 10 játékos verseng egymással. A host feltesz egy kérdést, ti pedig 4 lehetőség közül választjátok ki a helyes választ.</p>
     <p>A kérdések különböző témakörökből érkeznek: Bibliai, Filmek, Történelem, Földrajz, Tudomány és még sok más.</p>
   </div>
-
   <div class="guide-section">
     <div class="guide-section-title">📋 Játékmenet</div>
-    <p><strong style="color:var(--text)">1.</strong> Megjelenik a kérdés és 4 válaszlehetőség — koppints a szerinted helyes válaszra.</p>
+    <p><strong style="color:var(--text)">1.</strong> Megjelenik a kérdés és 4 válaszlehetőség — koppints a szerinted helyesre.</p>
     <p><strong style="color:var(--text)">2.</strong> Minden kérdésnek van visszaszámlálója — ha lejár az idő, nem kapsz pontot.</p>
-    <p><strong style="color:var(--text)">3.</strong> A kérdés után a host felfedi a helyes választ, majd jön a következő kérdés.</p>
+    <p><strong style="color:var(--text)">3.</strong> A kérdés után a host felfedi a helyes választ, majd jön a következő.</p>
     <p><strong style="color:var(--text)">4.</strong> A játék végén megjelenik a ranglista.</p>
   </div>
-
   <div class="guide-section">
     <div class="guide-section-title">🏆 Pontozás</div>
     <p>Minél gyorsabban válaszolsz helyesen, annál több pontot kapsz!</p>
     <table class="guide-score-table">
-      <tr>
-        <td>Helyes válasz — 1. válaszoló</td>
-        <td><span class="score-pill pill-green">5 pont</span></td>
-      </tr>
-      <tr>
-        <td>Helyes válasz — 2. válaszoló</td>
-        <td><span class="score-pill pill-green">4 pont</span></td>
-      </tr>
-      <tr>
-        <td>Helyes válasz — 3. válaszoló</td>
-        <td><span class="score-pill pill-green">3 pont</span></td>
-      </tr>
-      <tr>
-        <td>Helyes válasz — 4.+ válaszoló</td>
-        <td><span class="score-pill pill-green">2 pont</span></td>
-      </tr>
-      <tr>
-        <td>Helytelen válasz</td>
-        <td><span class="score-pill pill-red">1 pont</span></td>
-      </tr>
-      <tr>
-        <td>Nem válaszoltál (lejárt az idő)</td>
-        <td><span class="score-pill pill-red">0 pont</span></td>
-      </tr>
+      <tr><td>Helyes — 1. válaszoló</td><td><span class="score-pill pill-green">5 pont</span></td></tr>
+      <tr><td>Helyes — 2. válaszoló</td><td><span class="score-pill pill-green">4 pont</span></td></tr>
+      <tr><td>Helyes — 3. válaszoló</td><td><span class="score-pill pill-green">3 pont</span></td></tr>
+      <tr><td>Helyes — 4.+ válaszoló</td><td><span class="score-pill pill-green">2 pont</span></td></tr>
+      <tr><td>Helytelen válasz</td><td><span class="score-pill pill-red">1 pont</span></td></tr>
+      <tr><td>Lejárt az idő</td><td><span class="score-pill pill-red">0 pont</span></td></tr>
     </table>
   </div>
-
-  <div class="guide-section">
-    <div class="guide-section-title">💡 Tipp</div>
-    <p>Ha az appot <strong style="color:var(--text)">telepíted a főképernyődre,</strong> sokkal gyorsabban tudod megnyitni és böngésző nélkül, teljes képernyőn fut!</p>
-    <p>Android: a böngésző alján megjelenik a telepítési ajánlat. iPhone: Safari → Megosztás → Főképernyőhöz adás.</p>
-  </div>
-
-  <button class="menu-btn-primary" onclick="showMenu()" style="margin-top:8px;">
-    ← VISSZA A FŐMENÜBE
-  </button>
+  <button class="menu-btn-primary" onclick="showMenu()" style="margin-top:8px;">← VISSZA A FŐMENÜBE</button>
 </div>
 
-<!-- ═══════════════════════════════════════ -->
-<!-- NEM ELÉRHETŐ                            -->
-<!-- ═══════════════════════════════════════ -->
+<!-- NEM ELÉRHETŐ -->
 <div id="unavailable-screen">
   <div class="unavail-icon">🎮</div>
-  <div class="unavail-title">JÁTÉK NEM ELÉRHETŐ</div>
-  <div class="unavail-text">
-    Jelenleg a játék nem elérhető,<br>kérjük gyere vissza később.
-  </div>
+  <div class="unavail-title">NEM ELÉRHETŐ</div>
+  <div class="unavail-text">Jelenleg a játék nem elérhető,<br>kérjük gyere vissza később.</div>
   <button class="unavail-btn" onclick="startGame()">↺ ÚJRAPRÓBÁLÁS</button>
   <button class="unavail-back" onclick="showMenu()">← Vissza a főmenübe</button>
 </div>
 
-<!-- ═══════════════════════════════════════ -->
-<!-- VÁRAKOZÁS                               -->
-<!-- ═══════════════════════════════════════ -->
+<!-- VÁRÓTEREM -->
+<div id="lobby-screen">
+  <div class="lobby-icon">⏳</div>
+  <div class="lobby-title">VÁRÓTEREM</div>
+  <div class="lobby-name" id="lobby-name">—</div>
+  <div class="lobby-sub">A host hamarosan beenged a játékba.<br>Kérjük, várakozz türelmesen!</div>
+  <div class="lobby-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+</div>
+
+<!-- VÁRAKOZÁS -->
 <div id="waiting-screen">
   <div class="waiting-avatar" id="w-avatar">A</div>
   <div class="waiting-player-name" id="w-name">—</div>
@@ -428,12 +283,10 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div class="waiting-dots">
     <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
-  <div class="waiting-msg" id="waiting-msg">Várakozás a játék kezdésére...</div>
+  <div class="waiting-msg" id="waiting-msg">Várakozás az új játék kezdésére...</div>
 </div>
 
-<!-- ═══════════════════════════════════════ -->
-<!-- JÁTÉK                                   -->
-<!-- ═══════════════════════════════════════ -->
+<!-- JÁTÉK -->
 <div id="game-screen">
   <div class="game-topbar">
     <div>
@@ -443,8 +296,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     <div class="timer-ring-wrap">
       <svg class="timer-ring" width="64" height="64" viewBox="0 0 64 64">
         <circle class="timer-ring-bg" cx="32" cy="32" r="28"/>
-        <circle class="timer-ring-fill" id="timer-ring-fill" cx="32" cy="32" r="28"
-          stroke-dasharray="175.9" stroke-dashoffset="0"/>
+        <circle class="timer-ring-fill" id="timer-ring-fill" cx="32" cy="32" r="28" stroke-dasharray="175.9" stroke-dashoffset="0"/>
       </svg>
       <div class="timer-ring-num" id="timer-ring-num">30</div>
     </div>
@@ -468,9 +320,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════ -->
-<!-- EREDMÉNY                                -->
-<!-- ═══════════════════════════════════════ -->
+<!-- EREDMÉNY -->
 <div id="result-screen">
   <div class="result-trophy" id="result-emoji">🏆</div>
   <div class="result-title">VÉGE!</div>
@@ -483,13 +333,8 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
 
 <div class="score-delta-overlay" id="score-delta"></div>
 
-<!-- PWA TELEPÍTÉSI BANNER -->
-<div id="install-banner" style="
-  display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-  background:#1c1c28; border:1px solid #f0c040; border-radius:16px; padding:14px 18px;
-  align-items:center; gap:14px; z-index:9999;
-  box-shadow:0 8px 32px rgba(0,0,0,0.5); max-width:340px; width:calc(100% - 40px);
-  animation:slideUpBanner 0.4s ease;">
+<!-- PWA BANNER -->
+<div id="install-banner" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1c1c28;border:1px solid #f0c040;border-radius:16px;padding:14px 18px;align-items:center;gap:14px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.5);max-width:340px;width:calc(100% - 40px);animation:slideUpBanner 0.4s ease;">
   <img src="icons/icon-72.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0;" alt="">
   <div style="flex:1;min-width:0;">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:#f0c040;">TELEPÍTÉS</div>
@@ -500,9 +345,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
 </div>
 
 <script>
-// ============================================================
-// STATE
-// ============================================================
+// ── STATE ────────────────────────────────────────────────────
 let db = null, roomRef = null, roomCode = '', playerId = '', playerName = '';
 let myScore = 0, myColor = '', currentQIndex = -1, hasAnswered = false;
 let timerInterval = null, timerValue = 30, totalTime = 30;
@@ -512,43 +355,38 @@ const LETTERS = ['A','B','C','D'];
 const COLORS = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f','#5ae0d4','#e0c05a'];
 const CIRCUMFERENCE = 175.9;
 
-function getParam(name) {
-  return new URLSearchParams(window.location.search).get(name);
-}
+function getParam(n) { return new URLSearchParams(window.location.search).get(n); }
 
-// Induláskor töltsük be az elmentett nevet
 window.addEventListener('load', () => {
   const saved = localStorage.getItem('quizPlayerName');
   if (saved) document.getElementById('menu-name-input').value = saved;
 });
 
-// ============================================================
-// KÉPERNYŐ NAVIGÁCIÓ
-// ============================================================
+// ── KÉPERNYŐ VÁLTÁS ──────────────────────────────────────────
 function hideAll() {
-  ['menu-screen','guide-screen','unavailable-screen','waiting-screen','game-screen','result-screen']
+  ['menu-screen','guide-screen','unavailable-screen','lobby-screen',
+   'waiting-screen','game-screen','result-screen']
     .forEach(id => document.getElementById(id).style.display = 'none');
 }
-
 function showMenu() {
   hideAll();
   document.getElementById('menu-screen').style.display = 'flex';
-  document.getElementById('menu-screen').style.flexDirection = 'column';
-  document.getElementById('menu-screen').style.alignItems = 'center';
   document.getElementById('menu-error').textContent = '';
 }
-
 function showGuide() {
   hideAll();
   document.getElementById('guide-screen').style.display = 'flex';
   window.scrollTo({top:0});
 }
-
 function showUnavailable() {
   hideAll();
   document.getElementById('unavailable-screen').style.display = 'flex';
 }
-
+function showLobby() {
+  hideAll();
+  document.getElementById('lobby-screen').style.display = 'flex';
+  document.getElementById('lobby-name').textContent = playerName;
+}
 function showWaiting() {
   hideAll();
   const ws = document.getElementById('waiting-screen');
@@ -561,9 +399,7 @@ function showWaiting() {
   document.getElementById('w-room').textContent = roomCode;
 }
 
-// ============================================================
-// ÚJ JÁTÉK — gomb megnyomása
-// ============================================================
+// ── ÚJ JÁTÉK gomb ────────────────────────────────────────────
 async function startGame() {
   const name = document.getElementById('menu-name-input').value.trim();
   const err = document.getElementById('menu-error');
@@ -589,76 +425,129 @@ async function startGame() {
       return;
     }
 
+    // Ha volt korábbi db kapcsolat, szüntessük meg
+    if (roomRef) {
+      roomRef.child('gameState').off();
+      roomRef.child('players').off();
+      roomRef.child('answers').off();
+    }
+
     db = firebase.database();
     roomRef = db.ref('rooms/' + roomCode);
 
-    // Ellenőrizzük: a Host be van-e jelentkezve (gameState létezik-e)
+    // ─── KULCS ELLENŐRZÉS ───────────────────────────────────
+    // Ha a HOST nincs belépve, a gameState node NEM LÉTEZIK
+    // Firebase .once('value') ezt null-ként adja vissza
     const snap = await roomRef.child('gameState').once('value');
     const gameState = snap.val();
 
     if (!gameState) {
-      // Host nincs online
+      // HOST nincs online → "nem elérhető" képernyő
       showUnavailable();
       return;
     }
 
-    // Regisztráljuk a játékost
+    // Regisztráljuk a játékost — alapból lobby státusszal
     await roomRef.child('players').child(playerId).set({
-      name: playerName, score: 0, color: myColor,
+      name: playerName,
+      score: 0,
+      color: myColor,
+      status: 'lobby',  // 'lobby' | 'active'
       joinedAt: firebase.database.ServerValue.TIMESTAMP
     });
 
+    // Disconnect esetén töröljük
     roomRef.child('players').child(playerId).onDisconnect().remove();
 
-    showWaiting();
-    setupGameListeners();
+    // Figyeljük a saját státuszunkat
+    setupListeners();
+
+    // Kezdetben váróterembe tesszük magunkat
+    showLobby();
 
   } catch(e) {
     err.textContent = 'Hiba: ' + e.message;
+    console.error(e);
   }
 }
 
-// ============================================================
-// FIREBASE LISTENERS
-// ============================================================
-function setupGameListeners() {
+// ── FIREBASE LISTENERS ───────────────────────────────────────
+function setupListeners() {
+
+  // SAJÁT STÁTUSZ figyelése — ha a host "active"-ra állítja, mehetünk a váróba
+  roomRef.child('players').child(playerId).child('status').on('value', snap => {
+    const status = snap.val();
+    if (status === 'active') {
+      // Beengedtek! Ha váróteremben voltunk, menjünk a várakozó képernyőre
+      const lobbyVisible = document.getElementById('lobby-screen').style.display !== 'none';
+      if (lobbyVisible) {
+        showWaiting();
+      }
+    } else if (status === 'lobby') {
+      // Visszatettük a váróterembe
+      const gameVisible = document.getElementById('game-screen').style.display !== 'none';
+      const waitVisible = document.getElementById('waiting-screen').style.display !== 'none';
+      if (gameVisible || waitVisible) {
+        showLobby();
+      }
+    }
+  });
+
+  // JÁTÉKÁLLAPOT figyelése
   roomRef.child('gameState').on('value', snap => {
     const state = snap.val();
     if (!state) return;
 
-    if (state.phase === 'waiting') {
-      if (document.getElementById('result-screen').style.display !== 'none') {
-        backToMenu();
-      }
-    } else if (state.phase === 'question' && state.questionIndex !== currentQIndex) {
-      currentQIndex = state.questionIndex;
-      hasAnswered = false;
-      answeredNamesThisRound = new Set();
-      showQuestion(state.question, state.questionIndex);
+    // Ha a játék kérdésnél tart, csak az "active" státuszú játékos látja
+    if (state.phase === 'question' && state.questionIndex !== currentQIndex) {
+      // Ellenőrizzük a saját státuszunkat
+      roomRef.child('players').child(playerId).child('status').once('value', statusSnap => {
+        const myStatus = statusSnap.val();
+        if (myStatus === 'active') {
+          currentQIndex = state.questionIndex;
+          hasAnswered = false;
+          answeredNamesThisRound = new Set();
+          showQuestion(state.question, state.questionIndex);
+        }
+        // Ha 'lobby', maradunk a váróteremben
+      });
     } else if (state.phase === 'revealed') {
-      revealAnswers(state.correctAnswer);
+      const gameVisible = document.getElementById('game-screen').style.display !== 'none';
+      if (gameVisible) revealAnswers(state.correctAnswer);
     } else if (state.phase === 'ended') {
-      showResults();
+      const gameVisible = document.getElementById('game-screen').style.display !== 'none';
+      if (gameVisible) showResults();
+    } else if (state.phase === 'waiting') {
+      // Új játékkör — eredmény képernyőről vissza
+      if (document.getElementById('result-screen').style.display !== 'none') {
+        // Ellenőrizzük státuszunkat
+        roomRef.child('players').child(playerId).child('status').once('value', statusSnap => {
+          if (statusSnap.val() === 'active') showWaiting();
+          else showLobby();
+        });
+      }
     }
   });
 
+  // Pontszám figyelése
   roomRef.child('players').child(playerId).child('score').on('value', snap => {
     const newScore = snap.val() || 0;
     if (newScore > myScore) {
       const diff = newScore - myScore;
-      // diff=1 → helytelen válasz (piros), diff>1 → helyes (zöld)
       showScoreDelta('+' + diff, diff > 1);
     }
     myScore = newScore;
     document.getElementById('my-score').textContent = myScore;
   });
 
+  // Játékos lista (rangsor)
   roomRef.child('players').on('value', snap => {
     players = snap.val() || {};
     updateRank();
     updatePlayersChips(answeredNamesThisRound);
   });
 
+  // Válasz chipek
   roomRef.child('answers').on('child_added', snap => {
     const ans = snap.val();
     if (ans && ans.playerName) {
@@ -673,20 +562,17 @@ function setupGameListeners() {
     }
   });
 
+  // Kérdések száma (progress dots)
   roomRef.child('questions').once('value', snap => {
     questions = Object.values(snap.val() || {});
     updateProgress();
   });
 }
 
-// ============================================================
-// UI FÜGGVÉNYEK
-// ============================================================
+// ── UI FÜGGVÉNYEK ─────────────────────────────────────────────
 function showQuestion(q, idx) {
   hideAll();
-  const gs = document.getElementById('game-screen');
-  gs.style.display = 'flex';
-
+  document.getElementById('game-screen').style.display = 'flex';
   document.getElementById('q-cat-player').textContent = q.category || '';
   document.getElementById('q-text-player').textContent = q.text;
 
@@ -699,7 +585,6 @@ function showQuestion(q, idx) {
 
   document.getElementById('q-area').style.display = 'flex';
   document.getElementById('q-area').style.flexDirection = 'column';
-
   startPlayerTimer(q.time || 30);
   updateProgress(idx);
 }
@@ -707,12 +592,10 @@ function showQuestion(q, idx) {
 function submitAnswer(idx) {
   if (hasAnswered) return;
   hasAnswered = true;
-
   document.querySelectorAll('.ans-btn').forEach((btn, i) => {
     btn.classList.add('disabled');
     if (i === idx) btn.classList.add('selected');
   });
-
   if (db && roomRef) {
     roomRef.child('answers').child(playerId).set({
       answer: idx,
@@ -720,15 +603,11 @@ function submitAnswer(idx) {
       playerName: playerName
     });
   }
-
   stopTimer();
-
   const remaining = document.createElement('div');
   remaining.className = 'wait-reveal';
   remaining.innerHTML = `Válasz elküldve! Várakozás a megoldásra...
-    <div class="wait-dots">
-      <div class="wait-dot"></div><div class="wait-dot"></div><div class="wait-dot"></div>
-    </div>`;
+    <div class="wait-dots"><div class="wait-dot"></div><div class="wait-dot"></div><div class="wait-dot"></div></div>`;
   document.getElementById('q-area').appendChild(remaining);
 }
 
@@ -746,10 +625,8 @@ function revealAnswers(correctIdx) {
 function showResults() {
   stopTimer();
   hideAll();
-  const rs = document.getElementById('result-screen');
-  rs.style.display = 'block';
+  document.getElementById('result-screen').style.display = 'block';
   window.scrollTo({top:0, behavior:'smooth'});
-
   document.getElementById('final-score').textContent = myScore;
   const sorted = Object.values(players).sort((a,b) => (b.score||0)-(a.score||0));
   const rank = sorted.findIndex(p => p.name === playerName) + 1;
@@ -768,33 +645,31 @@ function showResults() {
 }
 
 function backToMenu() {
-  // Firebase listenerek leállítása
+  stopTimer();
   if (roomRef) {
     roomRef.child('gameState').off();
     roomRef.child('players').off();
     roomRef.child('answers').off();
-    roomRef.child('players').child(playerId).child('score').off();
+    if (playerId) {
+      roomRef.child('players').child(playerId).child('status').off();
+      roomRef.child('players').child(playerId).child('score').off();
+      roomRef.child('players').child(playerId).remove();
+    }
   }
-  // Játékos eltávolítása az adatbázisból
-  if (db && roomRef) {
-    roomRef.child('players').child(playerId).remove();
-  }
-
-  // State reset
   hasAnswered = false; myScore = 0; currentQIndex = -1;
   players = {}; questions = []; answeredNamesThisRound = new Set();
   document.getElementById('my-score').textContent = '0';
   document.getElementById('my-rank').textContent = '#—';
-  stopTimer();
-
   showMenu();
 }
 
 function updatePlayersChips(answeredSet) {
   const container = document.getElementById('players-chips');
   if (!container) return;
-  container.innerHTML = Object.values(players).map(p => {
-    const isAnswered = answeredSet && answeredSet.has ? answeredSet.has(p.name) : false;
+  // Csak az active státuszú játékosokat mutatjuk
+  const activePlayers = Object.values(players).filter(p => p.status === 'active');
+  container.innerHTML = activePlayers.map(p => {
+    const isAnswered = answeredSet && answeredSet.has(p.name);
     return `<div class="p-chip${isAnswered ? ' answered' : ''}">
       <div class="p-chip-dot"></div>${p.name}
     </div>`;
@@ -805,24 +680,23 @@ function showScoreDelta(text, isCorrect = true) {
   const el = document.getElementById('score-delta');
   el.textContent = text;
   el.style.color = isCorrect ? 'var(--green)' : 'var(--red)';
-  el.style.textShadow = isCorrect
-    ? '0 0 40px rgba(62,207,142,0.5)'
-    : '0 0 40px rgba(224,90,90,0.5)';
+  el.style.textShadow = isCorrect ? '0 0 40px rgba(62,207,142,0.5)' : '0 0 40px rgba(224,90,90,0.5)';
   el.classList.remove('show');
   void el.offsetWidth;
   el.classList.add('show');
 }
 
 function updateRank() {
-  const sorted = Object.values(players).sort((a,b) => (b.score||0)-(a.score||0));
-  const rank = sorted.findIndex(p => p.name === playerName) + 1;
-  document.getElementById('my-rank').textContent = '#' + (rank || '—');
+  const activeSorted = Object.values(players)
+    .filter(p => p.status === 'active')
+    .sort((a,b) => (b.score||0)-(a.score||0));
+  const rank = activeSorted.findIndex(p => p.name === playerName) + 1;
+  document.getElementById('my-rank').textContent = '#' + (rank > 0 ? rank : '—');
 }
 
 function updateProgress(currentIdx) {
   const total = questions.length || 10;
-  const dots = document.getElementById('progress-dots');
-  dots.innerHTML = Array.from({length: total}, (_,i) => {
+  document.getElementById('progress-dots').innerHTML = Array.from({length: total}, (_,i) => {
     let cls = 'prog-dot';
     if (currentIdx !== undefined) {
       if (i < currentIdx) cls += ' done';
@@ -832,9 +706,7 @@ function updateProgress(currentIdx) {
   }).join('');
 }
 
-// ============================================================
-// TIMER
-// ============================================================
+// ── TIMER ─────────────────────────────────────────────────────
 function startPlayerTimer(seconds) {
   stopTimer();
   timerValue = seconds; totalTime = seconds;
@@ -845,9 +717,7 @@ function startPlayerTimer(seconds) {
     if (timerValue <= 0) { stopTimer(); if (!hasAnswered) submitAnswer(-1); }
   }, 1000);
 }
-
 function stopTimer() { clearInterval(timerInterval); }
-
 function updateTimerUI() {
   const pct = timerValue / totalTime;
   const offset = CIRCUMFERENCE * (1 - pct);
@@ -860,22 +730,17 @@ function updateTimerUI() {
   num.classList.toggle('urgent', urgent);
 }
 
-// ============================================================
-// PWA
-// ============================================================
+// ── PWA ───────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js')
-      .then(reg => console.log('[PWA] SW regisztrálva:', reg.scope))
-      .catch(err => console.warn('[PWA] SW hiba:', err));
+      .then(r => console.log('[PWA] SW:', r.scope))
+      .catch(e => console.warn('[PWA] SW hiba:', e));
   });
 }
-
 let deferredInstallPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredInstallPrompt = e;
-  showInstallBanner();
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredInstallPrompt = e; showInstallBanner();
 });
 function showInstallBanner() {
   const b = document.getElementById('install-banner');
@@ -889,8 +754,7 @@ async function installApp() {
   if (!deferredInstallPrompt) return;
   deferredInstallPrompt.prompt();
   await deferredInstallPrompt.userChoice;
-  deferredInstallPrompt = null;
-  hideBanner();
+  deferredInstallPrompt = null; hideBanner();
 }
 window.addEventListener('appinstalled', () => hideBanner());
 </script>
