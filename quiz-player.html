@@ -5,57 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>QuizMaster — Játékos</title>
 
-<!-- ═══════════════════════════════════════════════ -->
-<!-- PWA META TAGEK                                  -->
-<!-- ═══════════════════════════════════════════════ -->
-
-<!-- PWA Manifest -->
 <link rel="manifest" href="manifest.json">
-
-<!-- Téma szín (Android Chrome böngésző sávja) -->
 <meta name="theme-color" content="#f0c040">
 <meta name="background-color" content="#0a0a0f">
-
-<!-- iPhone / iPad (Safari) PWA beállítások -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="QuizMaster">
-
-<!-- iPhone ikonok (Apple nem olvassa a manifest-et, ezért külön kell) -->
 <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
 <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png">
 <link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
 <link rel="apple-touch-icon" sizes="96x96"   href="icons/icon-96.png">
 <link rel="apple-touch-icon" sizes="72x72"   href="icons/icon-72.png">
 <link rel="apple-touch-icon"                 href="icons/icon-192.png">
-
-<!-- Favicon böngészőhöz -->
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32"   href="icons/icon-96.png">
-
-<!-- SEO / Leírás -->
 <meta name="description" content="QuizMaster multiplayer kvíz játék — játékos alkalmazás">
 <meta name="mobile-web-app-capable" content="yes">
-
-<!-- ═══════════════════════════════════════════════ -->
 
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script>
-// ============================================================
-// 🔧 IDE ÍRD BE A FIREBASE ADATAIDAT (quiz-host.html-ből másold)
-// ============================================================
 const FIREBASE_CONFIG = {
   apiKey:        "AIzaSyDCGdJWQg98bgLKI9GfAnqysd1L3M-Y5ic",
   authDomain:    "kvizmester-50358.firebaseapp.com",
   databaseURL:   "https://kvizmester-50358-default-rtdb.europe-west1.firebasedatabase.app",
   projectId:     "kvizmester-50358",
 };
-// ============================================================
-// A szoba neve is beállítható alapértéknek (felülírható URL-ből)
 const DEFAULT_ROOM = "kvizjatek";
-// ============================================================
 
 if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   firebase.initializeApp(FIREBASE_CONFIG);
@@ -63,265 +40,387 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
 </script>
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1c1c28;
-    --border: #2a2a3d;
-    --accent: #f0c040;
-    --accent2: #e05a2b;
-    --green: #3ecf8e;
-    --red: #e05a5a;
-    --blue: #5a8fe0;
-    --text: #f0f0f8;
-    --muted: #6b6b8a;
-    --font-display: 'Bebas Neue', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
+    --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c28; --border: #2a2a3d;
+    --accent: #f0c040; --accent2: #e05a2b; --green: #3ecf8e; --red: #e05a5a;
+    --blue: #5a8fe0; --text: #f0f0f8; --muted: #6b6b8a;
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'DM Sans', sans-serif;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
-    background: var(--bg); color: var(--text); font-family: var(--font-body);
-    min-height: 100vh; min-height: 100dvh;
-    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-    padding: 20px; overflow-y: auto; overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
+    background:var(--bg); color:var(--text); font-family:var(--font-body);
+    min-height:100vh; min-height:100dvh;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    padding:20px; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
   }
 
-  /* JOIN SCREEN */
-  #join-screen { width: 100%; max-width: 400px; text-align: center; margin: auto; padding: 20px 0; }
-  .join-logo { font-family: var(--font-display); font-size: 56px; letter-spacing: 4px; color: var(--accent); margin-bottom: 4px; }
-  .join-sub { color: var(--muted); font-size: 12px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 40px; }
-  .join-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
-    padding: 32px 28px;
+  /* ═══════════════════════════════════════
+     FŐMENÜ
+  ═══════════════════════════════════════ */
+  #menu-screen {
+    display:flex; flex-direction:column; align-items:center;
+    width:100%; max-width:360px; margin:auto; padding:20px 0 40px;
+    animation:fadeIn 0.4s ease;
   }
-  .join-card h2 { font-family: var(--font-display); font-size: 24px; letter-spacing: 2px; color: var(--accent); margin-bottom: 24px; }
-  .join-field { margin-bottom: 16px; }
-  .join-field label { display: block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; text-align: left; }
-  .join-field input {
-    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 18px; color: var(--text); font-family: var(--font-body); font-size: 16px;
-    outline: none; transition: border-color 0.2s; text-align: center; font-weight: 600;
-  }
-  .join-field input:focus { border-color: var(--accent); }
-  .join-btn {
-    width: 100%; padding: 16px; background: var(--accent); color: #000; border: none;
-    border-radius: 10px; font-family: var(--font-display); font-size: 22px; letter-spacing: 2px;
-    cursor: pointer; transition: transform 0.1s, opacity 0.2s; margin-top: 8px;
-  }
-  .join-btn:active { transform: scale(0.97); }
-  .join-error { color: var(--red); font-size: 13px; margin-top: 12px; min-height: 20px; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
 
-  /* WAITING SCREEN */
+  .menu-logo {
+    font-family:var(--font-display); font-size:64px; letter-spacing:5px;
+    color:var(--accent); line-height:1; margin-bottom:4px;
+    text-shadow: 0 0 40px rgba(240,192,64,0.3);
+  }
+  .menu-sub {
+    color:var(--muted); font-size:11px; letter-spacing:4px;
+    text-transform:uppercase; margin-bottom:12px;
+  }
+
+  /* Névbekérő */
+  .menu-name-wrap { width:100%; margin-bottom:32px; }
+  .menu-name-label {
+    display:block; font-size:11px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--muted); margin-bottom:8px; text-align:center;
+  }
+  .menu-name-input {
+    width:100%; background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:14px 18px; color:var(--text);
+    font-family:var(--font-body); font-size:18px; font-weight:600;
+    outline:none; transition:border-color 0.2s; text-align:center;
+  }
+  .menu-name-input:focus { border-color:var(--accent); }
+
+  /* Fő gombok */
+  .menu-buttons { display:flex; flex-direction:column; gap:14px; width:100%; margin-bottom:16px; }
+  .menu-btn-primary {
+    width:100%; padding:20px; background:var(--accent); color:#000; border:none;
+    border-radius:14px; font-family:var(--font-display); font-size:28px;
+    letter-spacing:3px; cursor:pointer; transition:all 0.15s;
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    box-shadow: 0 4px 20px rgba(240,192,64,0.25);
+  }
+  .menu-btn-primary:active { transform:scale(0.97); opacity:0.9; }
+  .menu-btn-secondary {
+    width:100%; padding:18px; background:transparent; color:var(--text);
+    border:2px solid var(--border); border-radius:14px;
+    font-family:var(--font-display); font-size:24px; letter-spacing:2px;
+    cursor:pointer; transition:all 0.15s;
+    display:flex; align-items:center; justify-content:center; gap:12px;
+  }
+  .menu-btn-secondary:active { border-color:var(--accent); color:var(--accent); transform:scale(0.97); }
+
+  .menu-error {
+    color:var(--red); font-size:13px; text-align:center;
+    margin-top:8px; min-height:18px;
+  }
+
+  /* ═══════════════════════════════════════
+     ÚTMUTATÓ KÉPERNYŐ
+  ═══════════════════════════════════════ */
+  #guide-screen {
+    display:none; flex-direction:column; width:100%; max-width:400px;
+    margin:auto; padding:24px 0 48px; animation:fadeIn 0.3s ease;
+  }
+  .guide-back {
+    display:flex; align-items:center; gap:8px; color:var(--muted);
+    font-size:13px; font-weight:600; cursor:pointer; margin-bottom:28px;
+    background:none; border:none; padding:0;
+  }
+  .guide-back:active { color:var(--accent); }
+  .guide-title {
+    font-family:var(--font-display); font-size:42px; letter-spacing:3px;
+    color:var(--accent); margin-bottom:6px;
+  }
+  .guide-subtitle { font-size:12px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:28px; }
+
+  .guide-notice {
+    background:rgba(240,192,64,0.08); border:1px solid rgba(240,192,64,0.25);
+    border-radius:12px; padding:16px 18px; margin-bottom:24px;
+    font-size:14px; line-height:1.7; color:var(--text);
+  }
+  .guide-notice strong { color:var(--accent); }
+
+  .guide-section { margin-bottom:24px; }
+  .guide-section-title {
+    font-family:var(--font-display); font-size:18px; letter-spacing:2px;
+    color:var(--accent); margin-bottom:10px; display:flex; align-items:center; gap:8px;
+  }
+  .guide-section p { font-size:14px; color:var(--muted); line-height:1.75; }
+  .guide-section p + p { margin-top:8px; }
+
+  .guide-score-table { width:100%; margin-top:10px; border-collapse:collapse; }
+  .guide-score-table td {
+    padding:8px 12px; font-size:13px; border-bottom:1px solid var(--border);
+    vertical-align:middle;
+  }
+  .guide-score-table tr:last-child td { border-bottom:none; }
+  .guide-score-table td:first-child { color:var(--muted); }
+  .guide-score-table td:last-child { color:var(--text); font-weight:600; text-align:right; }
+  .score-pill {
+    display:inline-block; padding:3px 10px; border-radius:20px;
+    font-family:var(--font-display); font-size:16px;
+  }
+  .pill-green { background:rgba(62,207,142,0.15); color:var(--green); }
+  .pill-red   { background:rgba(224,90,90,0.15);  color:var(--red); }
+
+  .guide-divider { height:1px; background:var(--border); margin:6px 0 20px; }
+
+  /* ═══════════════════════════════════════
+     NEM ELÉRHETŐ KÉPERNYŐ
+  ═══════════════════════════════════════ */
+  #unavailable-screen {
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; width:100%; max-width:360px; margin:auto; padding:40px 0;
+    animation:fadeIn 0.4s ease;
+  }
+  .unavail-icon { font-size:72px; margin-bottom:20px; }
+  .unavail-title {
+    font-family:var(--font-display); font-size:32px; letter-spacing:3px;
+    color:var(--accent); margin-bottom:14px;
+  }
+  .unavail-text { font-size:15px; color:var(--muted); line-height:1.75; margin-bottom:36px; }
+  .unavail-btn {
+    padding:14px 36px; background:transparent; color:var(--accent);
+    border:2px solid var(--accent); border-radius:12px;
+    font-family:var(--font-display); font-size:20px; letter-spacing:2px;
+    cursor:pointer; transition:all 0.2s; margin-bottom:14px; width:100%;
+  }
+  .unavail-btn:active { background:var(--accent); color:#000; }
+  .unavail-back {
+    background:none; border:none; color:var(--muted); font-size:13px;
+    font-weight:600; cursor:pointer; padding:8px;
+  }
+  .unavail-back:active { color:var(--text); }
+
+  /* ═══════════════════════════════════════
+     VÁRAKOZÓ KÉPERNYŐ
+  ═══════════════════════════════════════ */
   #waiting-screen {
-    display: none; width: 100%; max-width: 400px; text-align: center; margin: auto; padding: 40px 0;
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    width:100%; max-width:400px; text-align:center; margin:auto; padding:40px 0;
+    animation:fadeIn 0.4s ease;
   }
   .waiting-avatar {
-    width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-display); font-size: 40px; border: 3px solid;
+    width:80px; height:80px; border-radius:50%; margin:0 auto 20px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-size:40px; border:3px solid;
   }
-  .waiting-player-name { font-family: var(--font-display); font-size: 36px; letter-spacing: 2px; margin-bottom: 8px; }
-  .waiting-room { font-size: 12px; color: var(--muted); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 40px; }
-  .waiting-room span { color: var(--accent); }
-  .waiting-dots { display: flex; gap: 8px; justify-content: center; }
-  .dot {
-    width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
-    animation: bounce 1.2s infinite;
-  }
-  .dot:nth-child(2) { animation-delay: 0.2s; }
-  .dot:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes bounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
-  .waiting-msg { color: var(--muted); font-size: 13px; letter-spacing: 1px; margin-top: 16px; }
+  .waiting-player-name { font-family:var(--font-display); font-size:36px; letter-spacing:2px; margin-bottom:8px; }
+  .waiting-room { font-size:12px; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-bottom:40px; }
+  .waiting-room span { color:var(--accent); }
+  .waiting-dots { display:flex; gap:8px; justify-content:center; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--accent); animation:bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay:0.2s; }
+  .dot:nth-child(3) { animation-delay:0.4s; }
+  @keyframes bounce { 0%,80%,100%{transform:scale(0.6);opacity:0.4} 40%{transform:scale(1);opacity:1} }
+  .waiting-msg { color:var(--muted); font-size:13px; letter-spacing:1px; margin-top:16px; }
 
-  /* GAME SCREEN */
+  /* ═══════════════════════════════════════
+     JÁTÉK KÉPERNYŐ
+  ═══════════════════════════════════════ */
   #game-screen {
-    display: none; width: 100%; max-width: 420px;
-    min-height: 100vh; min-height: 100dvh;
-    flex-direction: column;
+    display:none; width:100%; max-width:420px;
+    min-height:100vh; min-height:100dvh; flex-direction:column;
   }
-
-  /* Top bar */
-  .game-topbar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 0 12px;
-  }
-  .my-score-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
-  .my-score-val { font-family: var(--font-display); font-size: 36px; color: var(--accent); line-height: 1; }
-  .my-rank { text-align: right; }
-  .my-rank-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
-  .my-rank-val { font-family: var(--font-display); font-size: 36px; color: var(--text); line-height: 1; }
-
-  /* Timer ring */
-  .timer-ring-wrap { text-align: center; position: relative; width: 64px; margin: 0 auto; }
-  .timer-ring { transform: rotate(-90deg); }
-  .timer-ring-bg { fill: none; stroke: var(--border); stroke-width: 4; }
-  .timer-ring-fill { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.5s; }
-  .timer-ring-fill.urgent { stroke: var(--red); }
-  .timer-ring-num {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-    font-family: var(--font-display); font-size: 22px; color: var(--accent);
-  }
-  .timer-ring-num.urgent { color: var(--red); }
-
-  /* Question area */
-  .q-area { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 8px 0 16px; }
-  .q-cat { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; text-align: center; }
-  .q-text-player {
-    font-family: var(--font-display); font-size: 28px; letter-spacing: 0.5px; line-height: 1.2;
-    text-align: center; margin-bottom: 28px;
-  }
-
-  /* Answer buttons */
-  .answers-player { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .game-topbar { display:flex; align-items:center; justify-content:space-between; padding:16px 0 12px; }
+  .my-score-label { font-size:11px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+  .my-score-val { font-family:var(--font-display); font-size:36px; color:var(--accent); line-height:1; }
+  .my-rank { text-align:right; }
+  .my-rank-label { font-size:11px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+  .my-rank-val { font-family:var(--font-display); font-size:36px; color:var(--text); line-height:1; }
+  .timer-ring-wrap { text-align:center; position:relative; width:64px; margin:0 auto; }
+  .timer-ring { transform:rotate(-90deg); }
+  .timer-ring-bg { fill:none; stroke:var(--border); stroke-width:4; }
+  .timer-ring-fill { fill:none; stroke:var(--accent); stroke-width:4; stroke-linecap:round; transition:stroke-dashoffset 1s linear,stroke 0.5s; }
+  .timer-ring-fill.urgent { stroke:var(--red); }
+  .timer-ring-num { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:var(--font-display); font-size:22px; color:var(--accent); }
+  .timer-ring-num.urgent { color:var(--red); }
+  .q-area { flex:1; display:flex; flex-direction:column; justify-content:center; padding:8px 0 16px; }
+  .q-cat { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; text-align:center; }
+  .q-text-player { font-family:var(--font-display); font-size:28px; letter-spacing:0.5px; line-height:1.2; text-align:center; margin-bottom:28px; }
+  .answers-player { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .ans-btn {
-    background: var(--surface2); border: 2px solid var(--border); border-radius: 14px;
-    padding: 16px 12px; cursor: pointer; transition: all 0.15s;
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-    min-height: 80px; justify-content: center;
-    -webkit-user-select: none; user-select: none;
+    background:var(--surface2); border:2px solid var(--border); border-radius:14px;
+    padding:16px 12px; cursor:pointer; transition:all 0.15s;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    min-height:80px; justify-content:center; -webkit-user-select:none; user-select:none;
   }
-  .ans-btn:active { transform: scale(0.95); }
-  .ans-btn.selected { border-color: var(--accent); background: rgba(240,192,64,0.12); }
-  .ans-btn.correct { border-color: var(--green); background: rgba(62,207,142,0.15); animation: correctPulse 0.5s ease; }
-  .ans-btn.wrong { border-color: var(--red); background: rgba(224,90,90,0.1); opacity: 0.6; }
-  .ans-btn.correct-highlight { border-color: var(--green); background: rgba(62,207,142,0.15); }
-  .ans-btn.disabled { pointer-events: none; }
-  @keyframes correctPulse {
-    0% { transform: scale(1); } 30% { transform: scale(1.04); } 60% { transform: scale(0.98); } 100% { transform: scale(1); }
-  }
-  .ans-letter {
-    width: 32px; height: 32px; border-radius: 8px; background: var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-display); font-size: 18px;
-  }
-  .ans-btn.selected .ans-letter { background: var(--accent); color: #000; }
-  .ans-btn.correct .ans-letter { background: var(--green); color: #000; }
-  .ans-text { font-size: 13px; text-align: center; line-height: 1.3; font-weight: 600; color: #ffffff; }
+  .ans-btn:active { transform:scale(0.95); }
+  .ans-btn.selected { border-color:var(--accent); background:rgba(240,192,64,0.12); }
+  .ans-btn.correct { border-color:var(--green); background:rgba(62,207,142,0.15); animation:correctPulse 0.5s ease; }
+  .ans-btn.wrong { border-color:var(--red); background:rgba(224,90,90,0.1); opacity:0.6; }
+  .ans-btn.correct-highlight { border-color:var(--green); background:rgba(62,207,142,0.15); }
+  .ans-btn.disabled { pointer-events:none; }
+  @keyframes correctPulse { 0%{transform:scale(1)} 30%{transform:scale(1.04)} 60%{transform:scale(0.98)} 100%{transform:scale(1)} }
+  .ans-letter { width:32px; height:32px; border-radius:8px; background:var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:18px; }
+  .ans-btn.selected .ans-letter { background:var(--accent); color:#000; }
+  .ans-btn.correct .ans-letter { background:var(--green); color:#000; }
+  .ans-text { font-size:13px; text-align:center; line-height:1.3; font-weight:600; color:#ffffff; }
+  .score-delta-overlay { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-family:var(--font-display); font-size:72px; color:var(--green); pointer-events:none; z-index:100; opacity:0; text-shadow:0 0 40px rgba(62,207,142,0.5); }
+  .score-delta-overlay.show { animation:scoreFloat 1.5s ease forwards; }
+  @keyframes scoreFloat { 0%{opacity:1;transform:translate(-50%,-50%) scale(0.5)} 30%{opacity:1;transform:translate(-50%,-60%) scale(1.1)} 100%{opacity:0;transform:translate(-50%,-90%) scale(0.9)} }
+  .wait-reveal { display:flex; flex-direction:column; align-items:center; padding:20px 0; color:var(--muted); font-size:13px; letter-spacing:1px; }
+  .wait-dots { display:flex; gap:6px; margin-top:12px; }
+  .wait-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); animation:bounce 1.2s infinite; }
+  .wait-dot:nth-child(2) { animation-delay:0.15s; }
+  .wait-dot:nth-child(3) { animation-delay:0.3s; }
+  .progress-dots { display:flex; gap:4px; justify-content:center; padding:8px 0 4px; }
+  .prog-dot { width:6px; height:6px; border-radius:50%; background:var(--border); transition:all 0.3s; }
+  .prog-dot.done { background:var(--muted); }
+  .prog-dot.current { background:var(--accent); width:18px; border-radius:3px; }
+  .players-panel { padding:8px 0 4px; }
+  .players-panel-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; text-align:center; }
+  .players-chips { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+  .p-chip { display:flex; align-items:center; gap:5px; background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:4px 10px; font-size:11px; font-weight:500; transition:all 0.3s; }
+  .p-chip.answered { border-color:var(--green); background:rgba(62,207,142,0.1); }
+  .p-chip-dot { width:7px; height:7px; border-radius:50%; background:var(--border); flex-shrink:0; }
+  .p-chip.answered .p-chip-dot { background:var(--green); }
+  .btn-back-game { width:100%; padding:10px; background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:10px; font-size:12px; letter-spacing:1px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+  .btn-back-game:active { border-color:var(--accent); color:var(--accent); }
 
-  /* Answered state */
-  .answered-overlay {
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 32px;
-  }
-  .answered-icon { font-size: 56px; margin-bottom: 16px; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-  @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-  .answered-title { font-family: var(--font-display); font-size: 36px; letter-spacing: 2px; margin-bottom: 8px; }
-  .answered-sub { font-size: 14px; color: var(--muted); }
+  /* ═══════════════════════════════════════
+     EREDMÉNY KÉPERNYŐ
+  ═══════════════════════════════════════ */
+  #result-screen { display:none; width:100%; max-width:420px; text-align:center; padding:24px 0 48px; margin:0 auto; }
+  .result-trophy { font-size:80px; margin-bottom:16px; }
+  .result-title { font-family:var(--font-display); font-size:52px; letter-spacing:3px; color:var(--accent); margin-bottom:8px; }
+  .result-score { font-family:var(--font-display); font-size:80px; color:var(--text); line-height:1; }
+  .result-pts { font-size:14px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:24px; }
+  .result-rank { font-size:16px; color:var(--muted); margin-bottom:28px; }
+  .result-rank strong { color:var(--accent); font-size:24px; }
+  .result-scoreboard { width:100%; text-align:left; margin-bottom:24px; }
+  .result-scoreboard h4 { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-align:center; margin-bottom:12px; }
+  .rsb-row { display:flex; align-items:center; gap:12px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 14px; margin-bottom:6px; }
+  .rsb-row.me { border-color:var(--accent); background:rgba(240,192,64,0.08); }
+  .rsb-rank { font-family:var(--font-display); font-size:22px; width:28px; text-align:center; color:var(--muted); flex-shrink:0; }
+  .rsb-row.me .rsb-rank { color:var(--accent); }
+  .rsb-name { flex:1; font-size:13px; font-weight:600; }
+  .rsb-pts { font-family:var(--font-display); font-size:22px; color:var(--accent); }
+  .btn-lobby { width:100%; padding:15px; background:transparent; color:var(--accent); border:2px solid var(--accent); border-radius:12px; font-family:var(--font-display); font-size:20px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; margin-bottom:8px; }
+  .btn-lobby:active { background:var(--accent); color:#000; }
 
-  /* Score delta animation */
-  .score-delta-overlay {
-    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    font-family: var(--font-display); font-size: 72px; color: var(--green);
-    pointer-events: none; z-index: 100; opacity: 0;
-    text-shadow: 0 0 40px rgba(62,207,142,0.5);
-  }
-  .score-delta-overlay.show { animation: scoreFloat 1.5s ease forwards; }
-  @keyframes scoreFloat {
-    0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
-    30% { opacity: 1; transform: translate(-50%, -60%) scale(1.1); }
-    100% { opacity: 0; transform: translate(-50%, -90%) scale(0.9); }
-  }
+  .hidden { display:none !important; }
 
-  /* Waiting for reveal */
-  .wait-reveal {
-    display: flex; flex-direction: column; align-items: center; padding: 20px 0;
-    color: var(--muted); font-size: 13px; letter-spacing: 1px;
+  @keyframes slideUpBanner {
+    from{opacity:0;transform:translateX(-50%) translateY(20px)}
+    to{opacity:1;transform:translateX(-50%) translateY(0)}
   }
-  .wait-dots { display: flex; gap: 6px; margin-top: 12px; }
-  .wait-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); animation: bounce 1.2s infinite; }
-  .wait-dot:nth-child(2) { animation-delay: 0.15s; }
-  .wait-dot:nth-child(3) { animation-delay: 0.3s; }
-
-  /* Progress dots */
-  .progress-dots { display: flex; gap: 4px; justify-content: center; padding: 8px 0 4px; }
-  .prog-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
-  .prog-dot.done { background: var(--muted); }
-  .prog-dot.current { background: var(--accent); width: 18px; border-radius: 3px; }
-
-  /* Players panel during game */
-  .players-panel {
-    padding: 8px 0 4px;
-  }
-  .players-panel-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; text-align: center; }
-  .players-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-  .p-chip {
-    display: flex; align-items: center; gap: 5px;
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 20px;
-    padding: 4px 10px; font-size: 11px; font-weight: 500; transition: all 0.3s;
-  }
-  .p-chip.answered { border-color: var(--green); background: rgba(62,207,142,0.1); }
-  .p-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
-  .p-chip.answered .p-chip-dot { background: var(--green); }
-
-  /* RESULT screen */
-  #result-screen {
-    display: none; width: 100%; max-width: 420px; text-align: center;
-    padding: 24px 0 48px; margin: 0 auto;
-  }
-  .result-trophy { font-size: 80px; margin-bottom: 16px; }
-  .result-title { font-family: var(--font-display); font-size: 52px; letter-spacing: 3px; color: var(--accent); margin-bottom: 8px; }
-  .result-score { font-family: var(--font-display); font-size: 80px; color: var(--text); line-height: 1; }
-  .result-pts { font-size: 14px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px; }
-  .result-rank { font-size: 16px; color: var(--muted); margin-bottom: 28px; }
-  .result-rank strong { color: var(--accent); font-size: 24px; }
-
-  /* Player scoreboard on result screen */
-  .result-scoreboard { width: 100%; text-align: left; margin-bottom: 24px; }
-  .result-scoreboard h4 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 12px; }
-  .rsb-row {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
-    padding: 10px 14px; margin-bottom: 6px;
-  }
-  .rsb-row.me { border-color: var(--accent); background: rgba(240,192,64,0.08); }
-  .rsb-rank { font-family: var(--font-display); font-size: 22px; width: 28px; text-align: center; color: var(--muted); flex-shrink: 0; }
-  .rsb-row.me .rsb-rank { color: var(--accent); }
-  .rsb-name { flex: 1; font-size: 13px; font-weight: 600; }
-  .rsb-pts { font-family: var(--font-display); font-size: 22px; color: var(--accent); }
-
-  /* In-game back button */
-  .btn-back-game {
-    width: 100%; padding: 10px; background: transparent; color: var(--muted);
-    border: 1px solid var(--border); border-radius: 10px;
-    font-size: 12px; letter-spacing: 1px; font-weight: 600;
-    cursor: pointer; transition: all 0.2s;
-  }
-  .btn-back-game:active { border-color: var(--accent); color: var(--accent); }
-
-  /* Back to lobby button */
-  .btn-lobby {
-    width: 100%; padding: 15px; background: transparent; color: var(--accent);
-    border: 2px solid var(--accent); border-radius: 12px;
-    font-family: var(--font-display); font-size: 20px; letter-spacing: 2px;
-    cursor: pointer; transition: all 0.2s; margin-bottom: 8px;
-  }
-  .btn-lobby:active { background: var(--accent); color: #000; }
-
-  .hidden { display: none !important; }
 </style>
 </head>
 <body>
 
-<!-- JOIN -->
-<div id="join-screen">
-  <div class="join-logo">QUIZ</div>
-  <div class="join-sub">Multiplayer Kvíz</div>
-  <div class="join-card">
-    <h2>CSATLAKOZÁS</h2>
-    <div class="join-field">
-      <label>Szoba neve</label>
-      <input type="text" id="room-input" placeholder="kvizjatek" autocomplete="off" autocapitalize="none">
-    </div>
-    <div class="join-field">
-      <label>Neved</label>
-      <input type="text" id="name-input" placeholder="pl. Anna" maxlength="20" autocomplete="off">
-    </div>
-    <button class="join-btn" onclick="joinGame()">BELÉPÉS →</button>
-    <div class="join-error" id="join-error"></div>
+<!-- ═══════════════════════════════════════ -->
+<!-- FŐMENÜ                                  -->
+<!-- ═══════════════════════════════════════ -->
+<div id="menu-screen">
+  <div class="menu-logo">QUIZ</div>
+  <div class="menu-sub">Multiplayer Kvíz Játék</div>
+
+  <div class="menu-name-wrap">
+    <label class="menu-name-label">A neved</label>
+    <input type="text" class="menu-name-input" id="menu-name-input"
+      placeholder="pl. Anna" maxlength="20" autocomplete="off"
+      onkeydown="if(event.key==='Enter')startGame()">
   </div>
+
+  <div class="menu-buttons">
+    <button class="menu-btn-primary" onclick="startGame()">
+      🎮 ÚJ JÁTÉK
+    </button>
+    <button class="menu-btn-secondary" onclick="showGuide()">
+      📖 ÚTMUTATÓ
+    </button>
+  </div>
+
+  <div class="menu-error" id="menu-error"></div>
 </div>
 
-<!-- WAITING -->
+<!-- ═══════════════════════════════════════ -->
+<!-- ÚTMUTATÓ                                -->
+<!-- ═══════════════════════════════════════ -->
+<div id="guide-screen">
+  <button class="guide-back" onclick="showMenu()">← Vissza</button>
+
+  <div class="guide-title">ÚTMUTATÓ</div>
+  <div class="guide-subtitle">Hogyan működik a QuizMaster?</div>
+
+  <div class="guide-notice">
+    Ezt a játékot azért hoztam létre, hogy <strong>többen együtt tudjunk játszani.</strong>
+    Ezért jelenleg csak úgy működik, ha én <strong>manuálisan elindítom.</strong>
+    Ha a játék nem elérhető, gyere vissza később! 🙂
+  </div>
+
+  <div class="guide-divider"></div>
+
+  <div class="guide-section">
+    <div class="guide-section-title">🎯 A játék lényege</div>
+    <p>A QuizMaster egy <strong style="color:var(--text)">valós idejű multiplayer kvíz,</strong> ahol egyszerre akár 10 játékos verseng egymással. A host (én) feltesz egy kérdést, ti pedig 4 lehetőség közül választjátok ki a szerintetek helyes választ.</p>
+    <p>A kérdések különböző témakörökből érkeznek: Bibliai, Filmek, Történelem, Földrajz, Tudomány és még sok más.</p>
+  </div>
+
+  <div class="guide-section">
+    <div class="guide-section-title">📋 Játékmenet</div>
+    <p><strong style="color:var(--text)">1.</strong> Megjelenik a kérdés és 4 válaszlehetőség — koppints a szerinted helyes válaszra.</p>
+    <p><strong style="color:var(--text)">2.</strong> Minden kérdésnek van visszaszámlálója — ha lejár az idő, nem kapsz pontot.</p>
+    <p><strong style="color:var(--text)">3.</strong> A kérdés után a host felfedi a helyes választ, majd jön a következő kérdés.</p>
+    <p><strong style="color:var(--text)">4.</strong> A játék végén megjelenik a ranglista.</p>
+  </div>
+
+  <div class="guide-section">
+    <div class="guide-section-title">🏆 Pontozás</div>
+    <p>Minél gyorsabban válaszolsz helyesen, annál több pontot kapsz!</p>
+    <table class="guide-score-table">
+      <tr>
+        <td>Helyes válasz — 1. válaszoló</td>
+        <td><span class="score-pill pill-green">5 pont</span></td>
+      </tr>
+      <tr>
+        <td>Helyes válasz — 2. válaszoló</td>
+        <td><span class="score-pill pill-green">4 pont</span></td>
+      </tr>
+      <tr>
+        <td>Helyes válasz — 3. válaszoló</td>
+        <td><span class="score-pill pill-green">3 pont</span></td>
+      </tr>
+      <tr>
+        <td>Helyes válasz — 4.+ válaszoló</td>
+        <td><span class="score-pill pill-green">2 pont</span></td>
+      </tr>
+      <tr>
+        <td>Helytelen válasz</td>
+        <td><span class="score-pill pill-red">1 pont</span></td>
+      </tr>
+      <tr>
+        <td>Nem válaszoltál (lejárt az idő)</td>
+        <td><span class="score-pill pill-red">0 pont</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="guide-section">
+    <div class="guide-section-title">💡 Tipp</div>
+    <p>Ha az appot <strong style="color:var(--text)">telepíted a főképernyődre,</strong> sokkal gyorsabban tudod megnyitni és böngésző nélkül, teljes képernyőn fut!</p>
+    <p>Android: a böngésző alján megjelenik a telepítési ajánlat. iPhone: Safari → Megosztás → Főképernyőhöz adás.</p>
+  </div>
+
+  <button class="menu-btn-primary" onclick="showMenu()" style="margin-top:8px;">
+    ← VISSZA A FŐMENÜBE
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- NEM ELÉRHETŐ                            -->
+<!-- ═══════════════════════════════════════ -->
+<div id="unavailable-screen">
+  <div class="unavail-icon">🎮</div>
+  <div class="unavail-title">JÁTÉK NEM ELÉRHETŐ</div>
+  <div class="unavail-text">
+    Jelenleg a játék nem elérhető,<br>kérjük gyere vissza később.
+  </div>
+  <button class="unavail-btn" onclick="startGame()">↺ ÚJRAPRÓBÁLÁS</button>
+  <button class="unavail-back" onclick="showMenu()">← Vissza a főmenübe</button>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- VÁRAKOZÁS                               -->
+<!-- ═══════════════════════════════════════ -->
 <div id="waiting-screen">
   <div class="waiting-avatar" id="w-avatar">A</div>
   <div class="waiting-player-name" id="w-name">—</div>
@@ -329,10 +428,12 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div class="waiting-dots">
     <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
-  <div class="waiting-msg">Várakozás a játék kezdésére...</div>
+  <div class="waiting-msg" id="waiting-msg">Várakozás a játék kezdésére...</div>
 </div>
 
-<!-- GAME -->
+<!-- ═══════════════════════════════════════ -->
+<!-- JÁTÉK                                   -->
+<!-- ═══════════════════════════════════════ -->
 <div id="game-screen">
   <div class="game-topbar">
     <div>
@@ -352,26 +453,24 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
       <div class="my-rank-val" id="my-rank">#—</div>
     </div>
   </div>
-
   <div class="progress-dots" id="progress-dots"></div>
-
   <div class="players-panel" id="players-panel">
     <div class="players-panel-title">JÁTÉKOSOK</div>
     <div class="players-chips" id="players-chips"></div>
   </div>
-
   <div class="q-area" id="q-area">
     <div class="q-cat" id="q-cat-player">—</div>
     <div class="q-text-player" id="q-text-player">Felkészülés...</div>
     <div class="answers-player" id="answers-player"></div>
   </div>
-
-  <div style="padding: 8px 0 4px;">
-    <button class="btn-back-game" onclick="backToLobby()">↺ Főmenü</button>
+  <div style="padding:8px 0 4px;">
+    <button class="btn-back-game" onclick="backToMenu()">↺ Főmenü</button>
   </div>
 </div>
 
-<!-- RESULTS -->
+<!-- ═══════════════════════════════════════ -->
+<!-- EREDMÉNY                                -->
+<!-- ═══════════════════════════════════════ -->
 <div id="result-screen">
   <div class="result-trophy" id="result-emoji">🏆</div>
   <div class="result-title">VÉGE!</div>
@@ -379,10 +478,26 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div class="result-pts">pont</div>
   <div class="result-rank" id="final-rank">Végső helyezés: <strong>#1</strong></div>
   <div class="result-scoreboard" id="result-scoreboard"></div>
-  <button class="btn-lobby" onclick="backToLobby()">↺ FŐMENÜBE VISSZA</button>
+  <button class="btn-lobby" onclick="backToMenu()">↺ FŐMENÜBE VISSZA</button>
 </div>
 
 <div class="score-delta-overlay" id="score-delta"></div>
+
+<!-- PWA TELEPÍTÉSI BANNER -->
+<div id="install-banner" style="
+  display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  background:#1c1c28; border:1px solid #f0c040; border-radius:16px; padding:14px 18px;
+  align-items:center; gap:14px; z-index:9999;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5); max-width:340px; width:calc(100% - 40px);
+  animation:slideUpBanner 0.4s ease;">
+  <img src="icons/icon-72.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0;" alt="">
+  <div style="flex:1;min-width:0;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:#f0c040;">TELEPÍTÉS</div>
+    <div style="font-size:12px;color:#6b6b8a;line-height:1.4;">Tedd a főképernyőre az appot!</div>
+  </div>
+  <button onclick="installApp()" style="background:#f0c040;color:#000;border:none;border-radius:10px;padding:9px 16px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;cursor:pointer;flex-shrink:0;">IGEN</button>
+  <button onclick="hideBanner()" style="background:transparent;color:#6b6b8a;border:none;font-size:20px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;">✕</button>
+</div>
 
 <script>
 // ============================================================
@@ -397,56 +512,102 @@ const LETTERS = ['A','B','C','D'];
 const COLORS = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f','#5ae0d4','#e0c05a'];
 const CIRCUMFERENCE = 175.9;
 
-// Parse URL params
 function getParam(name) {
   return new URLSearchParams(window.location.search).get(name);
 }
 
-// Auto-fill room from URL or default
+// Induláskor töltsük be az elmentett nevet
 window.addEventListener('load', () => {
-  const room = getParam('room') || (typeof DEFAULT_ROOM !== 'undefined' ? DEFAULT_ROOM : '');
-  if (room) document.getElementById('room-input').value = room;
   const saved = localStorage.getItem('quizPlayerName');
-  if (saved) document.getElementById('name-input').value = saved;
+  if (saved) document.getElementById('menu-name-input').value = saved;
 });
 
 // ============================================================
-// JOIN
+// KÉPERNYŐ NAVIGÁCIÓ
 // ============================================================
-async function joinGame() {
-  const room = document.getElementById('room-input').value.trim();
-  const name = document.getElementById('name-input').value.trim();
-  const err = document.getElementById('join-error');
+function hideAll() {
+  ['menu-screen','guide-screen','unavailable-screen','waiting-screen','game-screen','result-screen']
+    .forEach(id => document.getElementById(id).style.display = 'none');
+}
+
+function showMenu() {
+  hideAll();
+  document.getElementById('menu-screen').style.display = 'flex';
+  document.getElementById('menu-screen').style.flexDirection = 'column';
+  document.getElementById('menu-screen').style.alignItems = 'center';
+  document.getElementById('menu-error').textContent = '';
+}
+
+function showGuide() {
+  hideAll();
+  document.getElementById('guide-screen').style.display = 'flex';
+  window.scrollTo({top:0});
+}
+
+function showUnavailable() {
+  hideAll();
+  document.getElementById('unavailable-screen').style.display = 'flex';
+}
+
+function showWaiting() {
+  hideAll();
+  const ws = document.getElementById('waiting-screen');
+  ws.style.display = 'flex';
+  document.getElementById('w-avatar').textContent = playerName[0].toUpperCase();
+  document.getElementById('w-avatar').style.background = myColor + '22';
+  document.getElementById('w-avatar').style.borderColor = myColor;
+  document.getElementById('w-avatar').style.color = myColor;
+  document.getElementById('w-name').textContent = playerName;
+  document.getElementById('w-room').textContent = roomCode;
+}
+
+// ============================================================
+// ÚJ JÁTÉK — gomb megnyomása
+// ============================================================
+async function startGame() {
+  const name = document.getElementById('menu-name-input').value.trim();
+  const err = document.getElementById('menu-error');
   err.textContent = '';
 
-  if (!room) { err.textContent = 'Add meg a szoba nevét!'; return; }
-  if (!name || name.length < 2) { err.textContent = 'Adj meg legalább 2 karakteres nevet!'; return; }
+  if (!name || name.length < 2) {
+    err.textContent = 'Adj meg legalább 2 karakteres nevet!';
+    document.getElementById('menu-name-input').focus();
+    return;
+  }
 
-  roomCode = room;
   playerName = name;
+  roomCode = getParam('room') || (typeof DEFAULT_ROOM !== 'undefined' ? DEFAULT_ROOM : 'kvizjatek');
   playerId = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
   myColor = COLORS[Math.floor(Math.random() * COLORS.length)];
   localStorage.setItem('quizPlayerName', name);
 
+  err.textContent = 'Kapcsolódás...';
+
   try {
     if (!firebase.apps.length) {
-      err.textContent = 'Firebase nincs beállítva! Töltsd ki a FIREBASE_CONFIG részt a player fájlban.';
+      err.textContent = 'Firebase nincs beállítva!';
       return;
     }
+
     db = firebase.database();
     roomRef = db.ref('rooms/' + roomCode);
 
-    // Check room exists - ellenőrizzük hogy a host már beállította-e a szobát
-    // Ha gameState nincs, megpróbálunk csatlakozni és várunk
+    // Ellenőrizzük: a Host be van-e jelentkezve (gameState létezik-e)
     const snap = await roomRef.child('gameState').once('value');
-    // Nem blokkoljuk a belépést ha nincs gameState - lehet hogy a host még tölt
+    const gameState = snap.val();
 
-    // Register player
+    if (!gameState) {
+      // Host nincs online
+      showUnavailable();
+      return;
+    }
+
+    // Regisztráljuk a játékost
     await roomRef.child('players').child(playerId).set({
-      name: playerName, score: 0, color: myColor, joinedAt: firebase.database.ServerValue.TIMESTAMP
+      name: playerName, score: 0, color: myColor,
+      joinedAt: firebase.database.ServerValue.TIMESTAMP
     });
 
-    // Handle disconnect
     roomRef.child('players').child(playerId).onDisconnect().remove();
 
     showWaiting();
@@ -457,35 +618,17 @@ async function joinGame() {
   }
 }
 
-function initDemoMode(room, name) {
-  // Demo without firebase config
-  playerName = name;
-  myColor = COLORS[0];
-  showWaiting();
-  setTimeout(() => {
-    // Simulate game start after 2s
-    const demoQ = {
-      text: 'Ez egy demo kérdés — Firebase nélkül!',
-      options: ['A válasz','B válasz','C válasz','D válasz'],
-      category: 'Demo', time: 30, questionIndex: 0
-    };
-    showQuestion(demoQ, 0);
-  }, 2000);
-}
-
 // ============================================================
-// LISTENERS
+// FIREBASE LISTENERS
 // ============================================================
 function setupGameListeners() {
-  // Game state changes
   roomRef.child('gameState').on('value', snap => {
     const state = snap.val();
     if (!state) return;
 
     if (state.phase === 'waiting') {
-      // New game started by host - if we're on result screen, stay on waiting
       if (document.getElementById('result-screen').style.display !== 'none') {
-        backToLobby();
+        backToMenu();
       }
     } else if (state.phase === 'question' && state.questionIndex !== currentQIndex) {
       currentQIndex = state.questionIndex;
@@ -499,25 +642,23 @@ function setupGameListeners() {
     }
   });
 
-  // Score updates
   roomRef.child('players').child(playerId).child('score').on('value', snap => {
     const newScore = snap.val() || 0;
     if (newScore > myScore) {
       const diff = newScore - myScore;
-      showScoreDelta('+' + diff);
+      // diff=1 → helytelen válasz (piros), diff>1 → helyes (zöld)
+      showScoreDelta('+' + diff, diff > 1);
     }
     myScore = newScore;
     document.getElementById('my-score').textContent = myScore;
   });
 
-  // Ranking + player chips
   roomRef.child('players').on('value', snap => {
     players = snap.val() || {};
     updateRank();
     updatePlayersChips(answeredNamesThisRound);
   });
 
-  // Track answers for player chips
   roomRef.child('answers').on('child_added', snap => {
     const ans = snap.val();
     if (ans && ans.playerName) {
@@ -526,14 +667,12 @@ function setupGameListeners() {
     }
   });
   roomRef.child('answers').on('value', snap => {
-    // Reset when answers node is cleared (new question)
     if (!snap.val()) {
       answeredNamesThisRound = new Set();
       updatePlayersChips(answeredNamesThisRound);
     }
   });
 
-  // Questions for progress
   roomRef.child('questions').once('value', snap => {
     questions = Object.values(snap.val() || {});
     updateProgress();
@@ -541,30 +680,16 @@ function setupGameListeners() {
 }
 
 // ============================================================
-// UI
+// UI FÜGGVÉNYEK
 // ============================================================
-function showWaiting() {
-  document.getElementById('join-screen').style.display = 'none';
-  const ws = document.getElementById('waiting-screen');
-  ws.style.display = 'block';
-  document.getElementById('w-avatar').textContent = playerName[0].toUpperCase();
-  document.getElementById('w-avatar').style.background = myColor + '22';
-  document.getElementById('w-avatar').style.borderColor = myColor;
-  document.getElementById('w-avatar').style.color = myColor;
-  document.getElementById('w-name').textContent = playerName;
-  document.getElementById('w-room').textContent = roomCode;
-}
-
 function showQuestion(q, idx) {
-  document.getElementById('waiting-screen').style.display = 'none';
-  document.getElementById('result-screen').style.display = 'none';
+  hideAll();
   const gs = document.getElementById('game-screen');
   gs.style.display = 'flex';
 
   document.getElementById('q-cat-player').textContent = q.category || '';
   document.getElementById('q-text-player').textContent = q.text;
 
-  // Answers
   const container = document.getElementById('answers-player');
   container.innerHTML = q.options.map((opt, i) => `
     <button class="ans-btn" id="abtn-${i}" onclick="submitAnswer(${i})">
@@ -583,13 +708,11 @@ function submitAnswer(idx) {
   if (hasAnswered) return;
   hasAnswered = true;
 
-  // Visual feedback
   document.querySelectorAll('.ans-btn').forEach((btn, i) => {
     btn.classList.add('disabled');
     if (i === idx) btn.classList.add('selected');
   });
 
-  // Save to Firebase
   if (db && roomRef) {
     roomRef.child('answers').child(playerId).set({
       answer: idx,
@@ -600,11 +723,9 @@ function submitAnswer(idx) {
 
   stopTimer();
 
-  // Show waiting mini state
   const remaining = document.createElement('div');
   remaining.className = 'wait-reveal';
-  remaining.innerHTML = `
-    Válasz elküldve! Várakozás a megoldásra...
+  remaining.innerHTML = `Válasz elküldve! Várakozás a megoldásra...
     <div class="wait-dots">
       <div class="wait-dot"></div><div class="wait-dot"></div><div class="wait-dot"></div>
     </div>`;
@@ -618,30 +739,23 @@ function revealAnswers(correctIdx) {
     if (i === correctIdx) btn.classList.add('correct-highlight');
     else if (btn.classList.contains('selected')) btn.classList.add('wrong');
   });
-
-  // Remove wait message
   const wr = document.querySelector('.wait-reveal');
   if (wr) wr.remove();
 }
 
 function showResults() {
   stopTimer();
-  document.getElementById('game-screen').style.display = 'none';
+  hideAll();
   const rs = document.getElementById('result-screen');
   rs.style.display = 'block';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({top:0, behavior:'smooth'});
 
   document.getElementById('final-score').textContent = myScore;
-
-  // Rank
   const sorted = Object.values(players).sort((a,b) => (b.score||0)-(a.score||0));
   const rank = sorted.findIndex(p => p.name === playerName) + 1;
   document.getElementById('final-rank').innerHTML = 'Végső helyezés: <strong>#' + rank + '</strong>';
-
   const emojis = ['🏆','🥈','🥉','🎖️','⭐'];
   document.getElementById('result-emoji').textContent = emojis[Math.min(rank-1, emojis.length-1)];
-
-  // Full scoreboard
   const medals = ['🥇','🥈','🥉'];
   let sbHTML = '<h4>RANGLISTA</h4>';
   sbHTML += sorted.map((p, i) => `
@@ -653,29 +767,27 @@ function showResults() {
   document.getElementById('result-scoreboard').innerHTML = sbHTML;
 }
 
-function backToLobby() {
-  // Reset local state
-  hasAnswered = false;
-  myScore = 0;
-  currentQIndex = -1;
-
-  // Reset score in firebase
+function backToMenu() {
+  // Firebase listenerek leállítása
+  if (roomRef) {
+    roomRef.child('gameState').off();
+    roomRef.child('players').off();
+    roomRef.child('answers').off();
+    roomRef.child('players').child(playerId).child('score').off();
+  }
+  // Játékos eltávolítása az adatbázisból
   if (db && roomRef) {
-    roomRef.child('players').child(playerId).child('score').set(0);
+    roomRef.child('players').child(playerId).remove();
   }
 
-  document.getElementById('result-screen').style.display = 'none';
-  document.getElementById('game-screen').style.display = 'none';
-
-  // Show waiting screen again
-  const ws = document.getElementById('waiting-screen');
-  ws.style.display = 'block';
+  // State reset
+  hasAnswered = false; myScore = 0; currentQIndex = -1;
+  players = {}; questions = []; answeredNamesThisRound = new Set();
   document.getElementById('my-score').textContent = '0';
   document.getElementById('my-rank').textContent = '#—';
+  stopTimer();
 
-  // Update waiting message
-  const msg = ws.querySelector('.waiting-msg');
-  if (msg) msg.textContent = 'Várakozás az új játék kezdésére...';
+  showMenu();
 }
 
 function updatePlayersChips(answeredSet) {
@@ -689,11 +801,15 @@ function updatePlayersChips(answeredSet) {
   }).join('');
 }
 
-function showScoreDelta(text) {
+function showScoreDelta(text, isCorrect = true) {
   const el = document.getElementById('score-delta');
   el.textContent = text;
+  el.style.color = isCorrect ? 'var(--green)' : 'var(--red)';
+  el.style.textShadow = isCorrect
+    ? '0 0 40px rgba(62,207,142,0.5)'
+    : '0 0 40px rgba(224,90,90,0.5)';
   el.classList.remove('show');
-  void el.offsetWidth; // reflow
+  void el.offsetWidth;
   el.classList.add('show');
 }
 
@@ -721,17 +837,12 @@ function updateProgress(currentIdx) {
 // ============================================================
 function startPlayerTimer(seconds) {
   stopTimer();
-  timerValue = seconds;
-  totalTime = seconds;
+  timerValue = seconds; totalTime = seconds;
   updateTimerUI();
-
   timerInterval = setInterval(() => {
     timerValue--;
     updateTimerUI();
-    if (timerValue <= 0) {
-      stopTimer();
-      if (!hasAnswered) submitAnswer(-1); // time's up
-    }
+    if (timerValue <= 0) { stopTimer(); if (!hasAnswered) submitAnswer(-1); }
   }, 1000);
 }
 
@@ -750,100 +861,38 @@ function updateTimerUI() {
 }
 
 // ============================================================
-// PWA — SERVICE WORKER REGISZTRÁCIÓ
+// PWA
 // ============================================================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js')
-      .then(reg => console.log('[PWA] Service Worker regisztrálva:', reg.scope))
-      .catch(err => console.warn('[PWA] Service Worker hiba:', err));
+      .then(reg => console.log('[PWA] SW regisztrálva:', reg.scope))
+      .catch(err => console.warn('[PWA] SW hiba:', err));
   });
 }
 
-// ============================================================
-// PWA — TELEPÍTÉSI BANNER (Android Chrome)
-// ============================================================
 let deferredInstallPrompt = null;
-
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
   showInstallBanner();
 });
-
 function showInstallBanner() {
-  const banner = document.getElementById('install-banner');
-  if (banner) {
-    banner.style.display = 'flex';
-    // 8 másodperc után automatikusan eltűnik
-    setTimeout(() => hideBanner(), 8000);
-  }
+  const b = document.getElementById('install-banner');
+  if (b) { b.style.display = 'flex'; setTimeout(() => hideBanner(), 8000); }
 }
-
 function hideBanner() {
-  const banner = document.getElementById('install-banner');
-  if (banner) banner.style.display = 'none';
+  const b = document.getElementById('install-banner');
+  if (b) b.style.display = 'none';
 }
-
 async function installApp() {
   if (!deferredInstallPrompt) return;
   deferredInstallPrompt.prompt();
-  const result = await deferredInstallPrompt.userChoice;
-  console.log('[PWA] Telepítési eredmény:', result.outcome);
+  await deferredInstallPrompt.userChoice;
   deferredInstallPrompt = null;
   hideBanner();
 }
-
-// Ha már telepítve van (standalone módban fut) → ne mutassuk a bannert
-window.addEventListener('appinstalled', () => {
-  console.log('[PWA] App telepítve!');
-  hideBanner();
-});
+window.addEventListener('appinstalled', () => hideBanner());
 </script>
-<!-- ═══════════════════════════════════════════════════ -->
-<!-- PWA TELEPÍTÉSI BANNER                               -->
-<!-- ═══════════════════════════════════════════════════ -->
-<div id="install-banner" style="
-  display:none;
-  position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#1c1c28;
-  border:1px solid #f0c040;
-  border-radius:16px;
-  padding:14px 18px;
-  display:none;
-  align-items:center;
-  gap:14px;
-  z-index:9999;
-  box-shadow:0 8px 32px rgba(0,0,0,0.5);
-  max-width:340px;
-  width:calc(100% - 40px);
-  animation:slideUpBanner 0.4s ease;
-">
-  <img src="icons/icon-72.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0;" alt="QuizMaster">
-  <div style="flex:1;min-width:0;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:#f0c040;">TELEPÍTÉS</div>
-    <div style="font-size:12px;color:#6b6b8a;line-height:1.4;">Tedd a főképernyőre az appot!</div>
-  </div>
-  <button onclick="installApp()" style="
-    background:#f0c040;color:#000;border:none;border-radius:10px;
-    padding:9px 16px;font-family:'Bebas Neue',sans-serif;font-size:16px;
-    letter-spacing:1px;cursor:pointer;flex-shrink:0;
-  ">IGEN</button>
-  <button onclick="hideBanner()" style="
-    background:transparent;color:#6b6b8a;border:none;
-    font-size:20px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;
-  ">✕</button>
-</div>
-
-<style>
-@keyframes slideUpBanner {
-  from { opacity:0; transform:translateX(-50%) translateY(20px); }
-  to   { opacity:1; transform:translateX(-50%) translateY(0); }
-}
-</style>
-
 </body>
 </html>
