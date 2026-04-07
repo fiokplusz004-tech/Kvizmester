@@ -106,24 +106,57 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .unavail-back { background:none; border:none; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; padding:8px; }
 
   /* ── VÁRÓTEREM ───────────────────────────── */
-  #lobby-screen { display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; width:100%; max-width:360px; margin:auto; padding:40px 0; animation:fadeIn 0.4s ease; }
-  .lobby-icon { font-size:56px; margin-bottom:16px; }
-  .lobby-title { font-family:var(--font-display); font-size:36px; letter-spacing:3px; color:var(--accent); margin-bottom:8px; }
+  #lobby-screen { display:none; flex-direction:column; align-items:center; text-align:center; width:100%; max-width:380px; margin:auto; padding:32px 0 40px; animation:fadeIn 0.4s ease; }
+  .lobby-icon { font-size:52px; margin-bottom:14px; }
+  .lobby-title { font-family:var(--font-display); font-size:36px; letter-spacing:3px; color:var(--accent); margin-bottom:6px; }
   .lobby-name { font-size:18px; font-weight:600; color:var(--text); margin-bottom:6px; }
-  .lobby-sub { font-size:13px; color:var(--muted); margin-bottom:32px; line-height:1.6; }
-  .lobby-dots { display:flex; gap:8px; justify-content:center; margin-bottom:16px; }
+  .lobby-sub { font-size:13px; color:var(--muted); margin-bottom:24px; line-height:1.6; }
+  .lobby-dots { display:flex; gap:8px; justify-content:center; margin-bottom:24px; }
+
+  /* Játékos lista — közös stílus lobby és waiting képernyőhöz */
+  .player-list-section { width:100%; margin-bottom:20px; }
+  .player-list-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; text-align:center; }
+  .player-list-grid { display:flex; flex-direction:column; gap:6px; width:100%; }
+  .player-list-item {
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; padding:9px 13px; transition:all 0.3s;
+  }
+  .player-list-item.me { border-color:var(--accent); background:rgba(240,192,64,0.07); }
+  .player-list-item.active-player { border-color:rgba(62,207,142,0.4); }
+  .pli-avatar {
+    width:32px; height:32px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-size:16px; font-weight:700;
+  }
+  .pli-name { flex:1; font-size:13px; font-weight:600; text-align:left; }
+  .pli-badge {
+    font-size:10px; letter-spacing:1px; padding:3px 8px;
+    border-radius:10px; font-weight:600; flex-shrink:0;
+  }
+  .pli-badge-lobby { background:rgba(107,107,138,0.2); color:var(--muted); }
+  .pli-badge-active { background:rgba(62,207,142,0.15); color:var(--green); }
+  .pli-badge-me { background:rgba(240,192,64,0.15); color:var(--accent); }
+
+  /* Vissza gomb a váróteremben */
+  .lobby-back-btn {
+    background:none; border:none; color:var(--muted); font-size:13px;
+    font-weight:600; cursor:pointer; padding:8px; margin-top:4px;
+    transition:color 0.2s;
+  }
+  .lobby-back-btn:active { color:var(--accent); }
   .dot { width:10px; height:10px; border-radius:50%; background:var(--accent); animation:bounce 1.2s infinite; }
   .dot:nth-child(2) { animation-delay:0.2s; }
   .dot:nth-child(3) { animation-delay:0.4s; }
 
   /* ── VÁRAKOZÁS (játékra) ─────────────────── */
-  #waiting-screen { display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; width:100%; max-width:400px; margin:auto; padding:40px 0; animation:fadeIn 0.4s ease; }
-  .waiting-avatar { width:80px; height:80px; border-radius:50%; margin:0 auto 20px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:40px; border:3px solid; }
-  .waiting-player-name { font-family:var(--font-display); font-size:36px; letter-spacing:2px; margin-bottom:8px; }
-  .waiting-room { font-size:12px; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-bottom:40px; }
+  #waiting-screen { display:none; flex-direction:column; align-items:center; text-align:center; width:100%; max-width:380px; margin:auto; padding:32px 0 40px; animation:fadeIn 0.4s ease; }
+  .waiting-avatar { width:72px; height:72px; border-radius:50%; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:36px; border:3px solid; }
+  .waiting-player-name { font-family:var(--font-display); font-size:34px; letter-spacing:2px; margin-bottom:6px; }
+  .waiting-room { font-size:12px; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-bottom:20px; }
   .waiting-room span { color:var(--accent); }
   .waiting-dots { display:flex; gap:8px; justify-content:center; }
-  .waiting-msg { color:var(--muted); font-size:13px; letter-spacing:1px; margin-top:16px; }
+  .waiting-msg { color:var(--muted); font-size:13px; letter-spacing:1px; margin-top:12px; margin-bottom:24px; }
 
   /* ── JÁTÉK ───────────────────────────────── */
   #game-screen { display:none; width:100%; max-width:420px; min-height:100vh; min-height:100dvh; flex-direction:column; }
@@ -273,6 +306,14 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div class="lobby-dots">
     <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
+
+  <!-- Játékos lista -->
+  <div class="player-list-section" id="lobby-player-list-section">
+    <div class="player-list-title">CSATLAKOZOTT JÁTÉKOSOK</div>
+    <div class="player-list-grid" id="lobby-player-list"></div>
+  </div>
+
+  <button class="lobby-back-btn" onclick="backToMenu()">← Vissza a főmenübe</button>
 </div>
 
 <!-- VÁRAKOZÁS -->
@@ -284,6 +325,12 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
   <div class="waiting-msg" id="waiting-msg">Várakozás az új játék kezdésére...</div>
+
+  <!-- Játékos lista -->
+  <div class="player-list-section" id="waiting-player-list-section">
+    <div class="player-list-title">JÁTÉKOSOK A SZOBÁBAN</div>
+    <div class="player-list-grid" id="waiting-player-list"></div>
+  </div>
 </div>
 
 <!-- JÁTÉK -->
@@ -384,19 +431,26 @@ function showUnavailable() {
 }
 function showLobby() {
   hideAll();
-  document.getElementById('lobby-screen').style.display = 'flex';
+  const ls = document.getElementById('lobby-screen');
+  ls.style.display = 'flex';
+  ls.style.flexDirection = 'column';
+  ls.style.alignItems = 'center';
   document.getElementById('lobby-name').textContent = playerName;
+  updatePlayerLists();
 }
 function showWaiting() {
   hideAll();
   const ws = document.getElementById('waiting-screen');
   ws.style.display = 'flex';
+  ws.style.flexDirection = 'column';
+  ws.style.alignItems = 'center';
   document.getElementById('w-avatar').textContent = playerName[0].toUpperCase();
   document.getElementById('w-avatar').style.background = myColor + '22';
   document.getElementById('w-avatar').style.borderColor = myColor;
   document.getElementById('w-avatar').style.color = myColor;
   document.getElementById('w-name').textContent = playerName;
   document.getElementById('w-room').textContent = roomCode;
+  updatePlayerLists();
 }
 
 // ── ÚJ JÁTÉK gomb ────────────────────────────────────────────
@@ -540,11 +594,12 @@ function setupListeners() {
     document.getElementById('my-score').textContent = myScore;
   });
 
-  // Játékos lista (rangsor)
+  // Játékos lista (rangsor + lobby/waiting listák)
   roomRef.child('players').on('value', snap => {
     players = snap.val() || {};
     updateRank();
     updatePlayersChips(answeredNamesThisRound);
+    updatePlayerLists();
   });
 
   // Válasz chipek
@@ -692,6 +747,53 @@ function updateRank() {
     .sort((a,b) => (b.score||0)-(a.score||0));
   const rank = activeSorted.findIndex(p => p.name === playerName) + 1;
   document.getElementById('my-rank').textContent = '#' + (rank > 0 ? rank : '—');
+}
+
+function updatePlayerLists() {
+  const allPlayers = Object.values(players);
+  if (allPlayers.length === 0) return;
+
+  // Rendezés: én elsőnek, utána ábécé sorrendben
+  const sorted = [...allPlayers].sort((a, b) => {
+    if (a.name === playerName) return -1;
+    if (b.name === playerName) return 1;
+    return (a.name||'').localeCompare(b.name||'', 'hu');
+  });
+
+  function buildItem(p) {
+    const isMe = p.name === playerName;
+    const isActive = p.status === 'active';
+    const initials = (p.name||'?')[0].toUpperCase();
+    let badgeHTML = '';
+    if (isMe) {
+      badgeHTML = '<span class="pli-badge pli-badge-me">Te</span>';
+    } else if (isActive) {
+      badgeHTML = '<span class="pli-badge pli-badge-active">✓ Bent</span>';
+    } else {
+      badgeHTML = '<span class="pli-badge pli-badge-lobby">Vár</span>';
+    }
+    return `
+      <div class="player-list-item${isMe ? ' me' : isActive ? ' active-player' : ''}">
+        <div class="pli-avatar" style="background:${p.color||'#444'}22;color:${p.color||'#888'};border:2px solid ${p.color||'#444'};">
+          ${initials}
+        </div>
+        <div class="pli-name">${p.name||'Névtelen'}</div>
+        ${badgeHTML}
+      </div>`;
+  }
+
+  // LOBBY képernyő listája — mindenki látható
+  const lobbyList = document.getElementById('lobby-player-list');
+  if (lobbyList) {
+    lobbyList.innerHTML = sorted.map(buildItem).join('');
+  }
+
+  // WAITING képernyő listája — csak az active játékosok
+  const waitingList = document.getElementById('waiting-player-list');
+  if (waitingList) {
+    const activePlayers = sorted.filter(p => p.status === 'active');
+    waitingList.innerHTML = activePlayers.map(buildItem).join('');
+  }
 }
 
 function updateProgress(currentIdx) {
