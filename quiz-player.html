@@ -195,6 +195,39 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .btn-lobby { width:100%; padding:15px; background:transparent; color:var(--accent); border:2px solid var(--accent); border-radius:12px; font-family:var(--font-display); font-size:20px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; margin-bottom:8px; }
   .btn-lobby:active { background:var(--accent); color:#000; }
 
+  /* ── EREDMÉNYEIM képernyő ────────────────── */
+  #history-screen { display:none; width:100%; max-width:420px; padding:24px 0 48px; margin:0 auto; }
+  .hist-back { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; margin-bottom:20px; background:none; border:none; padding:4px 0; }
+  .hist-back:active { color:var(--accent); }
+  .hist-header { margin-bottom:24px; }
+  .hist-title { font-family:var(--font-display); font-size:42px; letter-spacing:3px; color:var(--accent); margin-bottom:4px; }
+  .hist-summary { font-size:13px; color:var(--muted); }
+  .hist-summary span { color:var(--text); font-weight:600; }
+  .hist-card { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:10px; border-left:4px solid var(--border); }
+  .hist-card.hist-correct { border-left-color:var(--green); }
+  .hist-card.hist-wrong { border-left-color:var(--red); }
+  .hist-card.hist-timeout { border-left-color:var(--muted); }
+  .hist-q-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .hist-q-num { font-size:11px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+  .hist-status-badge { font-size:11px; font-weight:700; padding:2px 9px; border-radius:20px; }
+  .badge-correct { background:rgba(62,207,142,0.15); color:var(--green); }
+  .badge-wrong { background:rgba(224,90,90,0.15); color:var(--red); }
+  .badge-timeout { background:rgba(107,107,138,0.15); color:var(--muted); }
+  .hist-q-text { font-size:14px; font-weight:600; margin-bottom:12px; line-height:1.4; color:var(--text); }
+  .hist-answers { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px; }
+  .hist-ans { padding:7px 10px; border-radius:8px; font-size:12px; font-weight:500; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; gap:6px; line-height:1.3; }
+  .hist-ans-letter { width:20px; height:20px; border-radius:5px; background:var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:13px; flex-shrink:0; }
+  .hist-ans.hist-ans-correct { border-color:var(--green); background:rgba(62,207,142,0.1); }
+  .hist-ans.hist-ans-correct .hist-ans-letter { background:var(--green); color:#000; }
+  .hist-ans.hist-ans-mine-wrong { border-color:var(--red); background:rgba(224,90,90,0.1); opacity:0.8; }
+  .hist-ans.hist-ans-mine-wrong .hist-ans-letter { background:var(--red); color:#fff; }
+  .hist-footer { display:flex; align-items:center; justify-content:space-between; padding-top:6px; border-top:1px solid var(--border); }
+  .hist-pts-label { font-size:12px; color:var(--muted); }
+  .hist-pts-val { font-family:var(--font-display); font-size:22px; }
+  .hist-pts-val.pts-positive { color:var(--green); }
+  .hist-pts-val.pts-wrong { color:var(--red); }
+  .hist-pts-val.pts-zero { color:var(--muted); }
+
   .hidden { display:none !important; }
 </style>
 </head>
@@ -273,9 +306,11 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div class="lobby-dots">
     <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
+  <button class="btn-back-game" style="max-width:280px;margin-top:28px;" onclick="backToMenu()">↺ Vissza a főmenübe</button>
 </div>
 
 <!-- VÁRAKOZÁS -->
+<!-- [FIX #1] "Vissza a főmenübe" gomb hozzáadva a waiting-screen-re -->
 <div id="waiting-screen">
   <div class="waiting-avatar" id="w-avatar">A</div>
   <div class="waiting-player-name" id="w-name">—</div>
@@ -284,6 +319,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
   <div class="waiting-msg" id="waiting-msg">Várakozás az új játék kezdésére...</div>
+  <button class="btn-back-game" style="max-width:280px;margin-top:28px;" onclick="backToMenu()">↺ Vissza a főmenübe</button>
 </div>
 
 <!-- JÁTÉK -->
@@ -328,7 +364,19 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div class="result-pts">pont</div>
   <div class="result-rank" id="final-rank">Végső helyezés: <strong>#1</strong></div>
   <div class="result-scoreboard" id="result-scoreboard"></div>
+  <!-- [FIX #3] Eredményeim gomb -->
+  <button class="btn-lobby" onclick="showHistory()" style="background:rgba(62,207,142,0.08);border-color:var(--green);color:var(--green);">📊 EREDMÉNYEIM</button>
   <button class="btn-lobby" onclick="backToMenu()">↺ FŐMENÜBE VISSZA</button>
+</div>
+
+<!-- [FIX #3] EREDMÉNYEIM képernyő -->
+<div id="history-screen">
+  <button class="hist-back" onclick="backToResults()">← Vissza az eredményekhez</button>
+  <div class="hist-header">
+    <div class="hist-title">EREDMÉNYEIM</div>
+    <div class="hist-summary" id="hist-summary"></div>
+  </div>
+  <div id="hist-list"></div>
 </div>
 
 <div class="score-delta-overlay" id="score-delta"></div>
@@ -355,6 +403,10 @@ const LETTERS = ['A','B','C','D'];
 const COLORS = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f','#5ae0d4','#e0c05a'];
 const CIRCUMFERENCE = 175.9;
 
+// [FIX #3] Kérdés előzmény tracking
+let myQuestionHistory = [];   // [{qText, options, myAnswer, correctAnswer, pts, qIndex}]
+let pendingQuestion = null;   // az éppen folyamatban lévő kérdés adatai
+
 function getParam(n) { return new URLSearchParams(window.location.search).get(n); }
 
 window.addEventListener('load', () => {
@@ -365,7 +417,7 @@ window.addEventListener('load', () => {
 // ── KÉPERNYŐ VÁLTÁS ──────────────────────────────────────────
 function hideAll() {
   ['menu-screen','guide-screen','unavailable-screen','lobby-screen',
-   'waiting-screen','game-screen','result-screen']
+   'waiting-screen','game-screen','result-screen','history-screen']
     .forEach(id => document.getElementById(id).style.display = 'none');
 }
 function showMenu() {
@@ -417,6 +469,10 @@ async function startGame() {
   myColor = COLORS[Math.floor(Math.random() * COLORS.length)];
   localStorage.setItem('quizPlayerName', name);
 
+  // Új játék kezdetekor töröljük az előző előzményt
+  myQuestionHistory = [];
+  pendingQuestion = null;
+
   err.textContent = 'Kapcsolódás...';
 
   try {
@@ -425,7 +481,6 @@ async function startGame() {
       return;
     }
 
-    // Ha volt korábbi db kapcsolat, szüntessük meg
     if (roomRef) {
       roomRef.child('gameState').off();
       roomRef.child('players').off();
@@ -435,34 +490,25 @@ async function startGame() {
     db = firebase.database();
     roomRef = db.ref('rooms/' + roomCode);
 
-    // ─── KULCS ELLENŐRZÉS ───────────────────────────────────
-    // Ha a HOST nincs belépve, a gameState node NEM LÉTEZIK
-    // Firebase .once('value') ezt null-ként adja vissza
     const snap = await roomRef.child('gameState').once('value');
     const gameState = snap.val();
 
     if (!gameState) {
-      // HOST nincs online → "nem elérhető" képernyő
       showUnavailable();
       return;
     }
 
-    // Regisztráljuk a játékost — alapból lobby státusszal
     await roomRef.child('players').child(playerId).set({
       name: playerName,
       score: 0,
       color: myColor,
-      status: 'lobby',  // 'lobby' | 'active'
+      status: 'lobby',
       joinedAt: firebase.database.ServerValue.TIMESTAMP
     });
 
-    // Disconnect esetén töröljük
     roomRef.child('players').child(playerId).onDisconnect().remove();
 
-    // Figyeljük a saját státuszunkat
     setupListeners();
-
-    // Kezdetben váróterembe tesszük magunkat
     showLobby();
 
   } catch(e) {
@@ -474,17 +520,14 @@ async function startGame() {
 // ── FIREBASE LISTENERS ───────────────────────────────────────
 function setupListeners() {
 
-  // SAJÁT STÁTUSZ figyelése — ha a host "active"-ra állítja, mehetünk a váróba
   roomRef.child('players').child(playerId).child('status').on('value', snap => {
     const status = snap.val();
     if (status === 'active') {
-      // Beengedtek! Ha váróteremben voltunk, menjünk a várakozó képernyőre
       const lobbyVisible = document.getElementById('lobby-screen').style.display !== 'none';
       if (lobbyVisible) {
         showWaiting();
       }
     } else if (status === 'lobby') {
-      // Visszatettük a váróterembe
       const gameVisible = document.getElementById('game-screen').style.display !== 'none';
       const waitVisible = document.getElementById('waiting-screen').style.display !== 'none';
       if (gameVisible || waitVisible) {
@@ -493,14 +536,11 @@ function setupListeners() {
     }
   });
 
-  // JÁTÉKÁLLAPOT figyelése
   roomRef.child('gameState').on('value', snap => {
     const state = snap.val();
     if (!state) return;
 
-    // Ha a játék kérdésnél tart, csak az "active" státuszú játékos látja
     if (state.phase === 'question' && state.questionIndex !== currentQIndex) {
-      // Ellenőrizzük a saját státuszunkat
       roomRef.child('players').child(playerId).child('status').once('value', statusSnap => {
         const myStatus = statusSnap.val();
         if (myStatus === 'active') {
@@ -509,7 +549,6 @@ function setupListeners() {
           answeredNamesThisRound = new Set();
           showQuestion(state.question, state.questionIndex);
         }
-        // Ha 'lobby', maradunk a váróteremben
       });
     } else if (state.phase === 'revealed') {
       const gameVisible = document.getElementById('game-screen').style.display !== 'none';
@@ -518,9 +557,7 @@ function setupListeners() {
       const gameVisible = document.getElementById('game-screen').style.display !== 'none';
       if (gameVisible) showResults();
     } else if (state.phase === 'waiting') {
-      // Új játékkör — eredmény képernyőről vissza
       if (document.getElementById('result-screen').style.display !== 'none') {
-        // Ellenőrizzük státuszunkat
         roomRef.child('players').child(playerId).child('status').once('value', statusSnap => {
           if (statusSnap.val() === 'active') showWaiting();
           else showLobby();
@@ -529,25 +566,27 @@ function setupListeners() {
     }
   });
 
-  // Pontszám figyelése
+  // [FIX #3] Pontszám figyelése — mentsük a kapott pontokat a pendingQuestion-be
   roomRef.child('players').child(playerId).child('score').on('value', snap => {
     const newScore = snap.val() || 0;
     if (newScore > myScore) {
       const diff = newScore - myScore;
+      // Pontokat mentjük a pending kérdéshez
+      if (pendingQuestion) {
+        pendingQuestion.pts = diff;
+      }
       showScoreDelta('+' + diff, diff > 1);
     }
     myScore = newScore;
     document.getElementById('my-score').textContent = myScore;
   });
 
-  // Játékos lista (rangsor)
   roomRef.child('players').on('value', snap => {
     players = snap.val() || {};
     updateRank();
     updatePlayersChips(answeredNamesThisRound);
   });
 
-  // Válasz chipek
   roomRef.child('answers').on('child_added', snap => {
     const ans = snap.val();
     if (ans && ans.playerName) {
@@ -562,7 +601,6 @@ function setupListeners() {
     }
   });
 
-  // Kérdések száma (progress dots)
   roomRef.child('questions').once('value', snap => {
     questions = Object.values(snap.val() || {});
     updateProgress();
@@ -575,6 +613,16 @@ function showQuestion(q, idx) {
   document.getElementById('game-screen').style.display = 'flex';
   document.getElementById('q-cat-player').textContent = q.category || '';
   document.getElementById('q-text-player').textContent = q.text;
+
+  // [FIX #3] Kérdés rögzítése tracking célra
+  pendingQuestion = {
+    qText: q.text,
+    options: q.options,
+    myAnswer: -1,       // -1 = nem válaszolt / lejárt az idő
+    correctAnswer: -1,  // majd a revealAnswers()-ben töltjük ki
+    pts: 0,
+    qIndex: idx
+  };
 
   const container = document.getElementById('answers-player');
   container.innerHTML = q.options.map((opt, i) => `
@@ -592,6 +640,12 @@ function showQuestion(q, idx) {
 function submitAnswer(idx) {
   if (hasAnswered) return;
   hasAnswered = true;
+
+  // [FIX #3] Saját válasz rögzítése
+  if (pendingQuestion) {
+    pendingQuestion.myAnswer = idx;
+  }
+
   document.querySelectorAll('.ans-btn').forEach((btn, i) => {
     btn.classList.add('disabled');
     if (i === idx) btn.classList.add('selected');
@@ -613,6 +667,23 @@ function submitAnswer(idx) {
 
 function revealAnswers(correctIdx) {
   stopTimer();
+
+  // [FIX #3] Helyes válasz és eredmény mentése, history-ba zárás
+  if (pendingQuestion) {
+    pendingQuestion.correctAnswer = correctIdx;
+    // Ha helytelen választ adott (de nem -1 = timeout), de pontot nem kapott: 1pt-ot kapna
+    // A pts-t a score-listener már feltölthette, ha kapott pontot.
+    // Ha nem kapott pontot és nem timeout és helytelen volt, pts marad 0 — de az 1pt-ot
+    // a host számolja, a score listener fogja frissíteni röviddel ezután.
+    // Ezért kis késleltetéssel zárjuk a history-t, hogy a score update megérkezhessen.
+    setTimeout(() => {
+      if (pendingQuestion) {
+        myQuestionHistory.push({...pendingQuestion});
+        pendingQuestion = null;
+      }
+    }, 1500);
+  }
+
   document.querySelectorAll('.ans-btn').forEach((btn, i) => {
     btn.classList.add('disabled');
     if (i === correctIdx) btn.classList.add('correct-highlight');
@@ -624,6 +695,13 @@ function revealAnswers(correctIdx) {
 
 function showResults() {
   stopTimer();
+
+  // Biztos hogy minden pending kérdés bekerüljön a history-ba
+  if (pendingQuestion) {
+    myQuestionHistory.push({...pendingQuestion});
+    pendingQuestion = null;
+  }
+
   hideAll();
   document.getElementById('result-screen').style.display = 'block';
   window.scrollTo({top:0, behavior:'smooth'});
@@ -644,6 +722,78 @@ function showResults() {
   document.getElementById('result-scoreboard').innerHTML = sbHTML;
 }
 
+// [FIX #3] Eredményeim képernyő megjelenítése
+function showHistory() {
+  hideAll();
+  document.getElementById('history-screen').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+
+  const total = myQuestionHistory.length;
+  const correct = myQuestionHistory.filter(h => h.myAnswer !== -1 && h.myAnswer === h.correctAnswer).length;
+  const wrong = myQuestionHistory.filter(h => h.myAnswer !== -1 && h.myAnswer !== h.correctAnswer).length;
+  const timeout = myQuestionHistory.filter(h => h.myAnswer === -1).length;
+  const totalPts = myQuestionHistory.reduce((s, h) => s + (h.pts || 0), 0);
+
+  document.getElementById('hist-summary').innerHTML =
+    `<span>${total} kérdés</span> · ` +
+    `<span style="color:var(--green)">${correct} helyes</span> · ` +
+    `<span style="color:var(--red)">${wrong} helytelen</span>` +
+    (timeout > 0 ? ` · <span style="color:var(--muted)">${timeout} időtúllépés</span>` : '') +
+    ` · <span style="color:var(--accent)">${totalPts} pont összesen</span>`;
+
+  let html = '';
+  if (myQuestionHistory.length === 0) {
+    html = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">Még nincs rögzített kérdés.</div>';
+  } else {
+    myQuestionHistory.forEach((h, i) => {
+      const isTimeout = h.myAnswer === -1;
+      const isCorrect = !isTimeout && h.myAnswer === h.correctAnswer;
+      const cardClass = isTimeout ? 'hist-timeout' : isCorrect ? 'hist-correct' : 'hist-wrong';
+      const badgeClass = isTimeout ? 'badge-timeout' : isCorrect ? 'badge-correct' : 'badge-wrong';
+      const statusText = isTimeout ? '⏰ Lejárt az idő' : isCorrect ? '✓ Helyes' : '✗ Helytelen';
+
+      const answersHTML = (h.options || []).map((opt, j) => {
+        let cls = 'hist-ans';
+        const isCorrectAns = j === h.correctAnswer;
+        const isMyAns = j === h.myAnswer;
+        if (isCorrectAns) cls += ' hist-ans-correct';
+        else if (isMyAns && !isCorrectAns) cls += ' hist-ans-mine-wrong';
+        const icon = isCorrectAns ? '✓' : (isMyAns && !isCorrectAns) ? '✗' : '';
+        return `<div class="${cls}">
+          <div class="hist-ans-letter" style="${!isCorrectAns && !isMyAns ? 'opacity:0.4' : ''}">${icon || LETTERS[j]}</div>
+          <span style="font-size:12px;line-height:1.3;">${opt}</span>
+        </div>`;
+      }).join('');
+
+      const ptsClass = (h.pts || 0) >= 2 ? 'pts-positive' : (h.pts || 0) === 1 ? 'pts-wrong' : 'pts-zero';
+      const ptsLabel = isTimeout ? 'Nem válaszoltál' : isCorrect ? 'Megszerzett pont' : '1 vigaszpont';
+
+      html += `
+        <div class="hist-card ${cardClass}">
+          <div class="hist-q-header">
+            <div class="hist-q-num">${i + 1}. kérdés</div>
+            <div class="hist-status-badge ${badgeClass}">${statusText}</div>
+          </div>
+          <div class="hist-q-text">${h.qText}</div>
+          <div class="hist-answers">${answersHTML}</div>
+          <div class="hist-footer">
+            <div class="hist-pts-label">${ptsLabel}</div>
+            <div class="hist-pts-val ${ptsClass}">+${h.pts || 0} pt</div>
+          </div>
+        </div>`;
+    });
+  }
+
+  document.getElementById('hist-list').innerHTML = html;
+}
+
+// [FIX #3] Vissza az eredményekhez
+function backToResults() {
+  hideAll();
+  document.getElementById('result-screen').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
 function backToMenu() {
   stopTimer();
   if (roomRef) {
@@ -658,6 +808,7 @@ function backToMenu() {
   }
   hasAnswered = false; myScore = 0; currentQIndex = -1;
   players = {}; questions = []; answeredNamesThisRound = new Set();
+  myQuestionHistory = []; pendingQuestion = null;
   document.getElementById('my-score').textContent = '0';
   document.getElementById('my-rank').textContent = '#—';
   showMenu();
@@ -666,7 +817,6 @@ function backToMenu() {
 function updatePlayersChips(answeredSet) {
   const container = document.getElementById('players-chips');
   if (!container) return;
-  // Csak az active státuszú játékosokat mutatjuk
   const activePlayers = Object.values(players).filter(p => p.status === 'active');
   container.innerHTML = activePlayers.map(p => {
     const isAnswered = answeredSet && answeredSet.has(p.name);

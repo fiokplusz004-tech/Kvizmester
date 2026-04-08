@@ -131,9 +131,6 @@
   .waiting-url{font-size:15px;color:var(--text);background:var(--surface2);padding:10px 18px;border-radius:8px;margin-bottom:14px;font-weight:500;}
   .player-count{font-size:13px;color:var(--muted);}
   .player-count span{color:var(--green);font-size:22px;font-weight:700;}
-  .players-joined{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:16px;max-width:600px;}
-  .player-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 13px;font-size:13px;display:flex;align-items:center;gap:7px;animation:chipIn 0.3s ease;}
-  @keyframes chipIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
   .player-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;}
   .question-state{width:100%;max-width:760px;}
   .q-number{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
@@ -356,7 +353,6 @@
           <div class="qr-wrapper"><div id="qr-code"></div></div>
           <div class="waiting-url" id="player-url">—</div>
           <div class="player-count">Csatlakozott: <span id="joined-count">0</span> játékos</div>
-          <div class="players-joined" id="players-joined"></div>
         </div>
         <div class="question-state hidden" id="question-state">
           <div class="timer-bar-wrap">
@@ -577,7 +573,15 @@ function setupListeners() {
     if(answeredPlayers.has(pid))return;
     answeredPlayers.add(pid);answerOrder++;
     const isCorrect=ans.answer===correctOptionIndex;
-    const pts=isCorrect?Math.max(1,5-Math.floor((answerOrder-1)*0.5)):0;
+    // Pontozás: helyes 1.→5pt, 2.→4pt, 3.→3pt, 4.+→2pt | helytelen→1pt | timeout(ans=-1)→0pt
+    let pts;
+    if (ans.answer === -1) {
+      pts = 0;
+    } else if (isCorrect) {
+      pts = Math.max(2, 6 - answerOrder);
+    } else {
+      pts = 1;
+    }
     if(players[pid]){
       players[pid].score=(players[pid].score||0)+pts;
       if(db)roomRef.child('players').child(pid).child('score').set(players[pid].score);
@@ -1068,13 +1072,9 @@ function newGame() {
 // UI
 // ============================================================
 function updatePlayerChips() {
-  const c=document.getElementById('players-joined');
-  if (!c) return;
   const activePlayers=Object.entries(players).filter(([id,p])=>p.status==='active');
   const activeCnt=activePlayers.length;
   document.getElementById('joined-count').textContent=activeCnt;
-  // Waiting area: csak az active játékosokat mutatjuk
-  c.innerHTML=activePlayers.map(([id,p])=>`<div class="player-chip"><div class="player-avatar" style="background:${p.color||'#555'}">${(p.name||'?')[0].toUpperCase()}</div>${p.name||'?'}</div>`).join('');
 }
 function updateScoreboard() {
   // Csak az active játékosok jelennek meg a pontállásban
