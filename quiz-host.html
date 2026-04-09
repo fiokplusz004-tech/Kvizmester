@@ -76,6 +76,14 @@
   .subtype-tab{padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all 0.2s;}
   .subtype-tab.active{background:var(--accent);color:#000;border-color:var(--accent);}
   .subtype-tab:hover:not(.active){color:var(--text);}
+  .subtype-tab-row{display:flex;align-items:center;gap:5px;padding:1px 0;}
+  .subtype-tab-actions{display:flex;gap:3px;opacity:0;transition:opacity 0.2s;flex-shrink:0;}
+  .subtype-tab-row:hover .subtype-tab-actions{opacity:1;}
+  .sub-mini-btn{width:19px;height:19px;border-radius:4px;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;line-height:1;}
+  .sub-exp-btn{background:rgba(240,192,64,0.15);color:var(--accent);}
+  .sub-exp-btn:hover{background:var(--accent);color:#000;}
+  .sub-del-btn{background:rgba(224,90,90,0.15);color:var(--red);}
+  .sub-del-btn:hover{background:var(--red);color:#fff;}
 
   /* Q CARDS */
   .q-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:7px;transition:border-color 0.2s;position:relative;}
@@ -192,66 +200,6 @@
   .lobby-item-name { flex:1; font-size:13px; font-weight:600; }
   .lobby-admit-btn { padding:4px 12px; background:var(--green); color:#000; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; transition:opacity 0.2s; white-space:nowrap; }
   .lobby-admit-btn:hover { opacity:0.85; }
-
-  /* VOTE PANEL — host oldali szavazás figyelő */
-  .vote-monitor-section {
-    border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
-  }
-  .vote-monitor-header {
-    display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
-  }
-  .vote-monitor-header h4 {
-    font-family:var(--font-display); font-size:16px; letter-spacing:2px; color:var(--accent);
-  }
-  .vote-progress-text {
-    font-size:11px; color:var(--muted); letter-spacing:1px;
-  }
-  .vote-progress-bar-bg {
-    height:4px; background:var(--border); border-radius:2px; overflow:hidden; margin-bottom:10px;
-  }
-  .vote-progress-bar-fill {
-    height:100%; background:var(--accent); border-radius:2px; transition:width 0.4s ease;
-  }
-  .vote-tally-list {
-    display:flex; flex-direction:column; gap:5px; margin-bottom:10px;
-  }
-  .vote-tally-row {
-    display:flex; align-items:center; gap:8px; padding:7px 10px;
-    background:var(--surface2); border:1px solid var(--border); border-radius:8px;
-    transition:all 0.3s;
-  }
-  .vote-tally-row.leader {
-    border-color:var(--accent); background:rgba(240,192,64,0.08);
-  }
-  .vote-tally-name {
-    flex:1; font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
-  .vote-tally-count {
-    font-family:var(--font-display); font-size:18px; color:var(--accent); flex-shrink:0;
-  }
-  .vote-tally-badge {
-    font-size:10px; padding:1px 6px; border-radius:3px;
-    background:rgba(240,192,64,0.15); color:var(--accent); flex-shrink:0;
-  }
-  .vote-winner-box {
-    background:rgba(240,192,64,0.08); border:1px solid rgba(240,192,64,0.4);
-    border-radius:10px; padding:10px 12px; text-align:center; margin-top:8px;
-  }
-  .vote-winner-label { font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:4px; }
-  .vote-winner-name { font-family:var(--font-display); font-size:18px; color:var(--accent); letter-spacing:1px; }
-  .vote-apply-btn {
-    width:100%; margin-top:8px; padding:8px; background:var(--accent); color:#000;
-    border:none; border-radius:7px; font-family:var(--font-display); font-size:15px;
-    letter-spacing:1px; cursor:pointer; transition:opacity 0.2s;
-  }
-  .vote-apply-btn:hover { opacity:0.85; }
-  .vote-reset-btn {
-    width:100%; margin-top:5px; padding:6px; background:transparent; color:var(--muted);
-    border:1px solid var(--border); border-radius:7px; font-size:12px; font-weight:600;
-    cursor:pointer; transition:all 0.2s;
-  }
-  .vote-reset-btn:hover { border-color:var(--red); color:var(--red); }
 
   /* 3-PONT MENÜ a pontállásban */
   .player-menu-wrap { position:relative; }
@@ -447,7 +395,6 @@
           <button class="btn-secondary" style="font-size:11px;padding:4px 9px;" onclick="resetAllScores()">⟳ Nulláz</button>
         </div>
       </div>
-
       <!-- VÁRÓTEREM -->
       <div class="lobby-section" id="lobby-section">
         <div class="lobby-header">
@@ -456,29 +403,6 @@
         </div>
         <div class="lobby-list" id="lobby-list"></div>
       </div>
-
-      <!-- SZAVAZÁS FIGYELŐ -->
-      <div class="vote-monitor-section" id="vote-monitor-section">
-        <div class="vote-monitor-header">
-          <h4>🗳 SZAVAZÁS</h4>
-          <span class="vote-progress-text" id="vote-progress-text">0 / 0 szavazat</span>
-        </div>
-        <div class="vote-progress-bar-bg">
-          <div class="vote-progress-bar-fill" id="vote-progress-bar" style="width:0%"></div>
-        </div>
-        <div class="vote-tally-list" id="vote-tally-list">
-          <div style="font-size:12px;color:var(--muted);text-align:center;padding:8px 0;">Még nem szavazott senki...</div>
-        </div>
-        <div class="vote-winner-box hidden" id="vote-winner-box">
-          <div class="vote-winner-label">🏆 NYERTES SZAVAZAT</div>
-          <div class="vote-winner-name" id="vote-winner-name">—</div>
-        </div>
-        <button class="vote-apply-btn hidden" id="vote-apply-btn" onclick="applyVoteResult()">
-          ✓ ALKALMAZ A JÁTÉKRA
-        </button>
-        <button class="vote-reset-btn" onclick="resetVotes()">🗑 Szavazatok törlése</button>
-      </div>
-
       <!-- PONTÁLLÁS -->
       <div class="score-list" id="score-list">
         <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">Még nincsenek játékosok...</div>
@@ -590,23 +514,6 @@ const TYPE_CLASSES = {
 const LETTERS = ['A','B','C','D'];
 const AVATAR_COLORS = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f','#5ae0d4','#e0c05a'];
 
-// Vote option labels
-const VOTE_LABELS = {
-  'Bibliai': '📖 Bibliai (összes)',
-  'Bibliai|vers': '📖 Bibliai — Vers felismerés',
-  'Bibliai|személy': '📖 Bibliai — Személy',
-  'Bibliai|évszám': '📖 Bibliai — Évszám',
-  'Bibliai|helység': '📖 Bibliai — Helység',
-  'Bibliai|esemény': '📖 Bibliai — Esemény',
-  'Filmek': '🎬 Filmek (összes)',
-  'Filmek|idézet': '🎬 Filmek — Idézet',
-  'Filmek|személy': '🎬 Filmek — Személy',
-  'Filmek|évszám/időpont': '🎬 Filmek — Évszám/Időpont',
-  'Filmek|helység': '🎬 Filmek — Helység',
-  'Filmek|esemény': '🎬 Filmek — Esemény',
-  'skip': '⏭ Nem szavaz',
-};
-
 // ============================================================
 // STATE
 // ============================================================
@@ -621,10 +528,6 @@ let activeQuestions=[],usedQuestionIds=new Set();
 let gameStartTime=null,gameTimerInterval=null;
 let nqCorrectOptVal=0;
 let currentInlineEditId=null,inlineCorrectOpt=0;
-
-// Szavazás state
-let votes = {};           // { playerId: { cat, subtype, playerName } }
-let voteWinnerKey = null; // pl. 'Bibliai' vagy 'Bibliai|vers'
 
 // ============================================================
 // FIREBASE
@@ -655,7 +558,7 @@ function initDemo() {
   ];
   showMain();
   const names=['Anna','Béla','Csilla','Dani'];
-  names.forEach((n,i)=>{players[`demo${i}`]={name:n,score:0,color:AVATAR_COLORS[i],status:'active'};});
+  names.forEach((n,i)=>{players[`demo${i}`]={name:n,score:0,color:AVATAR_COLORS[i]};});
   updateScoreboard();updatePlayerChips();updateLobbyPanel();
 }
 
@@ -668,10 +571,9 @@ function setupListeners() {
     updateLobbyPanel();
     const activeCnt = Object.values(players).filter(p=>p.status==='active').length;
     const lobbyCnt  = Object.values(players).filter(p=>p.status==='lobby').length;
+    const total = Object.keys(players).length;
     document.getElementById('joined-count').textContent=activeCnt;
     document.getElementById('player-count-tag').textContent=activeCnt+' játékos'+(lobbyCnt>0?' (+'+lobbyCnt+' vár)':'');
-    // Szavazás frissítése ha változott a játékosok száma
-    updateVoteMonitor();
   });
   roomRef.child('answers').on('child_added',snap=>{
     const ans=snap.val();if(!ans)return;
@@ -679,6 +581,7 @@ function setupListeners() {
     if(answeredPlayers.has(pid))return;
     answeredPlayers.add(pid);answerOrder++;
     const isCorrect=ans.answer===correctOptionIndex;
+    // Pontozás: helyes 1.→5pt, 2.→4pt, 3.→3pt, 4.+→2pt | helytelen→1pt | timeout(ans=-1)→0pt
     let pts;
     if (ans.answer === -1) {
       pts = 0;
@@ -696,18 +599,15 @@ function setupListeners() {
     const activePlayers=Object.entries(players).filter(([id,p])=>p.status==='active');
     const total=activePlayers.length;
     document.getElementById('answers-received').textContent=answeredPlayers.size+'/'+total+' válasz';
-    if(total>0&&answeredPlayers.size>=total)setTimeout(()=>revealAnswer(),500);
+    if(total>0&&answeredPlayers.size>=total){
+      if(gamePhase==='revealed'){startAutoAdvance();}
+      else{setTimeout(()=>revealAnswer(),500);}
+    }
   });
   roomRef.child('questions').on('value',snap=>{
     const dbQ=snap.val();
     questions=dbQ?Object.entries(dbQ).map(([id,q])=>({...q,id,type:q.type||autoDetectType(q)})):[];
     renderAll();
-  });
-
-  // Szavazatok figyelése
-  roomRef.child('votes').on('value', snap => {
-    votes = snap.val() || {};
-    updateVoteMonitor();
   });
 }
 
@@ -729,153 +629,6 @@ function showMain() {
     },1000);
   }
   renderAll();
-}
-
-// ============================================================
-// VOTE MONITOR (HOST OLDAL)
-// ============================================================
-function voteKey(cat, subtype) {
-  return subtype ? cat + '|' + subtype : cat;
-}
-
-function updateVoteMonitor() {
-  const activePlayers = Object.entries(players).filter(([id,p]) => p.status === 'active');
-  const totalActive = activePlayers.length;
-
-  // Szavazatok amik active játékosokhoz tartoznak
-  const activeVotes = Object.entries(votes).filter(([pid]) =>
-    players[pid] && players[pid].status === 'active'
-  );
-  const votedCount = activeVotes.length;
-
-  // Progress
-  const pct = totalActive > 0 ? Math.round(votedCount / totalActive * 100) : 0;
-  document.getElementById('vote-progress-text').textContent = votedCount + ' / ' + totalActive + ' szavazat';
-  document.getElementById('vote-progress-bar').style.width = pct + '%';
-
-  // Tally — kizárjuk a "skip"-et a nyertes számításból, de megjelenítjük
-  const tally = {};
-  activeVotes.forEach(([pid, v]) => {
-    const key = voteKey(v.cat, v.subtype);
-    if (!tally[key]) tally[key] = 0;
-    tally[key]++;
-  });
-
-  // Nyertes keresése (skip nélkül)
-  let maxCount = 0;
-  let leaders = [];
-  Object.entries(tally).forEach(([key, cnt]) => {
-    if (key === 'skip') return;
-    if (cnt > maxCount) { maxCount = cnt; leaders = [key]; }
-    else if (cnt === maxCount) { leaders.push(key); }
-  });
-
-  // Döntetlen esetén véletlen
-  if (leaders.length > 1) {
-    voteWinnerKey = leaders[Math.floor(Math.random() * leaders.length)];
-  } else if (leaders.length === 1) {
-    voteWinnerKey = leaders[0];
-  } else {
-    voteWinnerKey = null;
-  }
-
-  // Tally lista rendezése szavazat szerint
-  const sorted = Object.entries(tally).sort((a,b) => b[1] - a[1]);
-
-  const listEl = document.getElementById('vote-tally-list');
-  if (sorted.length === 0) {
-    listEl.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px 0;">Még nem szavazott senki...</div>';
-  } else {
-    listEl.innerHTML = sorted.map(([key, cnt]) => {
-      const isLeader = key === voteWinnerKey;
-      const label = VOTE_LABELS[key] || key;
-      return `<div class="vote-tally-row${isLeader ? ' leader' : ''}">
-        <div class="vote-tally-name">${label}</div>
-        ${isLeader ? '<span class="vote-tally-badge">🏆</span>' : ''}
-        <div class="vote-tally-count">${cnt}</div>
-      </div>`;
-    }).join('');
-  }
-
-  // Winner box + Apply gomb
-  const winnerBox = document.getElementById('vote-winner-box');
-  const applyBtn = document.getElementById('vote-apply-btn');
-
-  // Mindenki szavazott-e (mindenki aki active, szavazott)?
-  const allVoted = totalActive > 0 && votedCount >= totalActive;
-
-  if (allVoted && voteWinnerKey) {
-    winnerBox.classList.remove('hidden');
-    document.getElementById('vote-winner-name').textContent = VOTE_LABELS[voteWinnerKey] || voteWinnerKey;
-    applyBtn.classList.remove('hidden');
-
-    // Firebase-be kiírjuk az eredményt automatikusan (játékosok screen-jére)
-    if (db) {
-      const resultTally = sorted.map(([key, cnt]) => ({
-        key,
-        label: VOTE_LABELS[key] || key,
-        count: cnt
-      }));
-      roomRef.child('voteResult').set({
-        winner: voteWinnerKey,
-        tally: resultTally,
-        ts: firebase.database.ServerValue.TIMESTAMP
-      });
-    }
-  } else {
-    winnerBox.classList.add('hidden');
-    applyBtn.classList.add('hidden');
-  }
-}
-
-function applyVoteResult() {
-  if (!voteWinnerKey) return;
-
-  // Parse winner key
-  const parts = voteWinnerKey.split('|');
-  const cat = parts[0];
-  const subtype = parts[1] || null;
-
-  // Nyissuk meg a start modalt és töltsük ki
-  openStartModal();
-
-  // Kis késleltetés hogy a modal megnyíljon
-  setTimeout(() => {
-    const catSel = document.getElementById('start-cat-select');
-    // Keressük meg a kategóriát
-    for (let i = 0; i < catSel.options.length; i++) {
-      if (catSel.options[i].value === cat) {
-        catSel.selectedIndex = i;
-        break;
-      }
-    }
-    onStartCatChange();
-
-    // Altípus beállítása ha van
-    if (subtype) {
-      setTimeout(() => {
-        const subtypeSel = document.getElementById('start-subtype-select');
-        for (let i = 0; i < subtypeSel.options.length; i++) {
-          if (subtypeSel.options[i].value === subtype) {
-            subtypeSel.selectedIndex = i;
-            break;
-          }
-        }
-        updateStartModalInfo();
-      }, 100);
-    }
-  }, 100);
-}
-
-function resetVotes() {
-  if (!confirm('Törlöd az összes szavazatot?')) return;
-  votes = {};
-  voteWinnerKey = null;
-  if (db) {
-    roomRef.child('votes').remove();
-    roomRef.child('voteResult').remove();
-  }
-  updateVoteMonitor();
 }
 
 // ============================================================
@@ -986,6 +739,7 @@ function openInlineEdit(id) {
       <button class="btn-save" onclick="saveInlineEdit('${id}')">✓ Mentés</button>
       <button class="btn-cancel-form" onclick="closeInlineEdit()">Mégse</button>
     </div>`;
+
   const card=document.getElementById('qcard-'+id);
   if(card)card.after(form);
   form.scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -1048,6 +802,19 @@ function deleteCategoryQuestions(cat) {
   if(db){toDelete.forEach(q=>roomRef.child('questions').child(q.id).remove());}
   else{questions=questions.filter(q=>q.category!==cat);renderAll();}
 }
+function deleteSubtypeQuestions(cat,type) {
+  const label=TYPE_LABELS[type]||type;
+  if(!confirm(`Törlöd az összes "${cat} — ${label}" típusú kérdést?`))return;
+  closeInlineEdit();
+  const toDelete=questions.filter(q=>q.category===cat&&(q.type||'egyéb')===type);
+  if(db){toDelete.forEach(q=>roomRef.child('questions').child(q.id).remove());}
+  else{questions=questions.filter(q=>!(q.category===cat&&(q.type||'egyéb')===type));renderAll();}
+}
+function exportSubtype(cat,type) {
+  const filtered=questions.filter(q=>q.category===cat&&(q.type||'egyéb')===type);
+  const label=(TYPE_LABELS[type]||type).replace(/[^\w\u00C0-\u024F]/g,'').toLowerCase();
+  downloadJson(filtered,cat.toLowerCase()+'-'+label);
+}
 
 // ============================================================
 // FILTER & RENDER
@@ -1091,7 +858,15 @@ function renderCatTree() {
           <div class="subtype-tab${selectedSubtype==='all'?' active':''}" onclick="filterSubtype('all')">Mind (${catQs.length})</div>
           ${catTypeDefs.filter(t=>usedTypes.includes(t)).map(t=>{
             const cnt=catQs.filter(q=>(q.type||'egyéb')===t).length;
-            return `<div class="subtype-tab${selectedSubtype===t?' active':''}" onclick="filterSubtype('${t}')">${TYPE_LABELS[t]} (${cnt})</div>`;
+            const tEsc=t.replace(/'/g,"\\'");
+            const catEsc=cat.replace(/'/g,"\\'");
+            return `<div class="subtype-tab-row">
+              <div class="subtype-tab${selectedSubtype===t?' active':''}" onclick="filterSubtype('${tEsc}')">${TYPE_LABELS[t]} (${cnt})</div>
+              <div class="subtype-tab-actions">
+                <button class="sub-mini-btn sub-exp-btn" onclick="event.stopPropagation();exportSubtype('${catEsc}','${tEsc}')" title="Letöltés">⬇</button>
+                <button class="sub-mini-btn sub-del-btn" onclick="event.stopPropagation();deleteSubtypeQuestions('${catEsc}','${tEsc}')" title="Mind törlése">🗑</button>
+              </div>
+            </div>`;
           }).join('')}
         </div>`;
       }
@@ -1180,6 +955,7 @@ function confirmStartGame() {
   const pool=fresh.length>0?fresh:filtered;
   const count=countVal==='all'?pool.length:Math.min(parseInt(countVal),pool.length);
 
+  // Group by type for round-robin
   const byType={};
   pool.forEach(q=>{
     const t=q.type||'egyéb';
@@ -1281,11 +1057,22 @@ function revealAnswer() {
   document.getElementById('btn-reveal').classList.add('hidden');
   document.getElementById('btn-next').classList.remove('hidden');
   document.getElementById('phase-label').textContent='MEGOLDÁS MEGJELENÍTVE';
-  const total=Object.keys(players).length;
+  // Csak aktív játékosokat számolunk; ha mindenki válaszolt (vagy lejárt az idő), auto-advance
+  const activePlayers=Object.values(players).filter(p=>p.status==='active');
+  const total=activePlayers.length;
   if(total>0&&answeredPlayers.size>=total){
-    let cd=3;document.getElementById('phase-label').textContent='KÖVETKEZŐ: '+cd+'...';
-    const t=setInterval(()=>{cd--;if(cd>0){document.getElementById('phase-label').textContent='KÖVETKEZŐ: '+cd+'...';}else{clearInterval(t);nextQuestion();}},1000);
+    startAutoAdvance();
   }
+}
+
+function startAutoAdvance() {
+  let cd=3;
+  document.getElementById('phase-label').textContent='KÖVETKEZŐ: '+cd+'...';
+  const t=setInterval(()=>{
+    cd--;
+    if(cd>0){document.getElementById('phase-label').textContent='KÖVETKEZŐ: '+cd+'...';}
+    else{clearInterval(t);nextQuestion();}
+  },1000);
 }
 
 function endGame() {
@@ -1316,15 +1103,12 @@ function newGame() {
     roomRef.child('gameState').set({phase:'waiting'});
     roomRef.child('answers').remove();
     roomRef.child('players').remove();
-    roomRef.child('votes').remove();
-    roomRef.child('voteResult').remove();
   }
-  votes = {}; voteWinnerKey = null;
   document.getElementById('waiting-state').classList.remove('hidden');
   document.getElementById('question-state').classList.add('hidden');
   ['btn-start'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
   ['btn-reveal','btn-next','btn-end'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-  updateScoreboard();updatePlayerChips();updateVoteMonitor();
+  updateScoreboard();updatePlayerChips();
 }
 
 // ============================================================
@@ -1336,6 +1120,7 @@ function updatePlayerChips() {
   document.getElementById('joined-count').textContent=activeCnt;
 }
 function updateScoreboard() {
+  // Csak az active játékosok jelennek meg a pontállásban
   const sorted=Object.entries(players)
     .filter(([id,p])=>p.status==='active')
     .sort((a,b)=>(b[1].score||0)-(a[1].score||0));
@@ -1377,11 +1162,14 @@ function updateLobbyPanel() {
 
 function togglePlayerMenu(pid, event) {
   event.stopPropagation();
+  // Zárjuk be az összes többi menüt
   document.querySelectorAll('.player-dropdown').forEach(d => {
     if (d.id !== 'pmenu-'+pid) d.classList.add('hidden');
   });
   document.getElementById('pmenu-'+pid)?.classList.toggle('hidden');
 }
+
+// Kattintás bárhova → menük bezárása
 document.addEventListener('click', () => {
   document.querySelectorAll('.player-dropdown').forEach(d => d.classList.add('hidden'));
 });
@@ -1390,6 +1178,7 @@ function admitPlayer(pid) {
   if (!db || !players[pid]) return;
   roomRef.child('players').child(pid).child('status').set('active');
 }
+
 function admitAllPlayers() {
   const lobbyPlayers = Object.entries(players).filter(([id,p])=>p.status==='lobby');
   if (lobbyPlayers.length === 0) { alert('Nincs várakozó játékos!'); return; }
@@ -1397,6 +1186,7 @@ function admitAllPlayers() {
     if (db) roomRef.child('players').child(id).child('status').set('active');
   });
 }
+
 function moveToLobby(pid) {
   document.querySelectorAll('.player-dropdown').forEach(d => d.classList.add('hidden'));
   if (!db || !players[pid]) return;
@@ -1457,6 +1247,7 @@ function downloadJson(qs,filename) {
   a.download=filename+'.json';a.click();
 }
 
+// Import minta szövegek
 const IMPORT_GUIDES = {
   'Bibliai': `correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
 type értékek: vers | személy | évszám | helység | esemény
@@ -1510,8 +1301,10 @@ function openImportModal() {
   document.getElementById('import-modal').classList.remove('hidden');
   setImportTab('Bibliai');
 }
+
 function setImportTab(tab) {
   currentImportTab = tab;
+  // Gombok stílusa
   ['Bibliai','Filmek','egyéb'].forEach(t => {
     const btn = document.getElementById('import-tab-' + (t==='egyéb'?'egyeb':t));
     if(!btn) return;
@@ -1523,8 +1316,10 @@ function setImportTab(tab) {
       btn.style.cssText='flex:1;padding:10px;font-size:13px;';
     }
   });
+  // Minta szöveg
   document.getElementById('import-guide').textContent = IMPORT_GUIDES[tab] || IMPORT_GUIDES['egyéb'];
 }
+
 function doImport() {
   try{
     const raw=document.getElementById('import-textarea').value.trim();
@@ -1535,8 +1330,11 @@ function doImport() {
     parsed.forEach(q=>{
       if(!q.text||!q.options||q.options.length!==4)return;
       const correctIdx=typeof q.correct==='number'?Math.max(0,Math.min(3,q.correct)):0;
+      // Kategória: ha nincs megadva, a tab alapján töltjük ki
       const importCat = q.category || (currentImportTab!=='egyéb' ? currentImportTab : 'Általános');
+      // Típus: normalizáljuk
       let importType = (q.type||'').toLowerCase().trim();
+      // Filmek esetén "évszám/időpont" ellenőrzés
       const allowedTypes = CATEGORY_TYPES[importCat] || [];
       if(!allowedTypes.includes(importType)) importType = 'egyéb';
       const qData={
