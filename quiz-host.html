@@ -1308,6 +1308,7 @@ function nextQuestion() {
   if(currentQIndex>=activeQuestions.length){endGame();return;}
   const q=activeQuestions[currentQIndex];
   if(q.id)usedQuestionIds.add(q.id);
+  const prevCorrectIndex = correctOptionIndex; // előző kérdés helyes válasza (felülírás előtt mentjük)
   correctOptionIndex=q.correct;
   answeredPlayers.clear();answerCounts=[0,0,0,0];answerOrder=0;
   if(db){
@@ -1316,7 +1317,7 @@ function nextQuestion() {
       phase:'question',questionIndex:currentQIndex,
       question:{text:q.text,options:q.options,category:q.category,type:q.type||'egyéb',time:q.time},
       correctAnswer:q.correct,
-      lastCorrectAnswer: correctOptionIndex >= 0 ? correctOptionIndex : null,
+      lastCorrectAnswer: prevCorrectIndex >= 0 ? prevCorrectIndex : null,
       startTime:firebase.database.ServerValue.TIMESTAMP
     });
   }
