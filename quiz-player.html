@@ -318,7 +318,8 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <button class="changelog-back" onclick="showMenu()">← Vissza</button>
   <div class="changelog-title">VERZIÓ</div>
   <div class="changelog-subtitle">Fejlesztési előzmények</div>
-  <div class="cl-item"><div class="cl-ver current">1.22</div><div><div class="cl-desc">Szavazó felület a várakozási képernyőn — kategória és alkategória szavazás, valós idejű eredmény + Timer lejárat bug javítás (automatikus továbblépés időtúllépés esetén)</div></div></div>
+  <div class="cl-item"><div class="cl-ver current">1.23</div><div><div class="cl-desc">Új „Generációs szakadék" kategória hozzáadása — alkategóriák: 80-90-es évek generációi és Mai generáció, szavazási lehetőséggel</div></div></div>
+  <div class="cl-item"><div class="cl-ver">1.22</div><div><div class="cl-desc">Szavazó felület a várakozási képernyőn — kategória és alkategória szavazás, valós idejű eredmény + Timer lejárat bug javítás (automatikus továbblépés időtúllépés esetén)</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.21</div><div><div class="cl-desc">Játék verzió számának megjelenítése + Főmenü/Verzió előzmények gomb létrehozása</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.20</div><div><div class="cl-desc">Játék közben a következő kérdés indulásának fejlesztése</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.19</div><div><div class="cl-desc">Alkategóriák letöltése és törlése</div></div></div>
@@ -484,6 +485,27 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
           <div class="vote-subcat-item" id="vote-sub-Filmek-esemény" onclick="selectVote('Filmek','esemény')">
             <div class="vote-subcat-circle"></div>
             <div class="vote-subcat-label">⚡ Esemény</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GENERÁCIÓS SZAKADÉK (teljes sor) -->
+    <div class="vote-option-row" style="margin-top:0;">
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <div class="vote-radio-btn" id="vote-main-Generációs szakadék" onclick="selectVote('Generációs szakadék', null)">
+          <div class="vote-circle" id="vote-circle-Generációs szakadék"></div>
+          <div class="vote-label">🕹 Generációs szakadék</div>
+          <div class="vote-expand-icon" id="vote-expand-Generációs szakadék" onclick="event.stopPropagation();toggleSubcats('Generációs szakadék')">▶</div>
+        </div>
+        <div class="vote-subcats" id="vote-subcats-Generációs szakadék">
+          <div class="vote-subcat-item" id="vote-sub-Generációs szakadék-80-90-es évek generációi" onclick="selectVote('Generációs szakadék','80-90-es évek generációi')">
+            <div class="vote-subcat-circle"></div>
+            <div class="vote-subcat-label">📼 80-90-es évek generációi</div>
+          </div>
+          <div class="vote-subcat-item" id="vote-sub-Generációs szakadék-Mai generáció" onclick="selectVote('Generációs szakadék','Mai generáció')">
+            <div class="vote-subcat-circle"></div>
+            <div class="vote-subcat-label">📱 Mai generáció</div>
           </div>
         </div>
       </div>
@@ -1006,6 +1028,9 @@ const VOTE_LABELS_PLAYER = {
   'Filmek|évszám/időpont': '🎬 Filmek — Évszám/Időpont',
   'Filmek|helység': '🎬 Filmek — Helység',
   'Filmek|esemény': '🎬 Filmek — Esemény',
+  'Generációs szakadék': '🕹 Generációs szakadék (összes)',
+  'Generációs szakadék|80-90-es évek generációi': '📼 Generációs — 80-90-es évek',
+  'Generációs szakadék|Mai generáció': '📱 Generációs — Mai generáció',
   'skip': 'Nem szavazott',
 };
 
@@ -1259,7 +1284,7 @@ window.addEventListener('appinstalled', () => hideBanner());
 </script>
 
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.22</div>
+<div class="version-badge">Játék verzió: 1.23</div>
 
 </body>
 </html>
