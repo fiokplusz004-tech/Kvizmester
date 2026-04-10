@@ -1315,6 +1315,8 @@ function nextQuestion() {
     roomRef.child('gameState').set({
       phase:'question',questionIndex:currentQIndex,
       question:{text:q.text,options:q.options,category:q.category,type:q.type||'egyéb',time:q.time},
+      correctAnswer:q.correct,
+      lastCorrectAnswer: correctOptionIndex >= 0 ? correctOptionIndex : null,
       startTime:firebase.database.ServerValue.TIMESTAMP
     });
   }
