@@ -228,6 +228,45 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .hist-pts-val.pts-wrong { color:var(--red); }
   .hist-pts-val.pts-zero { color:var(--muted); }
 
+  /* ── SZAVAZÓ FELÜLET ─────────────────────── */
+  #vote-section { width:100%; max-width:380px; margin:20px auto 0; animation:fadeIn 0.4s ease; }
+  .vote-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--accent); text-align:center; margin-bottom:4px; }
+  .vote-subtitle { font-size:11px; color:var(--muted); text-align:center; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px; }
+  .vote-option-row { display:flex; gap:10px; margin-bottom:8px; }
+  .vote-radio-btn { flex:1; display:flex; align-items:center; gap:10px; background:var(--surface2); border:2px solid var(--border); border-radius:12px; padding:12px 14px; cursor:pointer; transition:all 0.2s; -webkit-user-select:none; user-select:none; }
+  .vote-radio-btn.selected { border-color:var(--accent); background:rgba(240,192,64,0.1); }
+  .vote-radio-btn.skip-btn { justify-content:center; flex:none; width:100%; margin-bottom:12px; border-color:var(--border); }
+  .vote-radio-btn.skip-btn.selected { border-color:var(--muted); background:rgba(107,107,138,0.12); }
+  .vote-circle { width:20px; height:20px; border-radius:50%; border:2px solid var(--border); flex-shrink:0; transition:all 0.2s; display:flex; align-items:center; justify-content:center; }
+  .vote-radio-btn.selected .vote-circle { border-color:var(--accent); background:var(--accent); }
+  .vote-radio-btn.selected .vote-circle::after { content:''; width:8px; height:8px; border-radius:50%; background:#000; }
+  .vote-radio-btn.skip-btn.selected .vote-circle { border-color:var(--muted); background:var(--muted); }
+  .vote-radio-btn.skip-btn.selected .vote-circle::after { content:''; width:8px; height:8px; border-radius:50%; background:#000; }
+  .vote-label { font-size:14px; font-weight:600; flex:1; }
+  .vote-expand-icon { font-size:11px; color:var(--muted); transition:transform 0.2s; flex-shrink:0; }
+  .vote-expand-icon.open { transform:rotate(90deg); }
+  .vote-subcats { display:none; padding:4px 0 4px 16px; flex-direction:column; gap:6px; }
+  .vote-subcats.open { display:flex; }
+  .vote-subcat-item { display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--surface); border:1px solid var(--border); border-radius:10px; cursor:pointer; transition:all 0.2s; -webkit-user-select:none; user-select:none; }
+  .vote-subcat-item.selected { border-color:var(--accent); background:rgba(240,192,64,0.08); }
+  .vote-subcat-circle { width:16px; height:16px; border-radius:50%; border:2px solid var(--border); flex-shrink:0; transition:all 0.2s; display:flex; align-items:center; justify-content:center; }
+  .vote-subcat-item.selected .vote-subcat-circle { border-color:var(--accent); background:var(--accent); }
+  .vote-subcat-item.selected .vote-subcat-circle::after { content:''; width:6px; height:6px; border-radius:50%; background:#000; }
+  .vote-subcat-label { font-size:13px; font-weight:500; }
+  .vote-submit-btn { width:100%; padding:16px; background:var(--accent); color:#000; border:none; border-radius:12px; font-family:var(--font-display); font-size:22px; letter-spacing:2px; cursor:pointer; transition:all 0.15s; margin-top:16px; box-shadow:0 4px 16px rgba(240,192,64,0.2); }
+  .vote-submit-btn:active { transform:scale(0.97); opacity:0.9; }
+  .vote-submit-btn:disabled { opacity:0.4; cursor:not-allowed; }
+  .vote-sent-box { background:rgba(62,207,142,0.08); border:1px solid rgba(62,207,142,0.3); border-radius:12px; padding:16px; margin-top:8px; text-align:center; }
+  .vote-sent-title { font-family:var(--font-display); font-size:18px; color:var(--green); letter-spacing:2px; margin-bottom:6px; }
+  .vote-sent-sub { font-size:12px; color:var(--muted); margin-bottom:12px; }
+  .vote-results-list { text-align:left; display:flex; flex-direction:column; gap:5px; margin-top:8px; }
+  .vote-result-row { display:flex; align-items:center; justify-content:space-between; padding:7px 10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; font-size:12px; }
+  .vote-result-row.leader { border-color:var(--accent); background:rgba(240,192,64,0.08); }
+  .vote-result-name { flex:1; font-weight:500; }
+  .vote-result-count { font-family:var(--font-display); font-size:16px; color:var(--accent); }
+  .vote-waiting-more { font-size:12px; color:var(--muted); text-align:center; margin-top:8px; }
+  .vote-divider { height:1px; background:var(--border); margin:16px 0; }
+
   .hidden { display:none !important; }
 
   /* VERSION BADGE */
@@ -279,7 +318,8 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <button class="changelog-back" onclick="showMenu()">← Vissza</button>
   <div class="changelog-title">VERZIÓ</div>
   <div class="changelog-subtitle">Fejlesztési előzmények</div>
-  <div class="cl-item"><div class="cl-ver current">1.21</div><div><div class="cl-desc">Játék verzió számának megjelenítése + Főmenü/Verzió előzmények gomb létrehozása</div></div></div>
+  <div class="cl-item"><div class="cl-ver current">1.22</div><div><div class="cl-desc">Szavazó felület a várakozási képernyőn — kategória és alkategória szavazás, valós idejű eredmény + Timer lejárat bug javítás (automatikus továbblépés időtúllépés esetén)</div></div></div>
+  <div class="cl-item"><div class="cl-ver">1.21</div><div><div class="cl-desc">Játék verzió számának megjelenítése + Főmenü/Verzió előzmények gomb létrehozása</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.20</div><div><div class="cl-desc">Játék közben a következő kérdés indulásának fejlesztése</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.19</div><div><div class="cl-desc">Alkategóriák letöltése és törlése</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.18</div><div><div class="cl-desc">Szavazórendszer bevezetése a váróteremben a témakörökkel kapcsolatban</div></div></div>
@@ -363,7 +403,6 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
 </div>
 
 <!-- VÁRAKOZÁS -->
-<!-- [FIX #1] "Vissza a főmenübe" gomb hozzáadva a waiting-screen-re -->
 <div id="waiting-screen">
   <div class="waiting-avatar" id="w-avatar">A</div>
   <div class="waiting-player-name" id="w-name">—</div>
@@ -372,6 +411,95 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
   <div class="waiting-msg" id="waiting-msg">Várakozás az új játék kezdésére...</div>
+
+  <!-- SZAVAZÓ FELÜLET -->
+  <div id="vote-section">
+    <div class="vote-divider"></div>
+    <div class="vote-title">🗳 SZAVAZÁS</div>
+    <div class="vote-subtitle">Milyen témájú kvízt szeretnél?</div>
+
+    <!-- NEM SZERETNÉK SZAVAZNI -->
+    <div class="vote-radio-btn skip-btn" id="vote-skip-btn" onclick="selectVote('skip', null)">
+      <div class="vote-circle" id="vote-circle-skip"></div>
+      <div class="vote-label" style="text-align:center;color:var(--muted);">Nem szeretnék szavazni</div>
+    </div>
+
+    <!-- FŐ KATEGÓRIÁK -->
+    <div class="vote-option-row">
+      <!-- BIBLIAI -->
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <div class="vote-radio-btn" id="vote-main-Bibliai" onclick="selectVote('Bibliai', null)">
+          <div class="vote-circle" id="vote-circle-Bibliai"></div>
+          <div class="vote-label">📖 Bibliai</div>
+          <div class="vote-expand-icon" id="vote-expand-Bibliai" onclick="event.stopPropagation();toggleSubcats('Bibliai')">▶</div>
+        </div>
+        <div class="vote-subcats" id="vote-subcats-Bibliai">
+          <div class="vote-subcat-item" id="vote-sub-Bibliai-vers" onclick="selectVote('Bibliai','vers')">
+            <div class="vote-subcat-circle"></div>
+            <div class="vote-subcat-label">📖 Vers felismerés</div>
+          </div>
+          <div class="vote-subcat-item" id="vote-sub-Bibliai-személy" onclick="selectVote('Bibliai','személy')">
+            <div class="vote-subcat-circle"></div>
+            <div class="vote-subcat-label">👤 Személy</div>
+          </div>
+          <div class="vote-subcat-item" id="vote-sub-Bibliai-évszám" onclick="selectVote('Bibliai','évszám')">
+            <div class="vote-subcat-circle"></div>
+            <div class="vote-subcat-label">📅 Évszám</div>
+          </div>
+          <div class="vote-subcat-item" id="vote-sub-Bibliai-helység" onclick="selectVote('Bibliai','helység')">
+            <div class="vote-subcat-circle"></div>
+            <div class="vote-subcat-label">📍 Helység</div>
+          </div>
+          <div class="vote-subcat-item" id="vote-sub-Bibliai-esemény" onclick="selectVote('Bibliai','esemény')">
+            <div class="vote-subcat-circle"></div>
+            <div class="vote-subcat-label">⚡ Esemény</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILMEK -->
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <div class="vote-radio-btn" id="vote-main-Filmek" onclick="selectVote('Filmek', null)">
+          <div class="vote-circle" id="vote-circle-Filmek"></div>
+          <div class="vote-label">🎬 Filmek</div>
+          <div class="vote-expand-icon" id="vote-expand-Filmek" onclick="event.stopPropagation();toggleSubcats('Filmek')">▶</div>
+        </div>
+        <div class="vote-subcats" id="vote-subcats-Filmek">
+          <div class="vote-subcat-item" id="vote-sub-Filmek-idézet" onclick="selectVote('Filmek','idézet')">
+            <div class="vote-subcat-circle"></div>
+            <div class="vote-subcat-label">💬 Idézet</div>
+          </div>
+          <div class="vote-subcat-item" id="vote-sub-Filmek-személy" onclick="selectVote('Filmek','személy')">
+            <div class="vote-subcat-circle"></div>
+            <div class="vote-subcat-label">👤 Személy</div>
+          </div>
+          <div class="vote-subcat-item" id="vote-sub-Filmek-évszám/időpont" onclick="selectVote('Filmek','évszám/időpont')">
+            <div class="vote-subcat-circle"></div>
+            <div class="vote-subcat-label">📅 Évszám/Időpont</div>
+          </div>
+          <div class="vote-subcat-item" id="vote-sub-Filmek-helység" onclick="selectVote('Filmek','helység')">
+            <div class="vote-subcat-circle"></div>
+            <div class="vote-subcat-label">📍 Helység</div>
+          </div>
+          <div class="vote-subcat-item" id="vote-sub-Filmek-esemény" onclick="selectVote('Filmek','esemény')">
+            <div class="vote-subcat-circle"></div>
+            <div class="vote-subcat-label">⚡ Esemény</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="vote-submit-btn" id="vote-submit-btn" onclick="submitVote()" disabled>🗳 Elküldés</button>
+
+    <!-- SZAVAZAT ELKÜLDVE — eredmény panel -->
+    <div class="vote-sent-box hidden" id="vote-sent-box">
+      <div class="vote-sent-title">✓ SZAVAZAT ELKÜLDVE</div>
+      <div class="vote-sent-sub" id="vote-sent-choice">—</div>
+      <div class="vote-results-list" id="vote-results-list"></div>
+      <div class="vote-waiting-more" id="vote-waiting-more"></div>
+    </div>
+  </div>
+
   <button class="btn-back-game" style="max-width:280px;margin-top:28px;" onclick="backToMenu()">↺ Vissza a főmenübe</button>
 </div>
 
@@ -460,6 +588,11 @@ const CIRCUMFERENCE = 175.9;
 let myQuestionHistory = [];   // [{qText, options, myAnswer, correctAnswer, pts, qIndex}]
 let pendingQuestion = null;   // az éppen folyamatban lévő kérdés adatai
 
+// Szavazás state
+let myVoteCat = null;     // pl. 'Bibliai', 'Filmek', 'skip'
+let myVoteSubtype = null; // pl. 'vers', null
+let myVoteSubmitted = false;
+
 function getParam(n) { return new URLSearchParams(window.location.search).get(n); }
 
 window.addEventListener('load', () => {
@@ -507,6 +640,8 @@ function showWaiting() {
   document.getElementById('w-avatar').style.color = myColor;
   document.getElementById('w-name').textContent = playerName;
   document.getElementById('w-room').textContent = roomCode;
+  // Szavazó felület reset
+  resetVoteUI();
 }
 
 // ── ÚJ JÁTÉK gomb ────────────────────────────────────────────
@@ -662,6 +797,11 @@ function setupListeners() {
   roomRef.child('questions').once('value', snap => {
     questions = Object.values(snap.val() || {});
     updateProgress();
+  });
+
+  // Szavazás eredmény figyelése (valós idejű frissítés)
+  roomRef.child('voteResult').on('value', snap => {
+    if (myVoteSubmitted) updateVoteResultsDisplay();
   });
 }
 
@@ -852,13 +992,163 @@ function backToResults() {
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
+// ── SZAVAZÁS ─────────────────────────────────────────────────
+const VOTE_LABELS_PLAYER = {
+  'Bibliai': '📖 Bibliai (összes)',
+  'Bibliai|vers': '📖 Bibliai — Vers felismerés',
+  'Bibliai|személy': '📖 Bibliai — Személy',
+  'Bibliai|évszám': '📖 Bibliai — Évszám',
+  'Bibliai|helység': '📖 Bibliai — Helység',
+  'Bibliai|esemény': '📖 Bibliai — Esemény',
+  'Filmek': '🎬 Filmek (összes)',
+  'Filmek|idézet': '🎬 Filmek — Idézet',
+  'Filmek|személy': '🎬 Filmek — Személy',
+  'Filmek|évszám/időpont': '🎬 Filmek — Évszám/Időpont',
+  'Filmek|helység': '🎬 Filmek — Helység',
+  'Filmek|esemény': '🎬 Filmek — Esemény',
+  'skip': 'Nem szavazott',
+};
+
+function resetVoteUI() {
+  myVoteCat = null;
+  myVoteSubtype = null;
+  myVoteSubmitted = false;
+  // Minden kijelölés törlése
+  document.querySelectorAll('.vote-radio-btn.selected').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.vote-subcat-item.selected').forEach(el => el.classList.remove('selected'));
+  // Alkategóriák bezárása
+  document.querySelectorAll('.vote-subcats.open').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.vote-expand-icon.open').forEach(el => el.classList.remove('open'));
+  // Submit gomb letiltva
+  const btn = document.getElementById('vote-submit-btn');
+  if (btn) { btn.disabled = true; btn.style.display = ''; }
+  // Sent box elrejtése
+  const sent = document.getElementById('vote-sent-box');
+  if (sent) sent.classList.add('hidden');
+  // Vote section megjelenítése
+  const section = document.getElementById('vote-section');
+  if (section) section.style.display = '';
+}
+
+function selectVote(cat, subtype) {
+  if (myVoteSubmitted) return;
+  myVoteCat = cat;
+  myVoteSubtype = subtype;
+
+  // Összes kijelölés törlése
+  document.querySelectorAll('.vote-radio-btn').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.vote-subcat-item').forEach(el => el.classList.remove('selected'));
+
+  if (cat === 'skip') {
+    document.getElementById('vote-skip-btn').classList.add('selected');
+  } else if (subtype) {
+    // Alkategória kiválasztva
+    const subEl = document.getElementById('vote-sub-' + cat + '-' + subtype);
+    if (subEl) subEl.classList.add('selected');
+    // Főkategória gomb is kiemelve (halványan jelzi a szülőt)
+    const mainEl = document.getElementById('vote-main-' + cat);
+    if (mainEl) mainEl.style.borderColor = 'rgba(240,192,64,0.4)';
+  } else {
+    // Főkategória kiválasztva
+    const mainEl = document.getElementById('vote-main-' + cat);
+    if (mainEl) mainEl.classList.add('selected');
+  }
+
+  // Submit gomb engedélyezése
+  const btn = document.getElementById('vote-submit-btn');
+  if (btn) btn.disabled = false;
+}
+
+function toggleSubcats(cat) {
+  const subcats = document.getElementById('vote-subcats-' + cat);
+  const icon = document.getElementById('vote-expand-' + cat);
+  if (!subcats || !icon) return;
+  const isOpen = subcats.classList.contains('open');
+  // Zárjuk be a másik kategória subcats-ját
+  document.querySelectorAll('.vote-subcats.open').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.vote-expand-icon.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) {
+    subcats.classList.add('open');
+    icon.classList.add('open');
+  }
+}
+
+function submitVote() {
+  if (!myVoteCat || myVoteSubmitted) return;
+  myVoteSubmitted = true;
+
+  // Firebase-be írjuk a szavazatot
+  if (db && roomRef) {
+    roomRef.child('votes').child(playerId).set({
+      cat: myVoteCat,
+      subtype: myVoteSubtype || null,
+      playerName: playerName,
+      ts: firebase.database.ServerValue.TIMESTAMP
+    });
+  }
+
+  // Submit gomb elrejtése
+  const btn = document.getElementById('vote-submit-btn');
+  if (btn) btn.style.display = 'none';
+
+  // Sent box megjelenítése
+  const sent = document.getElementById('vote-sent-box');
+  if (sent) sent.classList.remove('hidden');
+
+  const voteKey = myVoteSubtype ? myVoteCat + '|' + myVoteSubtype : myVoteCat;
+  const choiceLabel = myVoteCat === 'skip' ? 'Nem szavazott' : (VOTE_LABELS_PLAYER[voteKey] || voteKey);
+  const choiceEl = document.getElementById('vote-sent-choice');
+  if (choiceEl) choiceEl.textContent = 'Szavazatod: ' + choiceLabel;
+
+  updateVoteResultsDisplay();
+}
+
+function updateVoteResultsDisplay() {
+  if (!myVoteSubmitted) return;
+  // Firebase-ből olvassuk a voteResult-ot
+  if (db && roomRef) {
+    roomRef.child('voteResult').once('value', snap => {
+      const result = snap.val();
+      const listEl = document.getElementById('vote-results-list');
+      const waitEl = document.getElementById('vote-waiting-more');
+      if (!listEl || !waitEl) return;
+
+      if (!result || !result.tally) {
+        listEl.innerHTML = '';
+        waitEl.textContent = 'Várakozás a többi szavazatra...';
+        return;
+      }
+
+      // Tally megjelenítése
+      listEl.innerHTML = result.tally
+        .filter(r => r.key !== 'skip')
+        .map(r => {
+          const isLeader = r.key === result.winner;
+          return `<div class="vote-result-row${isLeader ? ' leader' : ''}">
+            <span class="vote-result-name">${r.label || r.key}${isLeader ? ' 🏆' : ''}</span>
+            <span class="vote-result-count">${r.count}</span>
+          </div>`;
+        }).join('');
+
+      if (result.winner) {
+        waitEl.textContent = '';
+      } else {
+        waitEl.textContent = 'Várakozás a többi szavazatra...';
+      }
+    });
+  }
+}
+
+
 function backToMenu() {
   stopTimer();
   if (roomRef) {
     roomRef.child('gameState').off();
     roomRef.child('players').off();
     roomRef.child('answers').off();
+    roomRef.child('voteResult').off();
     if (playerId) {
+      roomRef.child('votes').child(playerId).remove();
       roomRef.child('players').child(playerId).child('status').off();
       roomRef.child('players').child(playerId).child('score').off();
       roomRef.child('players').child(playerId).remove();
@@ -867,6 +1157,7 @@ function backToMenu() {
   hasAnswered = false; myScore = 0; currentQIndex = -1;
   players = {}; questions = []; answeredNamesThisRound = new Set();
   myQuestionHistory = []; pendingQuestion = null;
+  myVoteCat = null; myVoteSubtype = null; myVoteSubmitted = false;
   document.getElementById('my-score').textContent = '0';
   document.getElementById('my-rank').textContent = '#—';
   showMenu();
@@ -968,7 +1259,7 @@ window.addEventListener('appinstalled', () => hideBanner());
 </script>
 
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.21</div>
+<div class="version-badge">Játék verzió: 1.22</div>
 
 </body>
 </html>

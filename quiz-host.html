@@ -1349,21 +1349,22 @@ function startTimer(seconds) {
     bar.style.transition='width 1s linear';bar.style.width=(currentTimerValue/seconds*100)+'%';
     disp.textContent=currentTimerValue;
     if(currentTimerValue<=10){bar.classList.add('urgent');disp.classList.add('urgent');}
-    if(currentTimerValue<=0){clearInterval(currentTimerInterval);revealAnswer();}
+    if(currentTimerValue<=0){clearInterval(currentTimerInterval);revealAnswer(true);}
   },1000);
 }
 
-function revealAnswer() {
+function revealAnswer(fromTimer=false) {
   clearInterval(currentTimerInterval);gamePhase='revealed';
   document.querySelectorAll('.answer-card').forEach((card,i)=>card.classList.add(i===correctOptionIndex?'correct':'wrong'));
   if(db)roomRef.child('gameState').update({phase:'revealed',correctAnswer:correctOptionIndex});
   document.getElementById('btn-reveal').classList.add('hidden');
   document.getElementById('btn-next').classList.remove('hidden');
   document.getElementById('phase-label').textContent='MEGOLDÁS MEGJELENÍTVE';
-  // Csak aktív játékosokat számolunk; ha mindenki válaszolt (vagy lejárt az idő), auto-advance
   const activePlayers=Object.values(players).filter(p=>p.status==='active');
   const total=activePlayers.length;
-  if(total>0&&answeredPlayers.size>=total){
+  // Ha az idő járt le: mindig auto-advance (nem várunk több választ)
+  // Ha manuálisan hívták: csak ha mindenki már válaszolt
+  if(fromTimer || (total>0 && answeredPlayers.size>=total)){
     startAutoAdvance();
   }
 }
@@ -1654,7 +1655,7 @@ function closeChangelog() {
 }
 </script>
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.21</div>
+<div class="version-badge">Játék verzió: 1.22</div>
 
 <!-- CHANGELOG MODAL -->
 <div class="changelog-overlay hidden" id="changelog-modal" onclick="if(event.target===this)closeChangelog()">
@@ -1665,7 +1666,11 @@ function closeChangelog() {
     </div>
     <div class="changelog-scroll">
       <div class="changelog-item">
-        <div><div class="changelog-ver current">1.21</div></div>
+        <div><div class="changelog-ver current">1.22</div></div>
+        <div><div class="changelog-desc">Szavazó felület a várakozási képernyőn — kategória és alkategória szavazás, valós idejű eredmény + Timer lejárat bug javítás (automatikus továbblépés időtúllépés esetén)</div></div>
+      </div>
+      <div class="changelog-item">
+        <div><div class="changelog-ver">1.21</div></div>
         <div><div class="changelog-desc">Játék verzió számának megjelenítése + Főmenü/Verzió előzmények gomb létrehozása</div></div>
       </div>
       <div class="changelog-item">
