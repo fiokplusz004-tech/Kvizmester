@@ -737,10 +737,12 @@ function setupListeners() {
       roomRef.child('players').child(playerId).child('status').once('value', statusSnap => {
         const myStatus = statusSnap.val();
         if (myStatus === 'active') {
+          // state.lastCorrectAnswer = az előző kérdés helyes válasza (fallback a race conditionhoz)
+          const prevCorrect = (typeof state.lastCorrectAnswer === 'number') ? state.lastCorrectAnswer : -1;
           currentQIndex = state.questionIndex;
           hasAnswered = false;
           answeredNamesThisRound = new Set();
-          showQuestion(state.question, state.questionIndex);
+          showQuestion(state.question, state.questionIndex, prevCorrect);
         }
       });
     } else if (state.phase === 'revealed') {
@@ -809,7 +811,7 @@ function setupListeners() {
 }
 
 // ── UI FÜGGVÉNYEK ─────────────────────────────────────────────
-function showQuestion(q, idx) {
+function showQuestion(q, idx, prevCorrectAnswer) {
   hideAll();
   document.getElementById('game-screen').style.display = 'flex';
   document.getElementById('q-cat-player').textContent = q.category || '';
@@ -818,8 +820,12 @@ function showQuestion(q, idx) {
   // Előző "Válasz elküldve" elemek törlése
   document.querySelectorAll('.wait-reveal').forEach(el => el.remove());
 
-  // Ha volt lezáratlan pending kérdés (pl. reveal nem érkezett meg), zárjuk le
+  // Ha volt lezáratlan pending kérdés (a revealed phase race condition miatt kimaradt),
+  // zárjuk le most a helyes válasszal — prevCorrectAnswer az előző kérdés correctAnswer-je
   if (pendingQuestion && pendingQuestion.correctAnswer === -1) {
+    if (typeof prevCorrectAnswer === 'number' && prevCorrectAnswer >= 0) {
+      pendingQuestion.correctAnswer = prevCorrectAnswer;
+    }
     myQuestionHistory.push({...pendingQuestion});
   }
 
