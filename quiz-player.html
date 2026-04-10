@@ -759,14 +759,17 @@ function setupListeners() {
     }
   });
 
-  // [FIX #3] Pontszám figyelése — mentsük a kapott pontokat a pendingQuestion-be
+  // Pontszám figyelése
   roomRef.child('players').child(playerId).child('score').on('value', snap => {
     const newScore = snap.val() || 0;
     if (newScore > myScore) {
       const diff = newScore - myScore;
-      // Pontokat mentjük a pending kérdéshez
+      // Ha pendingQuestion még nyitva van (reveal előtt érkezett a pont), frissítjük
       if (pendingQuestion) {
         pendingQuestion.pts = diff;
+      } else if (myQuestionHistory.length > 0) {
+        // Ha a history-ba már bezárult a kérdés, utólag frissítjük az utolsó bejegyzést
+        myQuestionHistory[myQuestionHistory.length - 1].pts = diff;
       }
       showScoreDelta('+' + diff, diff > 1);
     }
@@ -812,12 +815,20 @@ function showQuestion(q, idx) {
   document.getElementById('q-cat-player').textContent = q.category || '';
   document.getElementById('q-text-player').textContent = q.text;
 
-  // [FIX #3] Kérdés rögzítése tracking célra
+  // Előző "Válasz elküldve" elemek törlése
+  document.querySelectorAll('.wait-reveal').forEach(el => el.remove());
+
+  // Ha volt lezáratlan pending kérdés (pl. reveal nem érkezett meg), zárjuk le
+  if (pendingQuestion && pendingQuestion.correctAnswer === -1) {
+    myQuestionHistory.push({...pendingQuestion});
+  }
+
+  // Kérdés rögzítése tracking célra
   pendingQuestion = {
     qText: q.text,
     options: q.options,
-    myAnswer: -1,       // -1 = nem válaszolt / lejárt az idő
-    correctAnswer: -1,  // majd a revealAnswers()-ben töltjük ki
+    myAnswer: -1,
+    correctAnswer: -1,
     pts: 0,
     qIndex: idx
   };
@@ -866,20 +877,12 @@ function submitAnswer(idx) {
 function revealAnswers(correctIdx) {
   stopTimer();
 
-  // [FIX #3] Helyes válasz és eredmény mentése, history-ba zárás
+  // Helyes válasz rögzítése és history-ba zárás azonnal
+  // (A pontot a score-listener fogja utólag frissíteni ha még nem érkezett meg)
   if (pendingQuestion) {
     pendingQuestion.correctAnswer = correctIdx;
-    // Ha helytelen választ adott (de nem -1 = timeout), de pontot nem kapott: 1pt-ot kapna
-    // A pts-t a score-listener már feltölthette, ha kapott pontot.
-    // Ha nem kapott pontot és nem timeout és helytelen volt, pts marad 0 — de az 1pt-ot
-    // a host számolja, a score listener fogja frissíteni röviddel ezután.
-    // Ezért kis késleltetéssel zárjuk a history-t, hogy a score update megérkezhessen.
-    setTimeout(() => {
-      if (pendingQuestion) {
-        myQuestionHistory.push({...pendingQuestion});
-        pendingQuestion = null;
-      }
-    }, 1500);
+    myQuestionHistory.push({...pendingQuestion});
+    pendingQuestion = null;
   }
 
   document.querySelectorAll('.ans-btn').forEach((btn, i) => {
@@ -887,14 +890,14 @@ function revealAnswers(correctIdx) {
     if (i === correctIdx) btn.classList.add('correct-highlight');
     else if (btn.classList.contains('selected')) btn.classList.add('wrong');
   });
-  const wr = document.querySelector('.wait-reveal');
-  if (wr) wr.remove();
+  // Összes wait-reveal elem törlése (megakadályozza a halmozódást)
+  document.querySelectorAll('.wait-reveal').forEach(el => el.remove());
 }
 
 function showResults() {
   stopTimer();
 
-  // Biztos hogy minden pending kérdés bekerüljön a history-ba
+  // Csak akkor mentjük, ha még nyitva van (revealAnswers nem futott le)
   if (pendingQuestion) {
     myQuestionHistory.push({...pendingQuestion});
     pendingQuestion = null;
@@ -963,7 +966,8 @@ function showHistory() {
         </div>`;
       }).join('');
 
-      const ptsClass = (h.pts || 0) >= 2 ? 'pts-positive' : (h.pts || 0) === 1 ? 'pts-wrong' : 'pts-zero';
+      const pts = h.pts || 0;
+      const ptsClass = isTimeout ? 'pts-zero' : pts >= 2 ? 'pts-positive' : pts === 1 ? 'pts-wrong' : 'pts-zero';
       const ptsLabel = isTimeout ? 'Nem válaszoltál' : isCorrect ? 'Megszerzett pont' : '1 vigaszpont';
 
       html += `
@@ -976,7 +980,7 @@ function showHistory() {
           <div class="hist-answers">${answersHTML}</div>
           <div class="hist-footer">
             <div class="hist-pts-label">${ptsLabel}</div>
-            <div class="hist-pts-val ${ptsClass}">+${h.pts || 0} pt</div>
+            <div class="hist-pts-val ${ptsClass}">+${pts} pt</div>
           </div>
         </div>`;
     });
