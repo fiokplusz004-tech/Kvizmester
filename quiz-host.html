@@ -670,7 +670,6 @@ let questions=[],players={};
 let currentQIndex=-1,correctOptionIndex=-1;
 let currentTimerInterval=null,currentTimerValue=30;
 let gamePhase='waiting';
-let autoAdvanceRunning=false;
 let selectedCat='all',selectedSubtype='all';
 let answerCounts=[0,0,0,0],answeredPlayers=new Set(),answerOrder=0;
 let activeQuestions=[],usedQuestionIds=new Set();
@@ -1303,12 +1302,10 @@ function startGame() {
 }
 
 function nextQuestion() {
-  autoAdvanceRunning=false;
   currentQIndex++;
   if(currentQIndex>=activeQuestions.length){endGame();return;}
   const q=activeQuestions[currentQIndex];
   if(q.id)usedQuestionIds.add(q.id);
-  const prevCorrectIndex = correctOptionIndex; // előző kérdés helyes válasza (felülírás előtt mentjük)
   correctOptionIndex=q.correct;
   answeredPlayers.clear();answerCounts=[0,0,0,0];answerOrder=0;
   if(db){
@@ -1316,8 +1313,6 @@ function nextQuestion() {
     roomRef.child('gameState').set({
       phase:'question',questionIndex:currentQIndex,
       question:{text:q.text,options:q.options,category:q.category,type:q.type||'egyéb',time:q.time},
-      correctAnswer:q.correct,
-      lastCorrectAnswer: prevCorrectIndex >= 0 ? prevCorrectIndex : null,
       startTime:firebase.database.ServerValue.TIMESTAMP
     });
   }
@@ -1354,35 +1349,32 @@ function startTimer(seconds) {
     bar.style.transition='width 1s linear';bar.style.width=(currentTimerValue/seconds*100)+'%';
     disp.textContent=currentTimerValue;
     if(currentTimerValue<=10){bar.classList.add('urgent');disp.classList.add('urgent');}
-    if(currentTimerValue<=0){clearInterval(currentTimerInterval);revealAnswer(true);}
+    if(currentTimerValue<=0){clearInterval(currentTimerInterval);revealAnswer();}
   },1000);
 }
 
-function revealAnswer(fromTimer=false) {
+function revealAnswer() {
   clearInterval(currentTimerInterval);gamePhase='revealed';
   document.querySelectorAll('.answer-card').forEach((card,i)=>card.classList.add(i===correctOptionIndex?'correct':'wrong'));
   if(db)roomRef.child('gameState').update({phase:'revealed',correctAnswer:correctOptionIndex});
   document.getElementById('btn-reveal').classList.add('hidden');
   document.getElementById('btn-next').classList.remove('hidden');
   document.getElementById('phase-label').textContent='MEGOLDÁS MEGJELENÍTVE';
+  // Csak aktív játékosokat számolunk; ha mindenki válaszolt (vagy lejárt az idő), auto-advance
   const activePlayers=Object.values(players).filter(p=>p.status==='active');
   const total=activePlayers.length;
-  // Ha az idő járt le: mindig auto-advance (nem várunk több választ)
-  // Ha manuálisan hívták: csak ha mindenki már válaszolt
-  if(fromTimer || (total>0 && answeredPlayers.size>=total)){
+  if(total>0&&answeredPlayers.size>=total){
     startAutoAdvance();
   }
 }
 
 function startAutoAdvance() {
-  if(autoAdvanceRunning)return;
-  autoAdvanceRunning=true;
   let cd=3;
   document.getElementById('phase-label').textContent='KÖVETKEZŐ: '+cd+'...';
   const t=setInterval(()=>{
     cd--;
     if(cd>0){document.getElementById('phase-label').textContent='KÖVETKEZŐ: '+cd+'...';}
-    else{clearInterval(t);autoAdvanceRunning=false;nextQuestion();}
+    else{clearInterval(t);nextQuestion();}
   },1000);
 }
 
@@ -1662,7 +1654,7 @@ function closeChangelog() {
 }
 </script>
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.22</div>
+<div class="version-badge">Játék verzió: 1.21</div>
 
 <!-- CHANGELOG MODAL -->
 <div class="changelog-overlay hidden" id="changelog-modal" onclick="if(event.target===this)closeChangelog()">
@@ -1673,11 +1665,7 @@ function closeChangelog() {
     </div>
     <div class="changelog-scroll">
       <div class="changelog-item">
-        <div><div class="changelog-ver current">1.22</div></div>
-        <div><div class="changelog-desc">Szavazó felület a várakozási képernyőn — kategória és alkategória szavazás, valós idejű eredmény + Timer lejárat bug javítás (automatikus továbblépés időtúllépés esetén)</div></div>
-      </div>
-      <div class="changelog-item">
-        <div><div class="changelog-ver">1.21</div></div>
+        <div><div class="changelog-ver current">1.21</div></div>
         <div><div class="changelog-desc">Játék verzió számának megjelenítése + Főmenü/Verzió előzmények gomb létrehozása</div></div>
       </div>
       <div class="changelog-item">
