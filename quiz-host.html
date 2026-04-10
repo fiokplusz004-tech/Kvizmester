@@ -670,6 +670,7 @@ let questions=[],players={};
 let currentQIndex=-1,correctOptionIndex=-1;
 let currentTimerInterval=null,currentTimerValue=30;
 let gamePhase='waiting';
+let autoAdvanceRunning=false;
 let selectedCat='all',selectedSubtype='all';
 let answerCounts=[0,0,0,0],answeredPlayers=new Set(),answerOrder=0;
 let activeQuestions=[],usedQuestionIds=new Set();
@@ -1302,6 +1303,7 @@ function startGame() {
 }
 
 function nextQuestion() {
+  autoAdvanceRunning=false;
   currentQIndex++;
   if(currentQIndex>=activeQuestions.length){endGame();return;}
   const q=activeQuestions[currentQIndex];
@@ -1370,12 +1372,14 @@ function revealAnswer(fromTimer=false) {
 }
 
 function startAutoAdvance() {
+  if(autoAdvanceRunning)return;
+  autoAdvanceRunning=true;
   let cd=3;
   document.getElementById('phase-label').textContent='KÖVETKEZŐ: '+cd+'...';
   const t=setInterval(()=>{
     cd--;
     if(cd>0){document.getElementById('phase-label').textContent='KÖVETKEZŐ: '+cd+'...';}
-    else{clearInterval(t);nextQuestion();}
+    else{clearInterval(t);autoAdvanceRunning=false;nextQuestion();}
   },1000);
 }
 
