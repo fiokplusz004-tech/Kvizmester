@@ -100,8 +100,6 @@
   .type-esemeny{background:rgba(192,90,224,0.2);color:#c05ae0;}
   .type-idezet{background:rgba(224,192,90,0.2);color:#e0c05a;}
   .type-egyeb{background:rgba(107,107,138,0.2);color:#6b6b8a;}
-  .type-gen80{background:rgba(224,90,180,0.2);color:#e05ab4;}
-  .type-genmai{background:rgba(90,224,180,0.2);color:#5ae0b4;}
   .q-actions{position:absolute;top:9px;right:9px;display:flex;gap:5px;}
   .q-btn-sm{width:25px;height:25px;border-radius:6px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all 0.15s;}
   .q-btn-del{background:rgba(224,90,90,0.15);color:var(--red);}
@@ -428,7 +426,6 @@
               <option value="Általános">Általános</option>
               <option value="Bibliai">Bibliai</option>
               <option value="Filmek">Filmek</option>
-              <option value="Generációs szakadék">Generációs szakadék</option>
               <option value="Természet">Természet</option>
               <option value="Történelem">Történelem</option>
               <option value="Sport">Sport</option>
@@ -612,10 +609,9 @@
     <h3>⬆ IMPORTÁLÁS</h3>
     <div class="modal-field" style="margin-bottom:14px;">
       <label>Milyen típusú kérdéseket importálsz?</label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;">
         <button id="import-tab-Bibliai" class="btn-save" style="flex:1;padding:10px;font-size:13px;" onclick="setImportTab('Bibliai')">📖 Bibliai</button>
         <button id="import-tab-Filmek" class="btn-cancel-form" style="flex:1;padding:10px;font-size:13px;" onclick="setImportTab('Filmek')">🎬 Filmek</button>
-        <button id="import-tab-Generációs szakadék" class="btn-cancel-form" style="flex:1;padding:10px;font-size:13px;" onclick="setImportTab('Generációs szakadék')">🕹 Generációs</button>
         <button id="import-tab-egyeb" class="btn-cancel-form" style="flex:1;padding:10px;font-size:13px;" onclick="setImportTab('egyéb')">📋 Egyéb</button>
       </div>
     </div>
@@ -636,18 +632,15 @@
 // ============================================================
 const BIBLICAL_TYPES = ['vers','személy','évszám','helység','esemény'];
 const FILM_TYPES     = ['idézet','személy','évszám/időpont','helység','esemény'];
-const GEN_TYPES      = ['80-90-es évek generációi','Mai generáció'];
-const CATEGORY_TYPES = { 'Bibliai': BIBLICAL_TYPES, 'Filmek': FILM_TYPES, 'Generációs szakadék': GEN_TYPES };
+const CATEGORY_TYPES = { 'Bibliai': BIBLICAL_TYPES, 'Filmek': FILM_TYPES };
 const TYPE_LABELS = {
   vers:'📖 Vers', személy:'👤 Személy', évszám:'📅 Évszám', 'évszám/időpont':'📅 Évszám/Időpont',
-  helység:'📍 Helység', esemény:'⚡ Esemény', idézet:'💬 Idézet', egyéb:'Általános',
-  '80-90-es évek generációi':'📼 80-90-es évek', 'Mai generáció':'📱 Mai generáció'
+  helység:'📍 Helység', esemény:'⚡ Esemény', idézet:'💬 Idézet', egyéb:'Általános'
 };
 const TYPE_CLASSES = {
   vers:'type-vers', személy:'type-szemely', évszám:'type-evszam', 'évszám/időpont':'type-evszam',
   helység:'type-helyseg', esemény:'type-esemeny',
-  idézet:'type-idezet', egyéb:'type-egyeb',
-  '80-90-es évek generációi':'type-gen80', 'Mai generáció':'type-genmai'
+  idézet:'type-idezet', egyéb:'type-egyeb'
 };
 const LETTERS = ['A','B','C','D'];
 const AVATAR_COLORS = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f','#5ae0d4','#e0c05a'];
@@ -666,9 +659,6 @@ const VOTE_LABELS = {
   'Filmek|évszám/időpont': '🎬 Filmek — Évszám/Időpont',
   'Filmek|helység': '🎬 Filmek — Helység',
   'Filmek|esemény': '🎬 Filmek — Esemény',
-  'Generációs szakadék': '🕹 Generációs szakadék (összes)',
-  'Generációs szakadék|80-90-es évek generációi': '📼 Generációs — 80-90-es évek',
-  'Generációs szakadék|Mai generáció': '📱 Generációs — Mai generáció',
   'skip': '⏭ Nem szavaz',
 };
 
@@ -1593,21 +1583,6 @@ type értékek: idézet | személy | évszám/időpont | helység | esemény
 ]
 → correct:1 = B = "Star Wars" ✓`,
 
-  'Generációs szakadék': `correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
-type értékek: 80-90-es évek generációi | Mai generáció
-
-[
-  {
-    "text": "Mit jelent az, hogy „cringe"?",
-    "options": ["Kínos", "Túl hangos", "Nagyon drága", "Régi ruhás"],
-    "correct": 0,
-    "category": "Generációs szakadék",
-    "type": "Mai generáció",
-    "time": 30
-  }
-]
-→ correct:0 = A = "Kínos" ✓`,
-
   'egyéb': `correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
 category: bármilyen szöveg (pl. "Általános", "Sport", "Zene", "Természet"...)
 
@@ -1632,9 +1607,8 @@ function openImportModal() {
 }
 function setImportTab(tab) {
   currentImportTab = tab;
-  ['Bibliai','Filmek','Generációs szakadék','egyéb'].forEach(t => {
-    const btnId = 'import-tab-' + (t==='egyéb'?'egyeb': t);
-    const btn = document.getElementById(btnId);
+  ['Bibliai','Filmek','egyéb'].forEach(t => {
+    const btn = document.getElementById('import-tab-' + (t==='egyéb'?'egyeb':t));
     if(!btn) return;
     if(t===tab) {
       btn.className='btn-save';
@@ -1657,11 +1631,9 @@ function doImport() {
       if(!q.text||!q.options||q.options.length!==4)return;
       const correctIdx=typeof q.correct==='number'?Math.max(0,Math.min(3,q.correct)):0;
       const importCat = q.category || (currentImportTab!=='egyéb' ? currentImportTab : 'Általános');
-      let importType = (q.type||'').trim();
+      let importType = (q.type||'').toLowerCase().trim();
       const allowedTypes = CATEGORY_TYPES[importCat] || [];
-      // Case-insensitive matching for allowed types
-      const matchedType = allowedTypes.find(t => t.toLowerCase() === importType.toLowerCase());
-      if(!matchedType) importType = 'egyéb'; else importType = matchedType;
+      if(!allowedTypes.includes(importType)) importType = 'egyéb';
       const qData={
         text:q.text, options:q.options, correct:correctIdx,
         category:importCat, type:importType, time:q.time||30
@@ -1687,7 +1659,7 @@ function closeChangelog() {
 }
 </script>
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.23</div>
+<div class="version-badge">Játék verzió: 1.22</div>
 
 <!-- CHANGELOG MODAL -->
 <div class="changelog-overlay hidden" id="changelog-modal" onclick="if(event.target===this)closeChangelog()">
@@ -1698,11 +1670,7 @@ function closeChangelog() {
     </div>
     <div class="changelog-scroll">
       <div class="changelog-item">
-        <div><div class="changelog-ver current">1.23</div></div>
-        <div><div class="changelog-desc">Új „Generációs szakadék" kategória hozzáadása — alkategóriák: 80-90-es évek generációi és Mai generáció, szavazási lehetőséggel</div></div>
-      </div>
-      <div class="changelog-item">
-        <div><div class="changelog-ver">1.22</div></div>
+        <div><div class="changelog-ver current">1.22</div></div>
         <div><div class="changelog-desc">Szavazó felület a várakozási képernyőn — kategória és alkategória szavazás, valós idejű eredmény + Timer lejárat bug javítás (automatikus továbblépés időtúllépés esetén)</div></div>
       </div>
       <div class="changelog-item">
