@@ -1372,7 +1372,7 @@ function startTimer(seconds) {
 function revealAnswer(fromTimer=false) {
   clearInterval(currentTimerInterval);gamePhase='revealed';
   document.querySelectorAll('.answer-card').forEach((card,i)=>card.classList.add(i===correctOptionIndex?'correct':'wrong'));
-  if(db)roomRef.child('gameState').update({phase:'revealed',correctAnswer:correctOptionIndex});
+  if(db)roomRef.child('gameState').update({phase:'revealed',correctAnswer:correctOptionIndex,revealedForIndex:currentQIndex});
   document.getElementById('btn-reveal').classList.add('hidden');
   document.getElementById('btn-next').classList.remove('hidden');
   document.getElementById('phase-label').textContent='MEGOLDÁS MEGJELENÍTVE';
@@ -1733,7 +1733,7 @@ function closeChangelog() {
 }
 </script>
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.24</div>
+<div class="version-badge">Játék verzió: 1.25</div>
 
 <!-- CHANGELOG MODAL -->
 <div class="changelog-overlay hidden" id="changelog-modal" onclick="if(event.target===this)closeChangelog()">
@@ -1744,7 +1744,11 @@ function closeChangelog() {
     </div>
     <div class="changelog-scroll">
       <div class="changelog-item">
-        <div><div class="changelog-ver current">1.24</div></div>
+        <div><div class="changelog-ver current">1.25</div></div>
+        <div><div class="changelog-desc">Eredményeim hiba javítás — a helyes válasz mostantól minden esetben pontosan jelenik meg, még hálózati késés esetén is (revealedForIndex guard)</div></div>
+      </div>
+      <div class="changelog-item">
+        <div><div class="changelog-ver">1.24</div></div>
         <div><div class="changelog-desc">Játékosok látják a kérdések sorszámát (#num) a játék közben és az Eredményeim képernyőn is</div></div>
       </div>
       <div class="changelog-item">

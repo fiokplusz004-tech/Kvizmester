@@ -319,7 +319,8 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <button class="changelog-back" onclick="showMenu()">← Vissza</button>
   <div class="changelog-title">VERZIÓ</div>
   <div class="changelog-subtitle">Fejlesztési előzmények</div>
-  <div class="cl-item"><div class="cl-ver current">1.24</div><div><div class="cl-desc">Játékosok látják a kérdések sorszámát (#num) a játék közben és az Eredményeim képernyőn</div></div></div>
+  <div class="cl-item"><div class="cl-ver current">1.25</div><div><div class="cl-desc">Eredményeim hiba javítás — a helyes válasz mostantól minden esetben pontosan jelenik meg (revealedForIndex guard)</div></div></div>
+  <div class="cl-item"><div class="cl-ver">1.24</div><div><div class="cl-desc">Játékosok látják a kérdések sorszámát (#num) a játék közben és az Eredményeim képernyőn</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.23</div><div><div class="cl-desc">Kérdés sorszámozás — minden kérdéshez egyedi sorszám, a host felületen látható (#num badge)</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.22</div><div><div class="cl-desc">Szavazó felület a várakozási képernyőn — kategória és alkategória szavazás, valós idejű eredmény + Timer lejárat bug javítás (automatikus továbblépés időtúllépés esetén)</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.21</div><div><div class="cl-desc">Játék verzió számának megjelenítése + Főmenü/Verzió előzmények gomb létrehozása</div></div></div>
@@ -754,7 +755,8 @@ function setupListeners() {
       }
     } else if (state.phase === 'revealed') {
       // Mindig hívjuk — a gameVisible check csak a DOM frissítést védi (revealAnswers-en belül)
-      revealAnswers(state.correctAnswer);
+      const revealIdx = typeof state.revealedForIndex === 'number' ? state.revealedForIndex : state.questionIndex;
+      revealAnswers(state.correctAnswer, revealIdx);
     } else if (state.phase === 'ended') {
       const gameVisible = document.getElementById('game-screen').style.display !== 'none';
       if (gameVisible) showResults();
@@ -830,15 +832,21 @@ function showQuestion(q, idx, prevCorrectAnswer) {
   // Előző "Válasz elküldve" elemek törlése
   document.querySelectorAll('.wait-reveal').forEach(el => el.remove());
 
-  // Ha volt lezáratlan pending kérdés (a revealed phase race condition miatt kimaradt),
-  // zárjuk le most a legjobb ismert helyes válasszal
-  if (pendingQuestion && pendingQuestion.correctAnswer === -1) {
-    // prevCorrectAnswer = state.lastCorrectAnswer, ha az sincs, lastKnownCorrectAnswer
-    const bestCorrect = (typeof prevCorrectAnswer === 'number' && prevCorrectAnswer >= 0)
-      ? prevCorrectAnswer
-      : lastKnownCorrectAnswer;
-    if (bestCorrect >= 0) pendingQuestion.correctAnswer = bestCorrect;
+  // Ha volt lezáratlan pending kérdés, zárjuk le a legjobb ismert helyes válasszal.
+  // Ez lefed két esetet:
+  //   1. A 'revealed' Firebase esemény teljesen kimaradt (hálózati ok)
+  //   2. A revealAnswers() index-eltérés miatt kihagyta a lezárást
+  if (pendingQuestion) {
+    if (pendingQuestion.correctAnswer === -1) {
+      // prevCorrectAnswer = state.lastCorrectAnswer az új kérdés gameState-jéből — ez
+      // tartalmazza az előző kérdés helyes válaszát, tehát ez az elsődleges forrás.
+      const bestCorrect = (typeof prevCorrectAnswer === 'number' && prevCorrectAnswer >= 0)
+        ? prevCorrectAnswer
+        : lastKnownCorrectAnswer;
+      if (bestCorrect >= 0) pendingQuestion.correctAnswer = bestCorrect;
+    }
     myQuestionHistory.push({...pendingQuestion});
+    pendingQuestion = null;
   }
 
   // Kérdés rögzítése tracking célra
@@ -893,7 +901,7 @@ function submitAnswer(idx) {
   document.getElementById('q-area').appendChild(remaining);
 }
 
-function revealAnswers(correctIdx) {
+function revealAnswers(correctIdx, forQuestionIndex) {
   stopTimer();
 
   // Mindig frissítjük az utoljára ismert helyes választ
@@ -901,11 +909,21 @@ function revealAnswers(correctIdx) {
     lastKnownCorrectAnswer = correctIdx;
   }
 
-  // Adatot mindig mentjük — függetlenül attól, hogy a játék képernyő látható-e
+  // Adatot csak akkor mentjük, ha ez a reveal tényleg az aktuális kérdéshez tartozik.
+  // Ez véd az ellen, ha egy késve érkező 'revealed' esemény már a következő kérdés
+  // pendingQuestion-ját írná felül rossz helyes válasszal.
   if (pendingQuestion) {
-    pendingQuestion.correctAnswer = correctIdx;
-    myQuestionHistory.push({...pendingQuestion});
-    pendingQuestion = null;
+    const indexMatch = typeof forQuestionIndex !== 'number'      // ha nincs index info, engedünk
+      || typeof pendingQuestion.qIndex !== 'number'
+      || pendingQuestion.qIndex === forQuestionIndex;
+
+    if (indexMatch) {
+      pendingQuestion.correctAnswer = correctIdx;
+      myQuestionHistory.push({...pendingQuestion});
+      pendingQuestion = null;
+    }
+    // Ha nem egyezik az index, figyelmen kívül hagyjuk ezt a reveal eseményt —
+    // a helyes választ majd a showQuestion fallback-je állítja be lastCorrectAnswer alapján.
   }
 
   // DOM frissítés csak ha a játék képernyő látható
@@ -1296,7 +1314,7 @@ window.addEventListener('appinstalled', () => hideBanner());
 </script>
 
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.24</div>
+<div class="version-badge">Játék verzió: 1.25</div>
 
 </body>
 </html>
