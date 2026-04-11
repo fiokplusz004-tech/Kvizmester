@@ -141,7 +141,7 @@
   .player-count span{color:var(--green);font-size:22px;font-weight:700;}
   .player-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;}
   .question-state{width:100%;max-width:760px;}
-  .q-number{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .q-number{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
   .q-category-tag{display:inline-block;padding:4px 12px;border-radius:4px;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px;background:rgba(240,192,64,0.15);color:var(--accent);border:1px solid rgba(240,192,64,0.3);}
   .q-text{font-family:var(--font-display);font-size:38px;letter-spacing:1px;line-height:1.15;margin-bottom:28px;}
   .answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -311,6 +311,10 @@
   .tag{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:4px;}
   .tag-green{background:rgba(62,207,142,0.15);color:var(--green);}
   .tag-yellow{background:rgba(240,192,64,0.15);color:var(--accent);}
+  .q-num-badge{display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;letter-spacing:1px;color:var(--accent);background:rgba(240,192,64,0.1);border:1px solid rgba(240,192,64,0.25);border-radius:5px;padding:1px 7px;margin-right:7px;flex-shrink:0;}
+  .q-num-inline{font-family:var(--font-display);font-size:13px;color:var(--muted);margin-right:4px;}
+  .q-number-host{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+  .q-number-host .num-pill{font-family:var(--font-display);font-size:16px;color:var(--accent);background:rgba(240,192,64,0.1);border:1px solid rgba(240,192,64,0.3);border-radius:6px;padding:2px 10px;letter-spacing:1px;}
   @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
   .slide-up{animation:slideUp 0.4s ease;}
 
@@ -395,6 +399,7 @@
       <button class="btn-secondary" onclick="showNewQuestionForm()">+ Kérdés</button>
       <button class="btn-secondary" onclick="openExportModal()">⬇ Export</button>
       <button class="btn-secondary" onclick="openImportModal()">⬆ Import</button>
+      <button class="btn-secondary" onclick="renumberAllQuestions()" title="Visszamenőleges sorszámozás az összes kérdéshez"># Sorszámozás</button>
     </div>
   </div>
 
@@ -994,7 +999,9 @@ function saveNewQuestion() {
   const typeEl=document.getElementById('nq-type');
   const type=CATEGORY_TYPES[cat]?typeEl.value:'egyéb';
   if(!text||opts.some(o=>!o)){alert('Töltsd ki az összes mezőt!');return;}
-  const qData={text,options:opts,correct:nqCorrectOptVal,category:cat,type,time};
+  const maxNum=questions.reduce((max,q)=>Math.max(max,q.num||0),0);
+  const num=maxNum+1;
+  const qData={text,options:opts,correct:nqCorrectOptVal,category:cat,type,time,num};
   if(db){roomRef.child('questions').push(qData);}
   else{questions.push({...qData,id:'q'+Date.now()});renderAll();}
   document.getElementById('nq-text').value='';
@@ -1072,7 +1079,9 @@ function saveInlineEdit(id) {
   const time=parseInt(document.getElementById('ie-time').value);
   const type=CATEGORY_TYPES[cat]?document.getElementById('ie-type').value:'egyéb';
   if(!text||opts.some(o=>!o)){alert('Töltsd ki az összes mezőt!');return;}
-  const qData={text,options:opts,correct:inlineCorrectOpt,category:cat,type,time};
+  const existingQ=questions.find(x=>x.id===id);
+  const num=existingQ?(existingQ.num||0):0;
+  const qData={text,options:opts,correct:inlineCorrectOpt,category:cat,type,time,num};
   if(db){roomRef.child('questions').child(id).set(qData);}
   else{const idx=questions.findIndex(q=>q.id===id);if(idx>=0)questions[idx]={...qData,id};renderAll();}
   closeInlineEdit();
@@ -1192,12 +1201,13 @@ function renderQuestions() {
   list.innerHTML=filtered.map(q=>{
     const used=usedQuestionIds.has(q.id);
     const typeBadge=CATEGORY_TYPES[q.category]?`<span class="q-type-badge ${TYPE_CLASSES[q.type||'egyéb']||'type-egyeb'}">${TYPE_LABELS[q.type||'egyéb']||'?'}</span>`:'';
+    const numBadge=q.num?`<span class="q-num-badge">#${q.num}</span>`:'<span class="q-num-badge" style="opacity:0.4">—</span>';
     return `<div class="q-card${used?' used':''}" id="qcard-${q.id}">
       <div class="q-actions">
         <button class="q-btn-sm q-btn-edit" onclick="openInlineEdit('${q.id}')">✎</button>
         <button class="q-btn-sm q-btn-del" onclick="deleteQuestion('${q.id}')">✕</button>
       </div>
-      <div class="q-card-text">${q.text}</div>
+      <div class="q-card-text" style="display:flex;align-items:flex-start;gap:0;">${numBadge}<span>${q.text}</span></div>
       <div class="q-card-meta">
         <span class="q-cat-badge">${q.category}</span>
         ${typeBadge}
@@ -1325,7 +1335,8 @@ function nextQuestion() {
   document.getElementById('question-state').classList.remove('hidden');
   document.getElementById('question-state').classList.add('slide-up');
   const typeTag=CATEGORY_TYPES[q.category]&&q.type&&q.type!=='egyéb'?' — '+TYPE_LABELS[q.type]:'';
-  document.getElementById('q-number').textContent=(currentQIndex+1)+'. KÉRDÉS / '+activeQuestions.length;
+  const numLabel=q.num?`<span class="num-pill">#${q.num}</span> `:'';
+  document.getElementById('q-number').innerHTML=numLabel+(currentQIndex+1)+'. KÉRDÉS / '+activeQuestions.length;
   document.getElementById('q-cat-tag').textContent=q.category+typeTag;
   document.getElementById('q-text-display').textContent=q.text;
   document.getElementById('phase-label').textContent='KÉRDÉS FOLYAMATBAN';
@@ -1549,18 +1560,20 @@ function doExport() {
   document.getElementById('export-modal').classList.add('hidden');
 }
 function downloadJson(qs,filename) {
-  const data=JSON.stringify(qs.map(q=>({text:q.text,options:q.options,correct:q.correct,category:q.category,type:q.type||'egyéb',time:q.time})),null,2);
+  const data=JSON.stringify(qs.map(q=>({num:q.num||0,text:q.text,options:q.options,correct:q.correct,category:q.category,type:q.type||'egyéb',time:q.time})),null,2);
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));
   a.download=filename+'.json';a.click();
 }
 
 const IMPORT_GUIDES = {
-  'Bibliai': `correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
+  'Bibliai': `num: egyedi sorszám (pl. 1, 42, 1500 — elhagyható, ekkor auto-generált)
+correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
 type értékek: vers | személy | évszám | helység | esemény
 
 [
   {
+    "num": 42,
     "text": "Mennyi ideig volt Nóé és családja a bárkában?",
     "options": ["30 nap", "40 nap", "1 év", "7 év"],
     "correct": 2,
@@ -1571,11 +1584,13 @@ type értékek: vers | személy | évszám | helység | esemény
 ]
 → correct:2 = C = "1 év" ✓`,
 
-  'Filmek': `correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
+  'Filmek': `num: egyedi sorszám (pl. 1, 42, 1500 — elhagyható, ekkor auto-generált)
+correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
 type értékek: idézet | személy | évszám/időpont | helység | esemény
 
 [
   {
+    "num": 101,
     "text": "Melyik filmben hangzott el: \\"Én vagyok az apád\\"?",
     "options": ["Apádra ütök", "Star Wars", "Bosszúállók", "Batman"],
     "correct": 1,
@@ -1586,11 +1601,13 @@ type értékek: idézet | személy | évszám/időpont | helység | esemény
 ]
 → correct:1 = B = "Star Wars" ✓`,
 
-  'egyéb': `correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
+  'egyéb': `num: egyedi sorszám (pl. 1, 42, 1500 — elhagyható, ekkor auto-generált)
+correct: 0=A(1.válasz)  1=B(2.válasz)  2=C(3.válasz)  3=D(4.válasz)
 category: bármilyen szöveg (pl. "Általános", "Sport", "Zene", "Természet"...)
 
 [
   {
+    "num": 7,
     "text": "Mi a kérdés szövege?",
     "options": ["1. válasz", "2. válasz", "3. válasz", "4. válasz"],
     "correct": 0,
@@ -1629,6 +1646,9 @@ function doImport() {
     if(!raw){alert('Kérlek illeszd be a JSON-t!');return;}
     const parsed=JSON.parse(raw);
     if(!Array.isArray(parsed))throw new Error('Tömbnek kell lennie [ ... ]');
+    let importMaxNum=questions.reduce((max,q)=>Math.max(max,q.num||0),0);
+    const existingNums=new Set(questions.map(q=>q.num||0).filter(n=>n>0));
+    const duplicates=[];
     let count=0;
     parsed.forEach(q=>{
       if(!q.text||!q.options||q.options.length!==4)return;
@@ -1637,9 +1657,23 @@ function doImport() {
       let importType = (q.type||'').toLowerCase().trim();
       const allowedTypes = CATEGORY_TYPES[importCat] || [];
       if(!allowedTypes.includes(importType)) importType = 'egyéb';
+      let num;
+      if(typeof q.num==='number' && q.num>0){
+        if(existingNums.has(q.num)){
+          duplicates.push({num:q.num, text:q.text});
+          num=++importMaxNum;
+        } else {
+          num=q.num;
+          existingNums.add(num);
+          if(num>importMaxNum)importMaxNum=num;
+        }
+      } else {
+        num=++importMaxNum;
+        existingNums.add(num);
+      }
       const qData={
         text:q.text, options:q.options, correct:correctIdx,
-        category:importCat, type:importType, time:q.time||30
+        category:importCat, type:importType, time:q.time||30, num
       };
       if(db)roomRef.child('questions').push(qData);
       else questions.push({...qData,id:'q'+Date.now()+'_'+Math.random().toString(36).substr(2,4)});
@@ -1647,8 +1681,45 @@ function doImport() {
     });
     if(!db)renderAll();
     document.getElementById('import-modal').classList.add('hidden');
-    alert(`✅ ${count} kérdés sikeresen importálva!\n\nEmlékeztető:\ncorrect: 0=A, 1=B, 2=C, 3=D`);
+    if(duplicates.length>0){
+      const dupList=duplicates.map(d=>`  #${d.num} — "${d.text.substring(0,40)}${d.text.length>40?'…':''}"`).join('\n');
+      alert(`✅ ${count} kérdés importálva.\n\n⚠️ ${duplicates.length} duplikált sorszám volt — ezek új sorszámot kaptak automatikusan:\n${dupList}`);
+    } else {
+      alert(`✅ ${count} kérdés sikeresen importálva!\n\nEmlékeztető:\ncorrect: 0=A, 1=B, 2=C, 3=D\nnum: sorszám (ha hiányzott, auto-generálva)`);
+    }
   }catch(e){alert('❌ Import hiba: '+e.message);}
+}
+
+// ============================================================
+// SORSZÁMOZÁS
+// ============================================================
+function renumberAllQuestions() {
+  if(questions.length===0){alert('Nincs kérdés a rendszerben!');return;}
+  const noNum=questions.filter(q=>!q.num||q.num===0).length;
+  const msg=noNum>0
+    ?`${noNum} kérdésnek nincs sorszáma.\nSorszámozás: az összes sorszám nélküli kérdés sorszámot kap (a meglévő sorszámok megmaradnak).\n\nFolytassuk?`
+    :'Minden kérdésnek van már sorszáma.\nÚjraszámozást végzel? (az összes sorszám felülíródik 1-től)\n\nFolytassuk?';
+  if(!confirm(msg))return;
+  // Rendezés: meglévő num szerint, utána num nélküliek
+  const withNum=questions.filter(q=>q.num&&q.num>0).sort((a,b)=>a.num-b.num);
+  const withoutNum=questions.filter(q=>!q.num||q.num===0);
+  let counter=withNum.length>0?withNum[withNum.length-1].num+1:1;
+  if(noNum===0){
+    // Teljes újraszámozás
+    counter=1;
+    questions.sort((a,b)=>(a.num||0)-(b.num||0)).forEach(q=>{
+      q.num=counter++;
+      if(db)roomRef.child('questions').child(q.id).child('num').set(q.num);
+    });
+  } else {
+    // Csak a hiányzókat töltjük ki
+    withoutNum.forEach(q=>{
+      q.num=counter++;
+      if(db)roomRef.child('questions').child(q.id).child('num').set(q.num);
+    });
+  }
+  if(!db)renderAll();
+  alert(`✅ Sorszámozás kész! ${noNum===0?questions.length+' kérdés újraszámozva':withoutNum.length+' kérdés kapott sorszámot.'}`);
 }
 
 // ============================================================
@@ -1662,7 +1733,7 @@ function closeChangelog() {
 }
 </script>
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.22</div>
+<div class="version-badge">Játék verzió: 1.23</div>
 
 <!-- CHANGELOG MODAL -->
 <div class="changelog-overlay hidden" id="changelog-modal" onclick="if(event.target===this)closeChangelog()">
@@ -1673,8 +1744,8 @@ function closeChangelog() {
     </div>
     <div class="changelog-scroll">
       <div class="changelog-item">
-        <div><div class="changelog-ver current">1.22</div></div>
-        <div><div class="changelog-desc">Szavazó felület a várakozási képernyőn — kategória és alkategória szavazás, valós idejű eredmény + Timer lejárat bug javítás (automatikus továbblépés időtúllépés esetén)</div></div>
+        <div><div class="changelog-ver current">1.23</div></div>
+        <div><div class="changelog-desc">Kérdés sorszámozás — minden kérdéshez egyedi sorszám (#num), host listában és játék közben megjelenik. Import JSON-ban sorszám mező, visszamenőleges sorszámozás gomb.</div></div>
       </div>
       <div class="changelog-item">
         <div><div class="changelog-ver">1.21</div></div>
