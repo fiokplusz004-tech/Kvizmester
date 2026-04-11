@@ -1733,7 +1733,7 @@ function closeChangelog() {
 }
 </script>
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.25</div>
+<div class="version-badge">Játék verzió: 1.26</div>
 
 <!-- CHANGELOG MODAL -->
 <div class="changelog-overlay hidden" id="changelog-modal" onclick="if(event.target===this)closeChangelog()">
@@ -1744,7 +1744,11 @@ function closeChangelog() {
     </div>
     <div class="changelog-scroll">
       <div class="changelog-item">
-        <div><div class="changelog-ver current">1.25</div></div>
+        <div><div class="changelog-ver current">1.26</div></div>
+        <div><div class="changelog-desc">Jelentés funkció — minden kérdéshez „Jelentés" gomb az Eredményeim képernyőn. Megnyomásával modal nyílik a kérdés adataival, szabad szövegmező a meglátáshoz, és automatikus emailküldés a fejlesztőnek (FormSubmit API + mailto: tartalék).</div></div>
+      </div>
+      <div class="changelog-item">
+        <div><div class="changelog-ver">1.25</div></div>
         <div><div class="changelog-desc">Eredményeim hiba javítás — a helyes válasz mostantól minden esetben pontosan jelenik meg, még hálózati késés esetén is (revealedForIndex guard)</div></div>
       </div>
       <div class="changelog-item">
