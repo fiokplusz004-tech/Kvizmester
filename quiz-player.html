@@ -595,6 +595,8 @@ let myVoteSubmitted = false;
 
 // Játékos státusz szinkron cache (async race condition elkerülése érdekében)
 let myPlayerStatus = 'lobby';
+// Az utoljára ismert helyes válasz indexe — fallback ha a revealAnswers előbb fut mint pendingQuestion beállítódik
+let lastKnownCorrectAnswer = -1;
 
 function getParam(n) { return new URLSearchParams(window.location.search).get(n); }
 
@@ -822,11 +824,13 @@ function showQuestion(q, idx, prevCorrectAnswer) {
   document.querySelectorAll('.wait-reveal').forEach(el => el.remove());
 
   // Ha volt lezáratlan pending kérdés (a revealed phase race condition miatt kimaradt),
-  // zárjuk le most a helyes válasszal — prevCorrectAnswer az előző kérdés correctAnswer-je
+  // zárjuk le most a legjobb ismert helyes válasszal
   if (pendingQuestion && pendingQuestion.correctAnswer === -1) {
-    if (typeof prevCorrectAnswer === 'number' && prevCorrectAnswer >= 0) {
-      pendingQuestion.correctAnswer = prevCorrectAnswer;
-    }
+    // prevCorrectAnswer = state.lastCorrectAnswer, ha az sincs, lastKnownCorrectAnswer
+    const bestCorrect = (typeof prevCorrectAnswer === 'number' && prevCorrectAnswer >= 0)
+      ? prevCorrectAnswer
+      : lastKnownCorrectAnswer;
+    if (bestCorrect >= 0) pendingQuestion.correctAnswer = bestCorrect;
     myQuestionHistory.push({...pendingQuestion});
   }
 
@@ -884,6 +888,11 @@ function submitAnswer(idx) {
 function revealAnswers(correctIdx) {
   stopTimer();
 
+  // Mindig frissítjük az utoljára ismert helyes választ
+  if (typeof correctIdx === 'number' && correctIdx >= 0) {
+    lastKnownCorrectAnswer = correctIdx;
+  }
+
   // Adatot mindig mentjük — függetlenül attól, hogy a játék képernyő látható-e
   if (pendingQuestion) {
     pendingQuestion.correctAnswer = correctIdx;
@@ -909,6 +918,10 @@ function showResults() {
 
   // Csak akkor mentjük, ha még nyitva van (revealAnswers nem futott le)
   if (pendingQuestion) {
+    // Ha a correctAnswer nem lett beállítva, használjuk az utoljára ismert értéket
+    if (pendingQuestion.correctAnswer === -1 && lastKnownCorrectAnswer >= 0) {
+      pendingQuestion.correctAnswer = lastKnownCorrectAnswer;
+    }
     myQuestionHistory.push({...pendingQuestion});
     pendingQuestion = null;
   }
@@ -1173,6 +1186,7 @@ function backToMenu() {
   myQuestionHistory = []; pendingQuestion = null;
   myVoteCat = null; myVoteSubtype = null; myVoteSubmitted = false;
   myPlayerStatus = 'lobby';
+  lastKnownCorrectAnswer = -1;
   document.getElementById('my-score').textContent = '0';
   document.getElementById('my-rank').textContent = '#—';
   showMenu();

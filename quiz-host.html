@@ -1377,7 +1377,7 @@ function revealAnswer(fromTimer=false) {
 function startAutoAdvance() {
   if(autoAdvanceRunning)return;
   autoAdvanceRunning=true;
-  let cd=3;
+  let cd=5;
   document.getElementById('phase-label').textContent='KÖVETKEZŐ: '+cd+'...';
   const t=setInterval(()=>{
     cd--;
