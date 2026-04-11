@@ -751,7 +751,7 @@ function setupListeners() {
         currentQIndex = state.questionIndex;
         hasAnswered = false;
         answeredNamesThisRound = new Set();
-        showQuestion(state.question, state.questionIndex, prevCorrect);
+        showQuestion(state.question, state.questionIndex, prevCorrect, state.correctAnswer);
       }
     } else if (state.phase === 'revealed') {
       // Mindig hívjuk — a gameVisible check csak a DOM frissítést védi (revealAnswers-en belül)
@@ -820,7 +820,11 @@ function setupListeners() {
 }
 
 // ── UI FÜGGVÉNYEK ─────────────────────────────────────────────
-function showQuestion(q, idx, prevCorrectAnswer) {
+// currentCorrectAnswer: az AKTUÁLIS kérdés helyes válaszának indexe — közvetlenül a
+// 'question' fázis gameState-jéből érkezik (state.correctAnswer). Ezzel az azonnali
+// tárolással megszüntetjük a függőséget a 'revealed' Firebase eseménytől, amely gyors
+// 2 játékos esetén batch-elve érkezhet és soha nem fut le külön.
+function showQuestion(q, idx, prevCorrectAnswer, currentCorrectAnswer) {
   hideAll();
   document.getElementById('game-screen').style.display = 'flex';
   document.getElementById('q-cat-player').textContent = q.category || '';
@@ -832,14 +836,11 @@ function showQuestion(q, idx, prevCorrectAnswer) {
   // Előző "Válasz elküldve" elemek törlése
   document.querySelectorAll('.wait-reveal').forEach(el => el.remove());
 
-  // Ha volt lezáratlan pending kérdés, zárjuk le a legjobb ismert helyes válasszal.
-  // Ez lefed két esetet:
-  //   1. A 'revealed' Firebase esemény teljesen kimaradt (hálózati ok)
-  //   2. A revealAnswers() index-eltérés miatt kihagyta a lezárást
+  // Ha volt lezáratlan pending kérdés (a 'revealed' esemény kimaradt vagy késett),
+  // zárjuk le a prevCorrectAnswer alapján (= state.lastCorrectAnswer az új kérdés
+  // gameState-jéből, ami mindig az előző kérdés helyes válaszát tartalmazza).
   if (pendingQuestion) {
     if (pendingQuestion.correctAnswer === -1) {
-      // prevCorrectAnswer = state.lastCorrectAnswer az új kérdés gameState-jéből — ez
-      // tartalmazza az előző kérdés helyes válaszát, tehát ez az elsődleges forrás.
       const bestCorrect = (typeof prevCorrectAnswer === 'number' && prevCorrectAnswer >= 0)
         ? prevCorrectAnswer
         : lastKnownCorrectAnswer;
@@ -849,13 +850,18 @@ function showQuestion(q, idx, prevCorrectAnswer) {
     pendingQuestion = null;
   }
 
+  // Az aktuális kérdés helyes válaszát AZONNAL tároljuk a gameState 'question' fázisából.
+  // Ez a legmegbízhatóbb forrás — nem függünk a 'revealed' esemény megérkezésétől.
+  const knownCorrect = (typeof currentCorrectAnswer === 'number' && currentCorrectAnswer >= 0)
+    ? currentCorrectAnswer : -1;
+
   // Kérdés rögzítése tracking célra
   pendingQuestion = {
     qText: q.text,
     qNum: q.num || 0,
     options: q.options,
     myAnswer: -1,
-    correctAnswer: -1,
+    correctAnswer: knownCorrect,
     pts: 0,
     qIndex: idx
   };
@@ -904,26 +910,30 @@ function submitAnswer(idx) {
 function revealAnswers(correctIdx, forQuestionIndex) {
   stopTimer();
 
-  // Mindig frissítjük az utoljára ismert helyes választ
+  // lastKnownCorrectAnswer frissítése — csak akkor, ha az index egyezik az aktuális
+  // kérdéssel (megakadályozzuk, hogy egy stale/késő reveal felülírja a helyes értéket)
   if (typeof correctIdx === 'number' && correctIdx >= 0) {
-    lastKnownCorrectAnswer = correctIdx;
+    const currentPendingIdx = pendingQuestion ? pendingQuestion.qIndex : -1;
+    const revealMatchesCurrent = typeof forQuestionIndex !== 'number'
+      || currentPendingIdx === -1
+      || currentPendingIdx === forQuestionIndex;
+    if (revealMatchesCurrent) {
+      lastKnownCorrectAnswer = correctIdx;
+    }
   }
 
-  // Adatot csak akkor mentjük, ha ez a reveal tényleg az aktuális kérdéshez tartozik.
-  // Ez véd az ellen, ha egy késve érkező 'revealed' esemény már a következő kérdés
-  // pendingQuestion-ját írná felül rossz helyes válasszal.
+  // History-push: csak ha a reveal az aktuális kérdéshez tartozik
   if (pendingQuestion) {
-    const indexMatch = typeof forQuestionIndex !== 'number'      // ha nincs index info, engedünk
+    const indexMatch = typeof forQuestionIndex !== 'number'
       || typeof pendingQuestion.qIndex !== 'number'
       || pendingQuestion.qIndex === forQuestionIndex;
 
     if (indexMatch) {
+      // A correctAnswer már be lehet állítva a 'question' fázisból — megerősítjük/frissítjük
       pendingQuestion.correctAnswer = correctIdx;
       myQuestionHistory.push({...pendingQuestion});
       pendingQuestion = null;
     }
-    // Ha nem egyezik az index, figyelmen kívül hagyjuk ezt a reveal eseményt —
-    // a helyes választ majd a showQuestion fallback-je állítja be lastCorrectAnswer alapján.
   }
 
   // DOM frissítés csak ha a játék képernyő látható
