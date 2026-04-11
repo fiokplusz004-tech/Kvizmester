@@ -142,6 +142,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .timer-ring-num.urgent { color:var(--red); }
   .q-area { flex:1; display:flex; flex-direction:column; justify-content:center; padding:8px 0 16px; }
   .q-cat { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; text-align:center; }
+  .q-num-player { display:inline-block; font-family:var(--font-display); font-size:15px; letter-spacing:1px; color:var(--accent); background:rgba(240,192,64,0.1); border:1px solid rgba(240,192,64,0.25); border-radius:6px; padding:2px 10px; margin-bottom:8px; text-align:center; }
   .q-text-player { font-family:var(--font-display); font-size:28px; letter-spacing:0.5px; line-height:1.2; text-align:center; margin-bottom:28px; }
   .answers-player { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .ans-btn { background:var(--surface2); border:2px solid var(--border); border-radius:14px; padding:16px 12px; cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column; align-items:center; gap:8px; min-height:80px; justify-content:center; -webkit-user-select:none; user-select:none; }
@@ -318,7 +319,8 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <button class="changelog-back" onclick="showMenu()">← Vissza</button>
   <div class="changelog-title">VERZIÓ</div>
   <div class="changelog-subtitle">Fejlesztési előzmények</div>
-  <div class="cl-item"><div class="cl-ver current">1.23</div><div><div class="cl-desc">Kérdés sorszámozás — minden kérdéshez egyedi sorszám, a host felületen látható (#num badge)</div></div></div>
+  <div class="cl-item"><div class="cl-ver current">1.24</div><div><div class="cl-desc">Játékosok látják a kérdések sorszámát (#num) a játék közben és az Eredményeim képernyőn</div></div></div>
+  <div class="cl-item"><div class="cl-ver">1.23</div><div><div class="cl-desc">Kérdés sorszámozás — minden kérdéshez egyedi sorszám, a host felületen látható (#num badge)</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.22</div><div><div class="cl-desc">Szavazó felület a várakozási képernyőn — kategória és alkategória szavazás, valós idejű eredmény + Timer lejárat bug javítás (automatikus továbblépés időtúllépés esetén)</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.21</div><div><div class="cl-desc">Játék verzió számának megjelenítése + Főmenü/Verzió előzmények gomb létrehozása</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.20</div><div><div class="cl-desc">Játék közben a következő kérdés indulásának fejlesztése</div></div></div>
@@ -529,6 +531,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     <div class="players-chips" id="players-chips"></div>
   </div>
   <div class="q-area" id="q-area">
+    <div class="q-num-player hidden" id="q-num-player">—</div>
     <div class="q-cat" id="q-cat-player">—</div>
     <div class="q-text-player" id="q-text-player">Felkészülés...</div>
     <div class="answers-player" id="answers-player"></div>
@@ -820,6 +823,9 @@ function showQuestion(q, idx, prevCorrectAnswer) {
   document.getElementById('game-screen').style.display = 'flex';
   document.getElementById('q-cat-player').textContent = q.category || '';
   document.getElementById('q-text-player').textContent = q.text;
+  const numEl = document.getElementById('q-num-player');
+  if(q.num && q.num > 0){ numEl.textContent = '#' + q.num; numEl.classList.remove('hidden'); }
+  else { numEl.classList.add('hidden'); }
 
   // Előző "Válasz elküldve" elemek törlése
   document.querySelectorAll('.wait-reveal').forEach(el => el.remove());
@@ -838,6 +844,7 @@ function showQuestion(q, idx, prevCorrectAnswer) {
   // Kérdés rögzítése tracking célra
   pendingQuestion = {
     qText: q.text,
+    qNum: q.num || 0,
     options: q.options,
     myAnswer: -1,
     correctAnswer: -1,
@@ -997,7 +1004,7 @@ function showHistory() {
       html += `
         <div class="hist-card ${cardClass}">
           <div class="hist-q-header">
-            <div class="hist-q-num">${i + 1}. kérdés</div>
+            <div class="hist-q-num">${i + 1}. kérdés${h.qNum ? ' &nbsp;·&nbsp; <span style="color:var(--accent);font-family:var(--font-display);font-size:13px;letter-spacing:1px;">#' + h.qNum + '</span>' : ''}</div>
             <div class="hist-status-badge ${badgeClass}">${statusText}</div>
           </div>
           <div class="hist-q-text">${h.qText}</div>
@@ -1289,7 +1296,7 @@ window.addEventListener('appinstalled', () => hideBanner());
 </script>
 
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.23</div>
+<div class="version-badge">Játék verzió: 1.24</div>
 
 </body>
 </html>

@@ -1325,7 +1325,7 @@ function nextQuestion() {
     roomRef.child('answers').remove();
     roomRef.child('gameState').set({
       phase:'question',questionIndex:currentQIndex,
-      question:{text:q.text,options:q.options,category:q.category,type:q.type||'egyéb',time:q.time},
+      question:{text:q.text,options:q.options,category:q.category,type:q.type||'egyéb',time:q.time,num:q.num||0},
       correctAnswer:q.correct,
       lastCorrectAnswer: prevCorrectIndex >= 0 ? prevCorrectIndex : null,
       startTime:firebase.database.ServerValue.TIMESTAMP
@@ -1733,7 +1733,7 @@ function closeChangelog() {
 }
 </script>
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.23</div>
+<div class="version-badge">Játék verzió: 1.24</div>
 
 <!-- CHANGELOG MODAL -->
 <div class="changelog-overlay hidden" id="changelog-modal" onclick="if(event.target===this)closeChangelog()">
@@ -1744,7 +1744,11 @@ function closeChangelog() {
     </div>
     <div class="changelog-scroll">
       <div class="changelog-item">
-        <div><div class="changelog-ver current">1.23</div></div>
+        <div><div class="changelog-ver current">1.24</div></div>
+        <div><div class="changelog-desc">Játékosok látják a kérdések sorszámát (#num) a játék közben és az Eredményeim képernyőn is</div></div>
+      </div>
+      <div class="changelog-item">
+        <div><div class="changelog-ver">1.23</div></div>
         <div><div class="changelog-desc">Kérdés sorszámozás — minden kérdéshez egyedi sorszám (#num), host listában és játék közben megjelenik. Import JSON-ban sorszám mező, visszamenőleges sorszámozás gomb.</div></div>
       </div>
       <div class="changelog-item">
