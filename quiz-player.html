@@ -462,7 +462,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div class="guide-divider"></div>
   <div class="guide-section">
     <div class="guide-section-title">🎯 A játék lényege</div>
-    <p>A QuizMaster egy <strong style="color:var(--text)">valós idejű multiplayer kvíz,</strong> ahol egyszerre akár 10 játékos verseng egymással. A host feltesz egy kérdést, ti pedig 4 lehetőség közül választjátok ki a helyes választ.</p>
+    <p>A QuizMaster egy <strong style="color:var(--text)">valós idejű multiplayer kvíz,</strong> ahol egyszerre akár 30 játékos verseng egymással. A host feltesz egy kérdést, ti pedig 4 lehetőség közül választjátok ki a helyes választ.</p>
     <p>A kérdések különböző témakörökből érkeznek: Bibliai, Filmek, Történelem, Földrajz, Tudomány és még sok más.</p>
   </div>
   <div class="guide-section">
@@ -471,15 +471,17 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     <p><strong style="color:var(--text)">2.</strong> Minden kérdésnek van visszaszámlálója — ha lejár az idő, nem kapsz pontot.</p>
     <p><strong style="color:var(--text)">3.</strong> A kérdés után a host felfedi a helyes választ, majd jön a következő.</p>
     <p><strong style="color:var(--text)">4.</strong> A játék végén megjelenik a ranglista.</p>
+    <p><strong style="color:var(--text)">5.</strong> A játék után az <strong style="color:var(--text)">Eredményeim</strong> gombbal visszanézheted az összes kérdést: melyiket találtad el, melyiket nem, és hány pontot szereztél kérdésenként.</p>
+    <p><strong style="color:var(--text)">6.</strong> Ha hibás kérdést találsz, a 🚩 <strong style="color:var(--text)">Jelentés</strong> gombbal visszajelzést küldhetsz.</p>
   </div>
   <div class="guide-section">
     <div class="guide-section-title">🏆 Pontozás</div>
-    <p>Minél gyorsabban válaszolsz helyesen, annál több pontot kapsz!</p>
+    <p>Minél gyorsabban válaszolsz <strong style="color:var(--text)">helyesen</strong>, annál több pontot kapsz! A sorrend a <strong style="color:var(--text)">helyes válaszadók</strong> között számít — a rossz válaszok nem befolyásolják a te helyezésedet.</p>
     <table class="guide-score-table">
-      <tr><td>Helyes — 1. válaszoló</td><td><span class="score-pill pill-green">5 pont</span></td></tr>
-      <tr><td>Helyes — 2. válaszoló</td><td><span class="score-pill pill-green">4 pont</span></td></tr>
-      <tr><td>Helyes — 3. válaszoló</td><td><span class="score-pill pill-green">3 pont</span></td></tr>
-      <tr><td>Helyes — 4.+ válaszoló</td><td><span class="score-pill pill-green">2 pont</span></td></tr>
+      <tr><td>Helyes — 1. helyesen válaszoló</td><td><span class="score-pill pill-green">5 pont</span></td></tr>
+      <tr><td>Helyes — 2. helyesen válaszoló</td><td><span class="score-pill pill-green">4 pont</span></td></tr>
+      <tr><td>Helyes — 3. helyesen válaszoló</td><td><span class="score-pill pill-green">3 pont</span></td></tr>
+      <tr><td>Helyes — 4.+ helyesen válaszoló</td><td><span class="score-pill pill-green">2 pont</span></td></tr>
       <tr><td>Helytelen válasz</td><td><span class="score-pill pill-red">1 pont</span></td></tr>
       <tr><td>Lejárt az idő</td><td><span class="score-pill pill-red">0 pont</span></td></tr>
     </table>

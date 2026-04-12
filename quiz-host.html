@@ -702,7 +702,7 @@ let currentTimerInterval=null,currentTimerValue=30;
 let gamePhase='waiting';
 let autoAdvanceRunning=false;
 let selectedCat='all',selectedSubtype='all';
-let answerCounts=[0,0,0,0],answeredPlayers=new Set(),answerOrder=0;
+let answerCounts=[0,0,0,0],answeredPlayers=new Set(),answerOrder=0,correctAnswerOrder=0;
 let activeQuestions=[],usedQuestionIds=new Set();
 let gameStartTime=null,gameTimerInterval=null;
 let nqCorrectOptVal=0;
@@ -772,7 +772,8 @@ function setupListeners() {
     if (ans.answer === -1) {
       pts = 0;
     } else if (isCorrect) {
-      pts = Math.max(2, 6 - answerOrder);
+      correctAnswerOrder++;
+      pts = Math.max(2, 6 - correctAnswerOrder);
     } else {
       pts = 1;
     }
@@ -1356,7 +1357,7 @@ function nextQuestion() {
   if(q.id)usedQuestionIds.add(q.id);
   const prevCorrectIndex = correctOptionIndex; // előző kérdés helyes válasza (felülírás előtt mentjük)
   correctOptionIndex=q.correct;
-  answeredPlayers.clear();answerCounts=[0,0,0,0];answerOrder=0;
+  answeredPlayers.clear();answerCounts=[0,0,0,0];answerOrder=0;correctAnswerOrder=0;
   if(db){
     // KRITIKUS: előbb töröljük a régi válaszokat, MAJD küldjük az új kérdést.
     // .finally() garantálja hogy a gameState.set() sikertelen remove() esetén is lefut.
