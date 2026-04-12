@@ -1785,7 +1785,7 @@ function closeChangelog() {
 }
 </script>
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.27</div>
+<div class="version-badge">Játék verzió: 1.28</div>
 
 <!-- CHANGELOG MODAL -->
 <div class="changelog-overlay hidden" id="changelog-modal" onclick="if(event.target===this)closeChangelog()">
@@ -1796,7 +1796,11 @@ function closeChangelog() {
     </div>
     <div class="changelog-scroll">
       <div class="changelog-item">
-        <div><div class="changelog-ver current">1.27</div></div>
+        <div><div class="changelog-ver current">1.28</div></div>
+        <div><div class="changelog-desc">Host jobb panel átrendezés — új sorrend: Szavazás → Váróterem → Játékban. A "Pontállás" fejléc eltávolítva. Váróteremben új "Eltávolítás" gomb (narancs) a játékos csendes eltávolítására, mellette a meglévő "Beenged" gomb. A "Játékban" szekció fejlécébe kerültek a játékos-számláló és Nulláz gombok.</div></div>
+      </div>
+      <div class="changelog-item">
+        <div><div class="changelog-ver">1.27</div></div>
         <div><div class="changelog-desc">Stale answer fix — válaszok kérdés-azonosítóval (qIndex) vannak ellátva, így elavult válaszok nem keverednek az aktuális kérdéshez. A answers.remove() befejezése előtt az új kérdés nem kerül kiküldésre (szekvenciális Firebase műveletek). Host onDisconnect védelem.</div></div>
       </div>
       <div class="changelog-item">
