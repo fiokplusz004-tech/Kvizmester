@@ -737,6 +737,9 @@ function setupListeners() {
   roomRef.child('answers').on('child_added',snap=>{
     const ans=snap.val();if(!ans)return;
     const pid=snap.key;
+    // Elavult válasz kizárása: ha a válasz egy korábbi kérdéshez tartozik, figyelmen kívül hagyjuk.
+    // A qIndex mező a játékos által küldött válaszban jelzi, melyik kérdésre vonatkozott.
+    if(typeof ans.qIndex==='number' && ans.qIndex!==currentQIndex) return;
     if(answeredPlayers.has(pid))return;
     answeredPlayers.add(pid);answerOrder++;
     const isCorrect=ans.answer===correctOptionIndex;
@@ -783,9 +786,7 @@ function showMain() {
   document.getElementById('player-url').textContent=playerUrl;
   if(db){
     roomRef.child('gameState').set({phase:'waiting'});
-    // Host onDisconnect — ha a host váratlanul kilép (böngésző bezárás, internet kiesés),
-    // a Firebase automatikusan törli a játékosokat és menetadatokat.
-    // A kérdésbank (questions) NEM törlődik — az tartós adat.
+    // Host onDisconnect — váratlan kilépés esetén automatikus adattisztítás
     roomRef.child('players').onDisconnect().remove();
     roomRef.child('answers').onDisconnect().remove();
     roomRef.child('votes').onDisconnect().remove();
@@ -1332,14 +1333,18 @@ function nextQuestion() {
   correctOptionIndex=q.correct;
   answeredPlayers.clear();answerCounts=[0,0,0,0];answerOrder=0;
   if(db){
-    roomRef.child('answers').remove();
-    roomRef.child('gameState').set({
+    // KRITIKUS: előbb töröljük a régi válaszokat, MAJD küldjük az új kérdést.
+    // .finally() garantálja hogy a gameState.set() sikertelen remove() esetén is lefut.
+    const gsData={
       phase:'question',questionIndex:currentQIndex,
       question:{text:q.text,options:q.options,category:q.category,type:q.type||'egyéb',time:q.time,num:q.num||0},
       correctAnswer:q.correct,
       lastCorrectAnswer: prevCorrectIndex >= 0 ? prevCorrectIndex : null,
       startTime:firebase.database.ServerValue.TIMESTAMP
-    });
+    };
+    roomRef.child('answers').remove()
+      .catch(err => console.warn('[QuizMaster] answers.remove() hiba:', err))
+      .finally(() => roomRef.child('gameState').set(gsData));
   }
   document.getElementById('waiting-state').classList.add('hidden');
   document.getElementById('question-state').classList.remove('hidden');
@@ -1755,7 +1760,7 @@ function closeChangelog() {
     <div class="changelog-scroll">
       <div class="changelog-item">
         <div><div class="changelog-ver current">1.27</div></div>
-        <div><div class="changelog-desc">Adatbázis biztonság — Host onDisconnect védelem: ha a host váratlanul kilép, a Firebase automatikusan törli a játékosokat és menetadatokat (kérdésbank megmarad). Firebase Security Rules: érvénytelen adatírás, hibás névformátum és negatív pontszámok blokkolása.</div></div>
+        <div><div class="changelog-desc">Stale answer fix — válaszok kérdés-azonosítóval (qIndex) vannak ellátva, így elavult válaszok nem keverednek az aktuális kérdéshez. A answers.remove() befejezése előtt az új kérdés nem kerül kiküldésre (szekvenciális Firebase műveletek). Host onDisconnect védelem.</div></div>
       </div>
       <div class="changelog-item">
         <div><div class="changelog-ver">1.26</div></div>

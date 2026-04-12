@@ -418,7 +418,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <button class="changelog-back" onclick="showMenu()">← Vissza</button>
   <div class="changelog-title">VERZIÓ</div>
   <div class="changelog-subtitle">Fejlesztési előzmények</div>
-  <div class="cl-item"><div class="cl-ver current">1.27</div><div><div class="cl-desc">Adatbázis biztonság — Host onDisconnect védelem: váratlan kilépés esetén automatikus adattisztítás. Firebase Security Rules: érvénytelen adatok, hibás névformátum és negatív pontszámok blokkolása.</div></div></div>
+  <div class="cl-item"><div class="cl-ver current">1.27</div><div><div class="cl-desc">Stale answer fix — válaszok kérdés-azonosítóval vannak ellátva, elavult válaszok nem befolyásolják az aktuális kérdés kiértékelését. Host oldali szekvenciális Firebase műveletek és onDisconnect védelem.</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.26</div><div><div class="cl-desc">Jelentés funkció — minden kérdéshez „Jelentés" gomb az Eredményeim képernyőn. Megnyomásával modal nyílik a kérdés adataival, szabad szövegmező a meglátáshoz, és automatikus emailküldés a fejlesztőnek (FormSubmit API + mailto: tartalék).</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.25</div><div><div class="cl-desc">Eredményeim hiba javítás — a helyes válasz mostantól minden esetben pontosan jelenik meg (revealedForIndex guard)</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.24</div><div><div class="cl-desc">Játékosok látják a kérdések sorszámát (#num) a játék közben és az Eredményeim képernyőn</div></div></div>
@@ -921,6 +921,8 @@ function setupListeners() {
   roomRef.child('answers').on('child_added', snap => {
     const ans = snap.val();
     if (ans && ans.playerName) {
+      // Elavult válasz kizárása a chip megjelenítéstől is
+      if (typeof ans.qIndex === 'number' && ans.qIndex !== currentQIndex) return;
       answeredNamesThisRound.add(ans.playerName);
       updatePlayersChips(answeredNamesThisRound);
     }
@@ -1019,6 +1021,7 @@ function submitAnswer(idx) {
   if (db && roomRef) {
     roomRef.child('answers').child(playerId).set({
       answer: idx,
+      qIndex: currentQIndex,   // Kérdés-azonosító: elavult válaszok kiszűréséhez a host oldalon
       time: firebase.database.ServerValue.TIMESTAMP,
       playerName: playerName
     });
