@@ -189,7 +189,7 @@
   @keyframes deltaIn{0%{opacity:0;transform:translateY(4px)}20%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
 
   /* LOBBY PANEL */
-  .lobby-section { border-bottom: 1px solid var(--border); padding: 12px 16px; }
+  .lobby-section { border-bottom: 1px solid var(--border); padding: 12px 16px; flex-shrink:0; }
   .lobby-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
   .lobby-header h4 { font-family:var(--font-display); font-size:16px; letter-spacing:2px; color:var(--muted); }
   .lobby-admit-all { padding:5px 12px; background:var(--green); color:#000; border:none; border-radius:7px; font-family:var(--font-display); font-size:14px; letter-spacing:1px; cursor:pointer; transition:opacity 0.2s; white-space:nowrap; }
@@ -201,10 +201,32 @@
   .lobby-admit-btn { padding:4px 12px; background:var(--green); color:#000; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; transition:opacity 0.2s; white-space:nowrap; }
   .lobby-admit-btn:hover { opacity:0.85; }
 
+  /* ELTÁVOLÍTÁS GOMB (Váróteremből) */
+  .lobby-remove-btn {
+    padding:4px 10px; background:rgba(224,90,43,0.12); color:var(--accent2);
+    border:1px solid rgba(224,90,43,0.38); border-radius:6px; font-size:12px;
+    font-weight:700; cursor:pointer; transition:all 0.2s; white-space:nowrap;
+  }
+  .lobby-remove-btn:hover { background:var(--accent2); color:#fff; }
+
+  /* JÁTÉKBAN SZEKCIÓ */
+  .ingame-section {
+    display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0;
+  }
+  .ingame-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 16px; border-bottom:1px solid var(--border); flex-shrink:0;
+    background:var(--surface);
+  }
+  .ingame-header h4 {
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px; color:var(--green);
+  }
+
   /* VOTE PANEL — host oldali szavazás figyelő */
   .vote-monitor-section {
     border-bottom: 1px solid var(--border);
     padding: 12px 16px;
+    flex-shrink: 0;
   }
   .vote-monitor-header {
     display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
@@ -500,22 +522,6 @@
 
     <!-- RIGHT -->
     <div class="panel-right">
-      <div class="panel-header">
-        <h3>PONTÁLLÁS</h3>
-        <div style="display:flex;gap:6px;">
-          <span class="tag tag-green" id="player-count-tag">0 játékos</span>
-          <button class="btn-secondary" style="font-size:11px;padding:4px 9px;" onclick="resetAllScores()">⟳ Nulláz</button>
-        </div>
-      </div>
-
-      <!-- VÁRÓTEREM -->
-      <div class="lobby-section" id="lobby-section">
-        <div class="lobby-header">
-          <h4>⏳ VÁRÓTEREM</h4>
-          <button class="lobby-admit-all" onclick="admitAllPlayers()">✓ Mindenki beenged</button>
-        </div>
-        <div class="lobby-list" id="lobby-list"></div>
-      </div>
 
       <!-- SZAVAZÁS FIGYELŐ -->
       <div class="vote-monitor-section" id="vote-monitor-section">
@@ -539,10 +545,29 @@
         <button class="vote-reset-btn" onclick="resetVotes()">🗑 Szavazatok törlése</button>
       </div>
 
-      <!-- PONTÁLLÁS -->
-      <div class="score-list" id="score-list">
-        <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">Még nincsenek játékosok...</div>
+      <!-- VÁRÓTEREM -->
+      <div class="lobby-section" id="lobby-section">
+        <div class="lobby-header">
+          <h4>⏳ VÁRÓTEREM</h4>
+          <button class="lobby-admit-all" onclick="admitAllPlayers()">✓ Mindenkit beengedni</button>
+        </div>
+        <div class="lobby-list" id="lobby-list"></div>
       </div>
+
+      <!-- JÁTÉKBAN -->
+      <div class="ingame-section">
+        <div class="ingame-header">
+          <h4>🎮 JÁTÉKBAN</h4>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span class="tag tag-green" id="player-count-tag">0 játékos</span>
+            <button class="btn-secondary" style="font-size:11px;padding:4px 9px;" onclick="resetAllScores()">⟳ Nulláz</button>
+          </div>
+        </div>
+        <div class="score-list" id="score-list">
+          <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">Még nincsenek aktív játékosok...</div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -730,7 +755,7 @@ function setupListeners() {
     const activeCnt = Object.values(players).filter(p=>p.status==='active').length;
     const lobbyCnt  = Object.values(players).filter(p=>p.status==='lobby').length;
     document.getElementById('joined-count').textContent=activeCnt;
-    document.getElementById('player-count-tag').textContent=activeCnt+' játékos'+(lobbyCnt>0?' (+'+lobbyCnt+' vár)':'');
+    document.getElementById('player-count-tag').textContent=activeCnt+' játékos';
     // Szavazás frissítése ha változott a játékosok száma
     updateVoteMonitor();
   });
@@ -1495,6 +1520,7 @@ function updateLobbyPanel() {
     <div class="lobby-item">
       <div class="player-avatar" style="background:${p.color||'#555'};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">${(p.name||'?')[0].toUpperCase()}</div>
       <div class="lobby-item-name">${p.name||'Ismeretlen'}</div>
+      <button class="lobby-remove-btn" onclick="removeFromLobby('${id}')">✕ Eltávolítás</button>
       <button class="lobby-admit-btn" onclick="admitPlayer('${id}')">✓ Beenged</button>
     </div>`).join('');
 }
@@ -1520,6 +1546,17 @@ function admitAllPlayers() {
   lobbyPlayers.forEach(([id]) => {
     if (db) roomRef.child('players').child(id).child('status').set('active');
   });
+}
+function removeFromLobby(pid) {
+  // Csendesen eltávolítja a játékost a váróteremből — a játékos saját felületén nincs értesítés
+  if (!players[pid]) return;
+  if (db) {
+    roomRef.child('players').child(pid).remove();
+  } else {
+    // Demo mód
+    delete players[pid];
+    updateScoreboard(); updatePlayerChips(); updateLobbyPanel(); updateVoteMonitor();
+  }
 }
 function moveToLobby(pid) {
   document.querySelectorAll('.player-dropdown').forEach(d => d.classList.add('hidden'));
