@@ -781,7 +781,17 @@ function showMain() {
   document.getElementById('room-code-display').textContent=roomCode.toUpperCase();
   const playerUrl=window.location.origin+window.location.pathname.replace('quiz-host.html','quiz-player.html')+'?room='+roomCode;
   document.getElementById('player-url').textContent=playerUrl;
-  if(db)roomRef.child('gameState').set({phase:'waiting'});
+  if(db){
+    roomRef.child('gameState').set({phase:'waiting'});
+    // Host onDisconnect — ha a host váratlanul kilép (böngésző bezárás, internet kiesés),
+    // a Firebase automatikusan törli a játékosokat és a menet-adatokat.
+    // A kérdésbank (questions) NEM törlődik — az tartós adat.
+    roomRef.child('players').onDisconnect().remove();
+    roomRef.child('answers').onDisconnect().remove();
+    roomRef.child('votes').onDisconnect().remove();
+    roomRef.child('voteResult').onDisconnect().remove();
+    roomRef.child('gameState').onDisconnect().set({phase:'waiting'});
+  }
   try{new QRCode(document.getElementById('qr-code'),{text:playerUrl,width:180,height:180,colorDark:'#000',colorLight:'#fff'});}catch(e){}
   if(!gameTimerInterval){
     gameStartTime=Date.now();
@@ -1733,7 +1743,7 @@ function closeChangelog() {
 }
 </script>
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.26</div>
+<div class="version-badge">Játék verzió: 1.27</div>
 
 <!-- CHANGELOG MODAL -->
 <div class="changelog-overlay hidden" id="changelog-modal" onclick="if(event.target===this)closeChangelog()">
@@ -1744,7 +1754,11 @@ function closeChangelog() {
     </div>
     <div class="changelog-scroll">
       <div class="changelog-item">
-        <div><div class="changelog-ver current">1.26</div></div>
+        <div><div class="changelog-ver current">1.27</div></div>
+        <div><div class="changelog-desc">Adatbázis biztonság és stabilitás — Host onDisconnect védelem: ha a host váratlanul kilép, a Firebase automatikusan törli a játékosokat és menetadatokat (kérdésbank megmarad). Firebase Security Rules: érvénytelen adatírás, túl rövid/hosszú nevek és negatív pontszámok blokkolása.</div></div>
+      </div>
+      <div class="changelog-item">
+        <div><div class="changelog-ver">1.26</div></div>
         <div><div class="changelog-desc">Jelentés funkció — minden kérdéshez „Jelentés" gomb az Eredményeim képernyőn. Megnyomásával modal nyílik a kérdés adataival, szabad szövegmező a meglátáshoz, és automatikus emailküldés a fejlesztőnek (FormSubmit API + mailto: tartalék).</div></div>
       </div>
       <div class="changelog-item">
