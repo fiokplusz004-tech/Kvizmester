@@ -43,7 +43,7 @@
   .topbar-room span{color:var(--accent);font-weight:600;font-size:15px;}
   .topbar-timer{font-family:var(--font-display);font-size:20px;color:var(--green);letter-spacing:2px;}
   .topbar-actions{display:flex;gap:8px;}
-  .main-grid{display:grid;grid-template-columns:360px 14px 1fr 14px 290px;height:calc(100vh - 60px);transition:grid-template-columns 0.3s ease;}
+  .main-grid{display:grid;grid-template-columns:360px 20px 1fr 20px 290px;height:calc(100vh - 60px);transition:grid-template-columns 0.3s ease;}
 
   /* LEFT */
   .panel-left{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;min-width:0;}
@@ -298,9 +298,9 @@
 
   /* PANEL DIVIDER (összecsukható kezelők) */
   .panel-divider{display:flex;align-items:center;justify-content:center;background:var(--bg);cursor:pointer;position:relative;transition:background 0.2s;z-index:5;flex-shrink:0;}
-  .panel-divider:hover{background:rgba(240,192,64,0.05);}
-  .panel-divider-handle{width:14px;height:40px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted);opacity:0;transition:opacity 0.2s,color 0.2s,border-color 0.2s;position:relative;z-index:1;line-height:1;user-select:none;letter-spacing:0;}
-  .panel-divider:hover .panel-divider-handle{opacity:1;color:var(--accent);border-color:rgba(240,192,64,0.4);}
+  .panel-divider:hover{background:rgba(240,192,64,0.06);}
+  .panel-divider-handle{width:18px;height:56px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);opacity:0.45;transition:opacity 0.2s,color 0.2s,border-color 0.2s,background 0.2s;position:relative;z-index:1;line-height:1;user-select:none;letter-spacing:0;}
+  .panel-divider:hover .panel-divider-handle{opacity:1;color:var(--accent);border-color:rgba(240,192,64,0.4);background:rgba(240,192,64,0.08);}
 
   /* RESULTS */
   #results-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:100;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;overflow-y:auto;}
@@ -1804,7 +1804,7 @@ let rightPanelOpen = true;
 function updateGridColumns() {
   const lw = leftPanelOpen  ? '360px' : '0px';
   const rw = rightPanelOpen ? '290px' : '0px';
-  document.querySelector('.main-grid').style.gridTemplateColumns = `${lw} 14px 1fr 14px ${rw}`;
+  document.querySelector('.main-grid').style.gridTemplateColumns = `${lw} 20px 1fr 20px ${rw}`;
   document.getElementById('divider-left-handle').textContent  = leftPanelOpen  ? '◀' : '▶';
   document.getElementById('divider-right-handle').textContent = rightPanelOpen ? '▶' : '◀';
   document.getElementById('divider-left').title  = leftPanelOpen  ? 'Bal panel bezárása'  : 'Bal panel megnyitása';
