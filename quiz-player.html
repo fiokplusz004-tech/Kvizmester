@@ -444,7 +444,8 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <button class="changelog-back" onclick="showMenu()">← Vissza</button>
   <div class="changelog-title">VERZIÓ</div>
   <div class="changelog-subtitle">Fejlesztési előzmények</div>
-  <div class="cl-item"><div class="cl-ver current">1.29</div><div><div class="cl-desc">Host felület bal és jobb oldali átdolgozása + váróterem bugfix — összecsukható bal/jobb panel (◀▶ toggle gomb, animációval), vastagabb és mindig látható kezelősáv. Váróterem kártya 2-soros elrendezés (nincs több vízszintes görgetés).</div></div></div>
+  <div class="cl-item"><div class="cl-ver current">1.30</div><div><div class="cl-desc">Játékos elérhetőség státusz ellenőrzés + "Vissza a játékba" menüpont létrehozása — zöld/piros kapcsolat-jelző a Váróteremben és Játék közben, soft disconnect (node megmarad), automatikus újracsatlakozás képernyőzárolás után. Az eredmény képernyőn új "Vissza a játékba" gomb a következő körbe való azonnali visszatéréshez.</div></div></div>
+  <div class="cl-item"><div class="cl-ver">1.29</div><div><div class="cl-desc">Host felület bal és jobb oldali átdolgozása + váróterem bugfix — összecsukható bal/jobb panel (◀▶ toggle gomb, animációval), vastagabb és mindig látható kezelősáv. Váróterem kártya 2-soros elrendezés (nincs több vízszintes görgetés).</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.28</div><div><div class="cl-desc">Host jobb panel átrendezés — új sorrend: Szavazás → Váróterem → Játékban. Váróteremben új "Eltávolítás" gomb a játékos csendes eltávolítására. A "Játékban" szekció tartalmazza a pontállást és a játékoskezelő funkciókat.</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.27</div><div><div class="cl-desc">Stale answer fix — válaszok kérdés-azonosítóval vannak ellátva, elavult válaszok nem befolyásolják az aktuális kérdés kiértékelését. Host oldali szekvenciális Firebase műveletek és onDisconnect védelem.</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.26</div><div><div class="cl-desc">Jelentés funkció — minden kérdéshez „Jelentés" gomb az Eredményeim képernyőn. Megnyomásával modal nyílik a kérdés adataival, szabad szövegmező a meglátáshoz, és automatikus emailküldés a fejlesztőnek (FormSubmit API + mailto: tartalék).</div></div></div>
@@ -500,6 +501,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     <p><strong style="color:var(--text)">4.</strong> A játék végén megjelenik a ranglista.</p>
     <p><strong style="color:var(--text)">5.</strong> A játék után az <strong style="color:var(--text)">Eredményeim</strong> gombbal visszanézheted az összes kérdést: melyiket találtad el, melyiket nem, és hány pontot szereztél kérdésenként.</p>
     <p><strong style="color:var(--text)">6.</strong> Ha hibás kérdést találsz, a 🚩 <strong style="color:var(--text)">Jelentés</strong> gombbal visszajelzést küldhetsz.</p>
+    <p><strong style="color:var(--text)">7.</strong> A <strong style="color:var(--text)">Vissza a játékba</strong> gombbal az eredmény képernyőről egyből visszatérhetsz a következő kvíz várótermébe — nem kell újra bejelentkezni.</p>
   </div>
   <div class="guide-section">
     <div class="guide-section-title">🏆 Pontozás</div>
@@ -681,9 +683,9 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div class="result-pts">pont</div>
   <div class="result-rank" id="final-rank">Végső helyezés: <strong>#1</strong></div>
   <div class="result-scoreboard" id="result-scoreboard"></div>
-  <!-- [FIX #3] Eredményeim gomb -->
   <button class="btn-lobby" onclick="showHistory()" style="background:rgba(62,207,142,0.08);border-color:var(--green);color:var(--green);">📊 EREDMÉNYEIM</button>
-  <button class="btn-lobby" onclick="backToMenu()">↺ FŐMENÜBE VISSZA</button>
+  <button class="btn-lobby" onclick="returnToGame()" style="background:rgba(240,192,64,0.08);border-color:var(--accent);color:var(--accent);">🎮 VISSZA A JÁTÉKBA</button>
+  <button class="btn-lobby" onclick="backToMenu()">↺ VISSZA A FŐMENÜBE</button>
 </div>
 
 <!-- [FIX #3] EREDMÉNYEIM képernyő -->
@@ -1251,6 +1253,59 @@ function backToResults() {
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
+// ── VISSZA A JÁTÉKBA ──────────────────────────────────────────
+// Az eredmény képernyőről egyenesen visszatér a játékba — újraregisztrálja
+// a játékost a Firebase-ben (az előző játék után a host törölte a nodes-t),
+// majd a szavazó felülettel ellátott várakozó képernyőre navigál.
+async function returnToGame() {
+  if (!db || !roomRef || !playerId) { backToMenu(); return; }
+
+  try {
+    // Ellenőrizzük, hogy a játék még elérhető-e
+    const gsSnap = await roomRef.child('gameState').once('value');
+    if (!gsSnap.val()) {
+      // Játék nem elérhető — főmenübe
+      backToMenu();
+      return;
+    }
+
+    // Játékos node újraregisztrálása (új játék → pontok nullázva)
+    await roomRef.child('players').child(playerId).set({
+      name: playerName,
+      score: 0,
+      color: myColor,
+      status: 'lobby',
+      connected: true,
+      rejoinedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    // onDisconnect hook újraregisztrálása (az előző érvénytelen lett)
+    await roomRef.child('players').child(playerId).onDisconnect().update({
+      connected: false,
+      disconnectedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    // Játék állapot reset (új kör, friss kezdés)
+    hasAnswered = false;
+    currentQIndex = -1;
+    answeredNamesThisRound = new Set();
+    pendingQuestion = null;
+    myVoteCat = null; myVoteSubtype = null; myVoteSubmitted = false;
+    myPlayerStatus = 'lobby';
+    lastKnownCorrectAnswer = -1;
+    myScore = 0;
+    myQuestionHistory = [];
+    document.getElementById('my-score').textContent = '0';
+    document.getElementById('my-rank').textContent = '#—';
+
+    showWaiting();
+
+  } catch(e) {
+    console.warn('[QuizMaster] returnToGame hiba:', e);
+    backToMenu();
+  }
+}
+
 // ── SZAVAZÁS ─────────────────────────────────────────────────
 const VOTE_LABELS_PLAYER = {
   'Bibliai': '📖 Bibliai (összes)',
@@ -1807,7 +1862,7 @@ document.addEventListener('visibilitychange', () => {
 </div>
 
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.29</div>
+<div class="version-badge">Játék verzió: 1.30</div>
 
 </body>
 </html>
