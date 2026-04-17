@@ -1244,7 +1244,7 @@ async function returnToGame() {
       name: playerName,
       score: 0,
       color: myColor,
-      status: 'lobby',
+      status: 'active',
       connected: true,
       rejoinedAt: firebase.database.ServerValue.TIMESTAMP
     });
@@ -1261,7 +1261,7 @@ async function returnToGame() {
     answeredNamesThisRound = new Set();
     pendingQuestion = null;
     myVoteCat = null; myVoteSubtype = null; myVoteSubmitted = false;
-    myPlayerStatus = 'lobby';
+    myPlayerStatus = 'active';
     lastKnownCorrectAnswer = -1;
     hostReadyForRejoin = false;
     myScore = 0;
