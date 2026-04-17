@@ -195,6 +195,8 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .rsb-pts { font-family:var(--font-display); font-size:22px; color:var(--accent); }
   .btn-lobby { width:100%; padding:15px; background:transparent; color:var(--accent); border:2px solid var(--accent); border-radius:12px; font-family:var(--font-display); font-size:20px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; margin-bottom:8px; }
   .btn-lobby:active { background:var(--accent); color:#000; }
+  .btn-lobby:disabled { opacity:0.38; cursor:not-allowed; color:var(--muted); border-color:var(--border); background:transparent; }
+  .btn-lobby:disabled:active { background:transparent; color:var(--muted); }
 
   /* ── EREDMÉNYEIM képernyő ────────────────── */
   #history-screen { display:none; width:100%; max-width:420px; padding:24px 0 48px; margin:0 auto; }
@@ -391,32 +393,6 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   }
   .hist-report-btn:hover { border-color:var(--accent2); color:var(--accent2); background:rgba(224,90,43,0.06); }
   .hist-report-btn:active { transform:scale(0.98); }
-
-  /* ── KAPCSOLAT-JELZŐ ─────────────────────── */
-  .conn-indicator {
-    position:fixed; bottom:36px; left:50%; transform:translateX(-50%);
-    z-index:9997; display:none; align-items:center; gap:8px;
-    padding:7px 16px; border-radius:20px; font-size:12px; font-weight:600;
-    letter-spacing:0.5px; white-space:nowrap; pointer-events:none;
-    transition:background 0.3s, border-color 0.3s, color 0.3s;
-    box-shadow:0 4px 16px rgba(0,0,0,0.35);
-  }
-  .conn-indicator.stable {
-    background:rgba(62,207,142,0.18); border:1px solid rgba(62,207,142,0.45); color:var(--green);
-  }
-  .conn-indicator.unstable {
-    background:rgba(224,90,90,0.18); border:1px solid rgba(224,90,90,0.5); color:var(--red);
-  }
-  .conn-dot-anim {
-    width:8px; height:8px; border-radius:50%; flex-shrink:0;
-  }
-  .conn-indicator.stable .conn-dot-anim { background:var(--green); }
-  .conn-indicator.unstable .conn-dot-anim {
-    background:var(--red); animation:connBlink 1.2s ease infinite;
-  }
-  @keyframes connBlink {
-    0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.75)}
-  }
 </style>
 </head>
 <body>
@@ -444,8 +420,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <button class="changelog-back" onclick="showMenu()">← Vissza</button>
   <div class="changelog-title">VERZIÓ</div>
   <div class="changelog-subtitle">Fejlesztési előzmények</div>
-  <div class="cl-item"><div class="cl-ver current">1.30</div><div><div class="cl-desc">Játékos elérhetőség státusz ellenőrzés + "Vissza a játékba" menüpont létrehozása — zöld/piros kapcsolat-jelző a Váróteremben és Játék közben, soft disconnect (node megmarad), automatikus újracsatlakozás képernyőzárolás után. Az eredmény képernyőn új "Vissza a játékba" gomb a következő körbe való azonnali visszatéréshez.</div></div></div>
-  <div class="cl-item"><div class="cl-ver">1.29</div><div><div class="cl-desc">Host felület bal és jobb oldali átdolgozása + váróterem bugfix — összecsukható bal/jobb panel (◀▶ toggle gomb, animációval), vastagabb és mindig látható kezelősáv. Váróterem kártya 2-soros elrendezés (nincs több vízszintes görgetés).</div></div></div>
+  <div class="cl-item"><div class="cl-ver current">1.29</div><div><div class="cl-desc">Host felület bal és jobb oldali átdolgozása + váróterem bugfix — összecsukható bal/jobb panel (◀▶ toggle gomb, animációval), vastagabb és mindig látható kezelősáv. Váróterem kártya 2-soros elrendezés (nincs több vízszintes görgetés).</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.28</div><div><div class="cl-desc">Host jobb panel átrendezés — új sorrend: Szavazás → Váróterem → Játékban. Váróteremben új "Eltávolítás" gomb a játékos csendes eltávolítására. A "Játékban" szekció tartalmazza a pontállást és a játékoskezelő funkciókat.</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.27</div><div><div class="cl-desc">Stale answer fix — válaszok kérdés-azonosítóval vannak ellátva, elavult válaszok nem befolyásolják az aktuális kérdés kiértékelését. Host oldali szekvenciális Firebase műveletek és onDisconnect védelem.</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.26</div><div><div class="cl-desc">Jelentés funkció — minden kérdéshez „Jelentés" gomb az Eredményeim képernyőn. Megnyomásával modal nyílik a kérdés adataival, szabad szövegmező a meglátáshoz, és automatikus emailküldés a fejlesztőnek (FormSubmit API + mailto: tartalék).</div></div></div>
@@ -501,7 +476,6 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     <p><strong style="color:var(--text)">4.</strong> A játék végén megjelenik a ranglista.</p>
     <p><strong style="color:var(--text)">5.</strong> A játék után az <strong style="color:var(--text)">Eredményeim</strong> gombbal visszanézheted az összes kérdést: melyiket találtad el, melyiket nem, és hány pontot szereztél kérdésenként.</p>
     <p><strong style="color:var(--text)">6.</strong> Ha hibás kérdést találsz, a 🚩 <strong style="color:var(--text)">Jelentés</strong> gombbal visszajelzést küldhetsz.</p>
-    <p><strong style="color:var(--text)">7.</strong> A <strong style="color:var(--text)">Vissza a játékba</strong> gombbal az eredmény képernyőről egyből visszatérhetsz a következő kvíz várótermébe — nem kell újra bejelentkezni.</p>
   </div>
   <div class="guide-section">
     <div class="guide-section-title">🏆 Pontozás</div>
@@ -684,7 +658,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div class="result-rank" id="final-rank">Végső helyezés: <strong>#1</strong></div>
   <div class="result-scoreboard" id="result-scoreboard"></div>
   <button class="btn-lobby" onclick="showHistory()" style="background:rgba(62,207,142,0.08);border-color:var(--green);color:var(--green);">📊 EREDMÉNYEIM</button>
-  <button class="btn-lobby" onclick="returnToGame()" style="background:rgba(240,192,64,0.08);border-color:var(--accent);color:var(--accent);">🎮 VISSZA A JÁTÉKBA</button>
+  <button class="btn-lobby" id="btn-return-to-game" onclick="returnToGame()" disabled>⏳ VÁRAKOZÁS A HOST-RA...</button>
   <button class="btn-lobby" onclick="backToMenu()">↺ VISSZA A FŐMENÜBE</button>
 </div>
 
@@ -745,11 +719,6 @@ const LETTERS = ['A','B','C','D'];
 const COLORS = ['#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f','#5ae0d4','#e0c05a'];
 const CIRCUMFERENCE = 175.9;
 
-// ── KAPCSOLAT TRACKING ────────────────────────────────────────
-let hasConnectedOnce = false;    // Első csatlakozás detektálásához
-let isFirebaseConnected = false; // Aktuális kapcsolat állapot
-let reconnectDebounce = null;    // Debounce timer (rapid events kiszűrése)
-
 // [FIX #3] Kérdés előzmény tracking
 let myQuestionHistory = [];   // [{qText, options, myAnswer, correctAnswer, pts, qIndex}]
 let pendingQuestion = null;   // az éppen folyamatban lévő kérdés adatai
@@ -763,6 +732,8 @@ let myVoteSubmitted = false;
 let myPlayerStatus = 'lobby';
 // Az utoljára ismert helyes válasz indexe — fallback ha a revealAnswers előbb fut mint pendingQuestion beállítódik
 let lastKnownCorrectAnswer = -1;
+// "Vissza a játékba" gomb: csak akkor aktív ha a host már visszalépett (phase:'waiting')
+let hostReadyForRejoin = false;
 
 function getParam(n) { return new URLSearchParams(window.location.search).get(n); }
 
@@ -800,7 +771,6 @@ function showLobby() {
   hideAll();
   document.getElementById('lobby-screen').style.display = 'flex';
   document.getElementById('lobby-name').textContent = playerName;
-  updateConnectionIndicator(isFirebaseConnected);
 }
 function showWaiting() {
   hideAll();
@@ -814,7 +784,6 @@ function showWaiting() {
   document.getElementById('w-room').textContent = roomCode;
   // Szavazó felület reset
   resetVoteUI();
-  updateConnectionIndicator(isFirebaseConnected);
 }
 
 // ── ÚJ JÁTÉK gomb ────────────────────────────────────────────
@@ -869,16 +838,10 @@ async function startGame() {
       score: 0,
       color: myColor,
       status: 'lobby',
-      connected: true,
       joinedAt: firebase.database.ServerValue.TIMESTAMP
     });
 
-    // Soft disconnect: nem töröljük a node-ot, csak jelöljük offline-nak.
-    // A handleReconnect() visszaállítja, ha a játékos újracsatlakozik.
-    roomRef.child('players').child(playerId).onDisconnect().update({
-      connected: false,
-      disconnectedAt: firebase.database.ServerValue.TIMESTAMP
-    });
+    roomRef.child('players').child(playerId).onDisconnect().remove();
 
     setupListeners();
     showLobby();
@@ -929,13 +892,14 @@ function setupListeners() {
     } else if (state.phase === 'ended') {
       const gameVisible = document.getElementById('game-screen').style.display !== 'none';
       if (gameVisible) showResults();
+      // Gomb letiltva: a host még a "játék vége" képernyőn van
+      hostReadyForRejoin = false;
+      updateReturnToGameBtn();
     } else if (state.phase === 'waiting') {
-      if (document.getElementById('result-screen').style.display !== 'none') {
-        roomRef.child('players').child(playerId).child('status').once('value', statusSnap => {
-          if (statusSnap.val() === 'active') showWaiting();
-          else showLobby();
-        });
-      }
+      // Host visszalépett a főmenübe → "Vissza a játékba" gomb aktiválódik
+      // Fontos: NEM navigálunk automatikusan — a játékos maga dönt mikor nyomja meg
+      hostReadyForRejoin = true;
+      updateReturnToGameBtn();
     }
   });
 
@@ -987,30 +951,6 @@ function setupListeners() {
   // Szavazás eredmény figyelése (valós idejű frissítés)
   roomRef.child('voteResult').on('value', snap => {
     if (myVoteSubmitted) updateVoteResultsDisplay();
-  });
-
-  // ── .INFO/CONNECTED — kapcsolat állapot figyelése ──────────
-  // Firebase belső csatorna: true ha WebSocket él, false ha leesett.
-  // Első tüzelés (connected=true) = normál belépés → csak hasConnectedOnce=true.
-  // Következő true = REcsatlakozás → handleReconnect() hívódik.
-  db.ref('.info/connected').on('value', snap => {
-    const connected = snap.val() === true;
-    isFirebaseConnected = connected;
-
-    // Debounce: gyors false→true→false szekvenciáknál ne fusson le feleslegesen
-    if (reconnectDebounce) clearTimeout(reconnectDebounce);
-    reconnectDebounce = setTimeout(() => {
-      reconnectDebounce = null;
-      updateConnectionIndicator(connected);
-
-      if (connected) {
-        if (hasConnectedOnce && playerId && roomRef) {
-          // Ez már egy REcsatlakozás — állítsuk helyre a node-ot
-          handleReconnect();
-        }
-        hasConnectedOnce = true;
-      }
-    }, 300);
   });
 }
 
@@ -1072,7 +1012,6 @@ function showQuestion(q, idx, prevCorrectAnswer, currentCorrectAnswer) {
   document.getElementById('q-area').style.flexDirection = 'column';
   startPlayerTimer(q.time || 30);
   updateProgress(idx);
-  updateConnectionIndicator(isFirebaseConnected);
 }
 
 function submitAnswer(idx) {
@@ -1177,6 +1116,11 @@ function showResults() {
       <div class="rsb-pts">${p.score || 0} pt</div>
     </div>`).join('');
   document.getElementById('result-scoreboard').innerHTML = sbHTML;
+
+  // "Vissza a játékba" gomb: alapból letiltva — csak akkor aktiválódik ha
+  // a host visszalép (phase:'waiting' érkezik a gameState listenerből)
+  hostReadyForRejoin = false;
+  updateReturnToGameBtn();
 }
 
 // [FIX #3] Eredményeim képernyő megjelenítése
@@ -1253,23 +1197,49 @@ function backToResults() {
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
-// ── VISSZA A JÁTÉKBA ──────────────────────────────────────────
-// Az eredmény képernyőről egyenesen visszatér a játékba — újraregisztrálja
-// a játékost a Firebase-ben (az előző játék után a host törölte a nodes-t),
-// majd a szavazó felülettel ellátott várakozó képernyőre navigál.
+// ── VISSZA A JÁTÉKBA — gomb állapot kezelő ───────────────────
+// Akkor aktiválódik, ha a host már visszalépett (phase:'waiting' érkezett)
+// Addig szürke és letiltott: "Várakozás a host-ra..."
+function updateReturnToGameBtn() {
+  const btn = document.getElementById('btn-return-to-game');
+  if (!btn) return;
+  // Csak az eredmény képernyőn van hatása
+  const resultVisible = document.getElementById('result-screen').style.display !== 'none';
+  if (!resultVisible) return;
+
+  if (hostReadyForRejoin) {
+    btn.disabled = false;
+    btn.textContent = '🎮 VISSZA A JÁTÉKBA';
+    btn.style.cssText = 'background:rgba(240,192,64,0.08);border-color:var(--accent);color:var(--accent);';
+  } else {
+    btn.disabled = true;
+    btn.textContent = '⏳ VÁRAKOZÁS A HOST-RA...';
+    btn.style.cssText = '';
+  }
+}
+
+// ── VISSZA A JÁTÉKBA — gomb megnyomása ───────────────────────
+// Csak akkor fut le ha hostReadyForRejoin === true, azaz a host már
+// visszalépett és törölte a játékosokat → safe regisztráció
 async function returnToGame() {
+  if (!hostReadyForRejoin) return;           // extra guard
   if (!db || !roomRef || !playerId) { backToMenu(); return; }
 
+  // Gomb azonnal letiltva — dupla kattintás ellen
+  const btn = document.getElementById('btn-return-to-game');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Csatlakozás...'; }
+
   try {
-    // Ellenőrizzük, hogy a játék még elérhető-e
+    // Ellenőrzés: a gameState valóban 'waiting'-e még?
     const gsSnap = await roomRef.child('gameState').once('value');
-    if (!gsSnap.val()) {
-      // Játék nem elérhető — főmenübe
-      backToMenu();
+    const gs = gsSnap.val();
+    if (!gs || gs.phase !== 'waiting') {
+      // Valamiért megváltozott (pl. host már el is indította a következő kört)
+      if (btn) { btn.disabled = false; btn.textContent = '🎮 VISSZA A JÁTÉKBA'; }
       return;
     }
 
-    // Játékos node újraregisztrálása (új játék → pontok nullázva)
+    // Játékos újraregisztrálása — pontok nullázva (új játék)
     await roomRef.child('players').child(playerId).set({
       name: playerName,
       score: 0,
@@ -1279,13 +1249,13 @@ async function returnToGame() {
       rejoinedAt: firebase.database.ServerValue.TIMESTAMP
     });
 
-    // onDisconnect hook újraregisztrálása (az előző érvénytelen lett)
+    // onDisconnect hook újraregisztrálása
     await roomRef.child('players').child(playerId).onDisconnect().update({
       connected: false,
       disconnectedAt: firebase.database.ServerValue.TIMESTAMP
     });
 
-    // Játék állapot reset (új kör, friss kezdés)
+    // Teljes state reset az új körre
     hasAnswered = false;
     currentQIndex = -1;
     answeredNamesThisRound = new Set();
@@ -1293,6 +1263,7 @@ async function returnToGame() {
     myVoteCat = null; myVoteSubtype = null; myVoteSubmitted = false;
     myPlayerStatus = 'lobby';
     lastKnownCorrectAnswer = -1;
+    hostReadyForRejoin = false;
     myScore = 0;
     myQuestionHistory = [];
     document.getElementById('my-score').textContent = '0';
@@ -1302,7 +1273,7 @@ async function returnToGame() {
 
   } catch(e) {
     console.warn('[QuizMaster] returnToGame hiba:', e);
-    backToMenu();
+    if (btn) { btn.disabled = false; btn.textContent = '🎮 VISSZA A JÁTÉKBA'; }
   }
 }
 
@@ -1456,15 +1427,6 @@ function updateVoteResultsDisplay() {
 
 function backToMenu() {
   stopTimer();
-
-  // Kapcsolat tracker reset + .info/connected listener leállítása
-  if (reconnectDebounce) { clearTimeout(reconnectDebounce); reconnectDebounce = null; }
-  if (db) db.ref('.info/connected').off();
-  hasConnectedOnce = false;
-  isFirebaseConnected = false;
-  const connEl = document.getElementById('conn-indicator');
-  if (connEl) connEl.style.display = 'none';
-
   if (roomRef) {
     roomRef.child('gameState').off();
     roomRef.child('players').off();
@@ -1483,6 +1445,7 @@ function backToMenu() {
   myVoteCat = null; myVoteSubtype = null; myVoteSubmitted = false;
   myPlayerStatus = 'lobby';
   lastKnownCorrectAnswer = -1;
+  hostReadyForRejoin = false;
   document.getElementById('my-score').textContent = '0';
   document.getElementById('my-rank').textContent = '#—';
   showMenu();
@@ -1528,91 +1491,6 @@ function updateProgress(currentIdx) {
     }
     return `<div class="${cls}"></div>`;
   }).join('');
-}
-
-// ── KAPCSOLAT JELZŐ ───────────────────────────────────────────
-// Megmutatja a játékosnak hogy él-e a kapcsolat a Firebase-szel.
-// Csak akkor jelenik meg, ha a játékos már belépett (playerId létezik),
-// és akkor rejtjük el, ha a főmenüre lép vissza.
-function updateConnectionIndicator(connected) {
-  const el = document.getElementById('conn-indicator');
-  if (!el || !playerId) return;
-
-  // Csak Váróteremben, Játékban és Waiting képernyőn látható
-  const lobby   = document.getElementById('lobby-screen').style.display   !== 'none';
-  const waiting = document.getElementById('waiting-screen').style.display !== 'none';
-  const game    = document.getElementById('game-screen').style.display    !== 'none';
-  const visible = lobby || waiting || game;
-
-  if (!visible) {
-    el.style.display = 'none';
-    return;
-  }
-
-  el.style.display = 'flex';
-  const dot  = el.querySelector('.conn-dot-anim');
-  const text = el.querySelector('.conn-text');
-
-  if (connected) {
-    el.className = 'conn-indicator stable';
-    text.textContent = 'Kapcsolat stabil';
-  } else {
-    el.className = 'conn-indicator unstable';
-    text.textContent = 'Kapcsolat megszakadt';
-  }
-}
-
-// ── RECONNECT HANDLER ─────────────────────────────────────────
-// Lefut amikor a Firebase WebSocket újra él (pl. képernyő bekapcsol,
-// alkalmazásba visszatér, hálózat helyreáll).
-// Feladatok:
-//   1. onDisconnect() hook újraregisztrálása (a korábbi érvénytelenné vált)
-//   2. Saját player node ellenőrzése — ha törölték, újraregisztrál
-//   3. Ha a node él, frissíti: connected=true + onDisconnect update
-async function handleReconnect() {
-  if (!db || !roomRef || !playerId) return;
-
-  try {
-    // 1. onDisconnect hook újraregisztrálása — MINDIG az első lépés
-    //    mert a korábbi hook a disconnect pillanatában törlődött
-    await roomRef.child('players').child(playerId).onDisconnect().update({
-      connected: false,
-      disconnectedAt: firebase.database.ServerValue.TIMESTAMP
-    });
-
-    // 2. Ellenőrizzük, hogy a player node még létezik-e
-    const snap = await roomRef.child('players').child(playerId).once('value');
-    const playerData = snap.val();
-
-    if (!playerData) {
-      // A node nem létezik — újraregisztrálás (pl. host kizárta közben,
-      // vagy a korábbi onDisconnect valamiért mégis remove()-ot futtatott)
-      // Státusz: lobby (a host dönti el, mikor engedi be újra)
-      await roomRef.child('players').child(playerId).set({
-        name: playerName,
-        score: myScore,
-        color: myColor,
-        status: 'lobby',
-        connected: true,
-        rejoinedAt: firebase.database.ServerValue.TIMESTAMP
-      });
-      myPlayerStatus = 'lobby';
-      // Ha korábban játékban volt, most lobby-ra kerül — a host dönt az újraengedésről
-      const wasInGame = document.getElementById('game-screen').style.display !== 'none';
-      if (wasInGame) {
-        showLobby();
-      }
-    } else {
-      // Node él — csak frissítjük a connected flag-et
-      await roomRef.child('players').child(playerId).update({ connected: true });
-
-      // Ha a státusz aktív volt és játék képernyőn vagyunk, nincs tennivaló
-      // Ha váróteremben volt és újracsatlakozott, marad ahol volt
-    }
-
-  } catch (err) {
-    console.warn('[QuizMaster] handleReconnect hiba:', err);
-  }
 }
 
 // ── TIMER ─────────────────────────────────────────────────────
@@ -1815,54 +1693,10 @@ async function installApp() {
   deferredInstallPrompt = null; hideBanner();
 }
 window.addEventListener('appinstalled', () => hideBanner());
-
-// ── VISIBILITY CHANGE — képernyőváltás / app-háttérbe kerülés ─
-// iOS Safari és Android Chrome egyaránt tüzel erre az eseményre.
-// Ha a játékos visszatér az appba (visible), ellenőrizzük a kapcsolatot.
-let staleCleanupTimer = null;
-
-document.addEventListener('visibilitychange', () => {
-  if (!playerId || !roomRef) return;
-
-  if (document.visibilityState === 'hidden') {
-    // App háttérbe ment — indítunk egy delayed cleanup timert.
-    // Ha 5 percen belül visszatér, cancel-eljük (nem tűnik el a játékoslistából).
-    // Ha nem tér vissza, a Firebase onDisconnect() már beállította connected:false.
-    staleCleanupTimer = setTimeout(() => {
-      // 5 perc után explicit törlés — tényleg elhagyta az appot
-      if (document.visibilityState === 'hidden' && roomRef && playerId) {
-        roomRef.child('players').child(playerId).update({
-          connected: false,
-          status: 'lobby',
-          disconnectedAt: firebase.database.ServerValue.TIMESTAMP
-        }).catch(() => {});
-      }
-    }, 5 * 60 * 1000); // 5 perc
-
-  } else if (document.visibilityState === 'visible') {
-    // App előtérbe jött — töröljük a stale cleanup timert
-    if (staleCleanupTimer) {
-      clearTimeout(staleCleanupTimer);
-      staleCleanupTimer = null;
-    }
-    // Ha Firebase már újracsatlakoztatta, .info/connected triggereli a handleReconnect()-et.
-    // Ha még nem (gyors váltás), a connected state ellenőrzése:
-    if (isFirebaseConnected && hasConnectedOnce) {
-      handleReconnect();
-    }
-    updateConnectionIndicator(isFirebaseConnected);
-  }
-});
 </script>
 
-<!-- KAPCSOLAT-JELZŐ -->
-<div class="conn-indicator hidden" id="conn-indicator">
-  <div class="conn-dot-anim"></div>
-  <span class="conn-text">Kapcsolat stabil</span>
-</div>
-
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.30</div>
+<div class="version-badge">Játék verzió: 1.29</div>
 
 </body>
 </html>
