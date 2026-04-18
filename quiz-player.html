@@ -420,7 +420,8 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <button class="changelog-back" onclick="showMenu()">← Vissza</button>
   <div class="changelog-title">VERZIÓ</div>
   <div class="changelog-subtitle">Fejlesztési előzmények</div>
-  <div class="cl-item"><div class="cl-ver current">1.29</div><div><div class="cl-desc">Host felület bal és jobb oldali átdolgozása + váróterem bugfix — összecsukható bal/jobb panel (◀▶ toggle gomb, animációval), vastagabb és mindig látható kezelősáv. Váróterem kártya 2-soros elrendezés (nincs több vízszintes görgetés).</div></div></div>
+  <div class="cl-item"><div class="cl-ver current">1.30</div><div><div class="cl-desc">Játékos elérhetőség státusz ellenőrzés + "Vissza a játékba" menüpont létrehozása — soft disconnect (játékos node megmarad képernyőzároláskor), automatikus újracsatlakozás, zöld/piros kapcsolat-jelző a Váróteremben és Játék közben, automatikus "Játékban" részhez navigálás a "Vissza a játékba" gombbal.</div></div></div>
+  <div class="cl-item"><div class="cl-ver">1.29</div><div><div class="cl-desc">Host felület bal és jobb oldali átdolgozása + váróterem bugfix — összecsukható bal/jobb panel (◀▶ toggle gomb, animációval), vastagabb és mindig látható kezelősáv. Váróterem kártya 2-soros elrendezés (nincs több vízszintes görgetés).</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.28</div><div><div class="cl-desc">Host jobb panel átrendezés — új sorrend: Szavazás → Váróterem → Játékban. Váróteremben új "Eltávolítás" gomb a játékos csendes eltávolítására. A "Játékban" szekció tartalmazza a pontállást és a játékoskezelő funkciókat.</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.27</div><div><div class="cl-desc">Stale answer fix — válaszok kérdés-azonosítóval vannak ellátva, elavult válaszok nem befolyásolják az aktuális kérdés kiértékelését. Host oldali szekvenciális Firebase műveletek és onDisconnect védelem.</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.26</div><div><div class="cl-desc">Jelentés funkció — minden kérdéshez „Jelentés" gomb az Eredményeim képernyőn. Megnyomásával modal nyílik a kérdés adataival, szabad szövegmező a meglátáshoz, és automatikus emailküldés a fejlesztőnek (FormSubmit API + mailto: tartalék).</div></div></div>
@@ -1696,7 +1697,7 @@ window.addEventListener('appinstalled', () => hideBanner());
 </script>
 
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.29</div>
+<div class="version-badge">Játék verzió: 1.30</div>
 
 </body>
 </html>
