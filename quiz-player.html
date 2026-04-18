@@ -620,7 +620,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
 <div id="game-screen">
   <div class="game-topbar">
     <div>
-      <div class="my-score-label">PONTOM</div>
+      <div class="my-score-label" id="my-score-label">PONTOM</div>
       <div class="my-score-val" id="my-score">0</div>
     </div>
     <div class="timer-ring-wrap">
@@ -637,7 +637,7 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   </div>
   <div class="progress-dots" id="progress-dots"></div>
   <div class="players-panel" id="players-panel">
-    <div class="players-panel-title">JÁTÉKOSOK</div>
+    <div class="players-panel-title" id="players-panel-title">JÁTÉKOSOK</div>
     <div class="players-chips" id="players-chips"></div>
   </div>
   <div class="q-area" id="q-area">
@@ -729,6 +729,12 @@ let pendingQuestion = null;   // az éppen folyamatban lévő kérdés adatai
 let myVoteCat = null;     // pl. 'Bibliai', 'Filmek', 'skip'
 let myVoteSubtype = null; // pl. 'vers', null
 let myVoteSubmitted = false;
+
+// ── CSAPATVERSENY STATE ──────────────────────────────────────
+let gameMode = 'normal';   // 'normal' | 'teams'
+let myTeamId = null;       // saját csapat Firebase ID
+let myTeamName = '';       // saját csapat neve
+let teamScores = {};       // { teamId: { name, score } }
 
 // Játékos státusz szinkron cache (async race condition elkerülése érdekében)
 let myPlayerStatus = 'lobby';
@@ -878,8 +884,29 @@ function setupListeners() {
     const state = snap.val();
     if (!state) return;
 
+    // Játékmód beállítása minden state változáskor
+    gameMode = state.mode === 'teams' ? 'teams' : 'normal';
+    updateGameModeUI();
+
     if (state.phase === 'question' && state.questionIndex !== currentQIndex) {
-      // Szinkron státusz ellenőrzés — nincs async, nincs race condition
+      // Team módban: csak akkor mutatjuk a kérdést ha van teamId
+      if (gameMode === 'teams' && !myTeamId) {
+        // Keressük meg a saját csapatot a teams node-ból
+        let foundTeam = false;
+        for(const [tid,t] of Object.entries(teamScores)){
+          if(t.members&&t.members[playerId]){
+            myTeamId = tid;
+            myTeamName = t.name||'';
+            foundTeam = true;
+            break;
+          }
+        }
+        if(!foundTeam){
+          // Nincs csapat — várakozás képernyő marad "csapat beosztásra"
+          showWaitingForTeam();
+          return;
+        }
+      }
       if (myPlayerStatus === 'active') {
         const prevCorrect = (typeof state.lastCorrectAnswer === 'number') ? state.lastCorrectAnswer : -1;
         currentQIndex = state.questionIndex;
@@ -888,20 +915,18 @@ function setupListeners() {
         showQuestion(state.question, state.questionIndex, prevCorrect, state.correctAnswer);
       }
     } else if (state.phase === 'revealed') {
-      // Mindig hívjuk — a gameVisible check csak a DOM frissítést védi (revealAnswers-en belül)
       const revealIdx = typeof state.revealedForIndex === 'number' ? state.revealedForIndex : state.questionIndex;
       revealAnswers(state.correctAnswer, revealIdx);
     } else if (state.phase === 'ended') {
       const gameVisible = document.getElementById('game-screen').style.display !== 'none';
       if (gameVisible) showResults();
-      // Gomb letiltva: a host még a "játék vége" képernyőn van
       hostReadyForRejoin = false;
       updateReturnToGameBtn();
     } else if (state.phase === 'waiting') {
-      // Host visszalépett a főmenübe → "Vissza a játékba" gomb aktiválódik
-      // Fontos: NEM navigálunk automatikusan — a játékos maga dönt mikor nyomja meg
       hostReadyForRejoin = true;
       updateReturnToGameBtn();
+      // Team módban: pontszám felirat frissítése
+      if(gameMode==='teams') updateGameModeUI();
     }
   });
 
@@ -910,23 +935,44 @@ function setupListeners() {
     const newScore = snap.val() || 0;
     if (newScore > myScore) {
       const diff = newScore - myScore;
-      // Ha pendingQuestion még nyitva van (reveal előtt érkezett a pont), frissítjük
       if (pendingQuestion) {
         pendingQuestion.pts = diff;
       } else if (myQuestionHistory.length > 0) {
-        // Ha a history-ba már bezárult a kérdés, utólag frissítjük az utolsó bejegyzést
         myQuestionHistory[myQuestionHistory.length - 1].pts = diff;
       }
+      // Team módban: csapatpont delta animáció
       showScoreDelta('+' + diff, diff > 1);
     }
     myScore = newScore;
-    document.getElementById('my-score').textContent = myScore;
+    // Normal módban az egyéni pontot mutatjuk, team módban a teams listener frissíti
+    if(gameMode !== 'teams'){
+      document.getElementById('my-score').textContent = myScore;
+    }
   });
 
   roomRef.child('players').on('value', snap => {
     players = snap.val() || {};
     updateRank();
     updatePlayersChips(answeredNamesThisRound);
+  });
+
+  // Csapatok figyelése (team módban)
+  roomRef.child('teams').on('value', snap => {
+    teamScores = snap.val() || {};
+    // Saját csapat ID frissítése ha még nincs beállítva
+    if(!myTeamId){
+      for(const [tid,t] of Object.entries(teamScores)){
+        if(t.members&&t.members[playerId]){
+          myTeamId = tid;
+          myTeamName = t.name||'';
+          break;
+        }
+      }
+    }
+    // Ha team módban vagyunk, frissítjük a pontszám kijelzőt
+    if(gameMode==='teams'&&myTeamId&&teamScores[myTeamId]){
+      document.getElementById('my-score').textContent = teamScores[myTeamId].score||0;
+    }
   });
 
   roomRef.child('answers').on('child_added', snap => {
@@ -1090,9 +1136,7 @@ function revealAnswers(correctIdx, forQuestionIndex) {
 function showResults() {
   stopTimer();
 
-  // Csak akkor mentjük, ha még nyitva van (revealAnswers nem futott le)
   if (pendingQuestion) {
-    // Ha a correctAnswer nem lett beállítva, használjuk az utoljára ismert értéket
     if (pendingQuestion.correctAnswer === -1 && lastKnownCorrectAnswer >= 0) {
       pendingQuestion.correctAnswer = lastKnownCorrectAnswer;
     }
@@ -1103,6 +1147,18 @@ function showResults() {
   hideAll();
   document.getElementById('result-screen').style.display = 'block';
   window.scrollTo({top:0, behavior:'smooth'});
+
+  if(gameMode === 'teams'){
+    showTeamResults();
+  } else {
+    showNormalResults();
+  }
+
+  hostReadyForRejoin = false;
+  updateReturnToGameBtn();
+}
+
+function showNormalResults() {
   document.getElementById('final-score').textContent = myScore;
   const sorted = Object.values(players).sort((a,b) => (b.score||0)-(a.score||0));
   const rank = sorted.findIndex(p => p.name === playerName) + 1;
@@ -1111,18 +1167,63 @@ function showResults() {
   document.getElementById('result-emoji').textContent = emojis[Math.min(rank-1, emojis.length-1)];
   const medals = ['🥇','🥈','🥉'];
   let sbHTML = '<h4>RANGLISTA</h4>';
-  sbHTML += sorted.map((p, i) => `
+  sbHTML += Object.values(players).sort((a,b)=>(b.score||0)-(a.score||0)).map((p, i) => `
     <div class="rsb-row${p.name === playerName ? ' me' : ''}">
       <div class="rsb-rank">${medals[i] || (i+1) + '.'}</div>
       <div class="rsb-name">${p.name || 'Névtelen'}${p.name === playerName ? ' 👤' : ''}</div>
       <div class="rsb-pts">${p.score || 0} pt</div>
     </div>`).join('');
   document.getElementById('result-scoreboard').innerHTML = sbHTML;
+}
 
-  // "Vissza a játékba" gomb: alapból letiltva — csak akkor aktiválódik ha
-  // a host visszalép (phase:'waiting' érkezik a gameState listenerből)
-  hostReadyForRejoin = false;
-  updateReturnToGameBtn();
+function showTeamResults() {
+  // Csapat ranglista
+  const sortedTeams = Object.entries(teamScores).sort((a,b)=>(b[1].score||0)-(a[1].score||0));
+  const myTeam = myTeamId ? teamScores[myTeamId] : null;
+  const myTeamRank = sortedTeams.findIndex(([tid])=>tid===myTeamId)+1;
+  const isWinner = myTeamRank===1;
+
+  // Emoji és cím
+  document.getElementById('result-emoji').textContent = isWinner ? '🏆' : myTeamRank===2 ? '🥈' : myTeamRank===3 ? '🥉' : '🎖️';
+  document.getElementById('final-score').textContent = myTeam ? myTeam.score||0 : 0;
+
+  // Rang sor
+  document.getElementById('final-rank').innerHTML = myTeamName
+    ? `Csapatod: <strong>${myTeamName}</strong> — #${myTeamRank} helyezés`
+    : 'Csapatverseny vége';
+
+  // Csapat ranglista
+  const medals = ['🥇','🥈','🥉'];
+  let sbHTML = '<h4>CSAPAT RANGLISTA</h4>';
+  sbHTML += sortedTeams.map(([tid,t],i)=>{
+    const isMe = tid===myTeamId;
+    return `<div class="rsb-row${isMe?' me':''}">
+      <div class="rsb-rank">${medals[i]||(i+1)+'.'}</div>
+      <div class="rsb-name">${t.name||'Névtelen csapat'}${isMe?' 👥':''}</div>
+      <div class="rsb-pts">${t.score||0} pt</div>
+    </div>`;
+  }).join('');
+
+  // Saját csapat tagjai és egyéni hozzájárulásuk
+  if(myTeam){
+    const memberIds = Object.keys(myTeam.members||{});
+    const memberData = memberIds
+      .map(pid=>players[pid])
+      .filter(Boolean)
+      .sort((a,b)=>(b.score||0)-(a.score||0));
+
+    if(memberData.length>0){
+      sbHTML += `<h4 style="margin-top:16px;">A TE CSAPATOD: ${myTeamName||''}${isWinner?' 🏆':''}</h4>`;
+      sbHTML += memberData.map(p=>`
+        <div class="rsb-row${p.name===playerName?' me':''}">
+          <div class="rsb-rank" style="font-size:13px;color:var(--muted);">👤</div>
+          <div class="rsb-name">${p.name||'Névtelen'}${p.name===playerName?' (te)':''}</div>
+          <div class="rsb-pts">${p.score||0} pt</div>
+        </div>`).join('');
+    }
+  }
+
+  document.getElementById('result-scoreboard').innerHTML = sbHTML;
 }
 
 // [FIX #3] Eredményeim képernyő megjelenítése
@@ -1242,14 +1343,19 @@ async function returnToGame() {
     }
 
     // Játékos újraregisztrálása — pontok nullázva (új játék)
-    await roomRef.child('players').child(playerId).set({
+    const rejoinData = {
       name: playerName,
       score: 0,
       color: myColor,
       status: 'active',
       connected: true,
       rejoinedAt: firebase.database.ServerValue.TIMESTAMP
-    });
+    };
+    // Team módban: teamId megmarad (1. opció)
+    if(gameMode === 'teams' && myTeamId){
+      rejoinData.teamId = myTeamId;
+    }
+    await roomRef.child('players').child(playerId).set(rejoinData);
 
     // onDisconnect hook újraregisztrálása
     await roomRef.child('players').child(playerId).onDisconnect().update({
@@ -1268,8 +1374,10 @@ async function returnToGame() {
     hostReadyForRejoin = false;
     myScore = 0;
     myQuestionHistory = [];
+    // Team módban: score display nullázva, teamId megmarad
     document.getElementById('my-score').textContent = '0';
     document.getElementById('my-rank').textContent = '#—';
+    updateGameModeUI();
 
     showWaiting();
 
@@ -1427,6 +1535,37 @@ function updateVoteResultsDisplay() {
 }
 
 
+// ── CSAPATVERSENY UI ─────────────────────────────────────────
+function updateGameModeUI() {
+  const scoreLabel = document.getElementById('my-score-label');
+  const panelTitle = document.getElementById('players-panel-title');
+  if(gameMode === 'teams'){
+    if(scoreLabel) scoreLabel.innerHTML = 'CSAPAT<br>PONTUNK';
+    if(panelTitle) panelTitle.textContent = 'CSAPATTÁRSAK';
+    // Csapatpont frissítése
+    if(myTeamId && teamScores[myTeamId]){
+      document.getElementById('my-score').textContent = teamScores[myTeamId].score||0;
+    }
+  } else {
+    if(scoreLabel) scoreLabel.innerHTML = 'PONTOM';
+    if(panelTitle) panelTitle.textContent = 'JÁTÉKOSOK';
+    document.getElementById('my-score').textContent = myScore;
+  }
+}
+
+function showWaitingForTeam() {
+  // A waiting-screen-en marad, de speciális üzenettel
+  const msgEl = document.getElementById('waiting-msg');
+  if(msgEl) msgEl.textContent = 'Várakozás csapat beosztásra...';
+  // Ha nem a waiting-screen látszik, navigálunk oda
+  const waitVisible = document.getElementById('waiting-screen').style.display !== 'none';
+  if(!waitVisible && myPlayerStatus === 'active'){
+    showWaiting();
+    const msgEl2 = document.getElementById('waiting-msg');
+    if(msgEl2) msgEl2.textContent = 'Várakozás csapat beosztásra...';
+  }
+}
+
 function backToMenu() {
   stopTimer();
   if (roomRef) {
@@ -1448,16 +1587,29 @@ function backToMenu() {
   myPlayerStatus = 'lobby';
   lastKnownCorrectAnswer = -1;
   hostReadyForRejoin = false;
+  gameMode = 'normal'; myTeamId = null; myTeamName = ''; teamScores = {};
   document.getElementById('my-score').textContent = '0';
   document.getElementById('my-rank').textContent = '#—';
+  updateGameModeUI();
   showMenu();
 }
 
 function updatePlayersChips(answeredSet) {
   const container = document.getElementById('players-chips');
   if (!container) return;
-  const activePlayers = Object.values(players).filter(p => p.status === 'active');
-  container.innerHTML = activePlayers.map(p => {
+  let displayPlayers;
+  if(gameMode === 'teams' && myTeamId){
+    // Csak a saját csapat tagjait mutatjuk (magunkat kizárva)
+    const myTeam = teamScores[myTeamId];
+    const memberIds = myTeam ? Object.keys(myTeam.members||{}) : [];
+    displayPlayers = Object.values(players).filter(p =>
+      p.status === 'active' && memberIds.some(mid => players[mid]&&players[mid].name===p.name) && p.name !== playerName
+    );
+    // Ha üres a lista (csak mi vagyunk a csapatban), ne mutassunk semmit
+  } else {
+    displayPlayers = Object.values(players).filter(p => p.status === 'active');
+  }
+  container.innerHTML = displayPlayers.map(p => {
     const isAnswered = answeredSet && answeredSet.has(p.name);
     return `<div class="p-chip${isAnswered ? ' answered' : ''}">
       <div class="p-chip-dot"></div>${p.name}

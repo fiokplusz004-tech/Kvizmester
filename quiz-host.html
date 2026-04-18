@@ -394,6 +394,77 @@
   .changelog-ver.current { color:var(--green); }
   .changelog-desc { font-size:13px; color:var(--text); line-height:1.55; }
   .changelog-date { font-size:11px; color:var(--muted); margin-top:3px; }
+
+  /* ── CSAPATVERSENY ──────────────────────────────────────── */
+  .ctrl-teams { background:rgba(90,143,224,0.15); color:#5a8fe0; border:1px solid rgba(90,143,224,0.4); }
+  .ctrl-teams:hover { background:#5a8fe0; color:#fff; border-color:#5a8fe0; opacity:1; }
+
+  /* Team modal overlay */
+  .team-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:300; display:flex; align-items:center; justify-content:center; padding:16px; animation:slideUp 0.25s ease; }
+  .team-modal-overlay.hidden { display:none!important; }
+  .team-modal-inner { background:var(--surface); border:1px solid var(--border); border-radius:16px; width:100%; max-width:900px; height:min(82vh,640px); display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.65); overflow:hidden; }
+  .team-modal-head { padding:16px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:var(--surface2); flex-shrink:0; }
+  .team-modal-head h3 { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--accent); }
+  .team-modal-body { display:flex; flex:1; overflow:hidden; min-height:0; }
+  .team-col { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+  .team-col:first-child { border-right:1px solid var(--border); }
+  .team-col-head { padding:10px 16px; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); font-weight:700; border-bottom:1px solid var(--border); background:rgba(240,192,64,0.04); flex-shrink:0; }
+  .team-col-scroll { flex:1; overflow-y:auto; padding:8px; }
+  .team-col-scroll::-webkit-scrollbar { width:4px; }
+  .team-col-scroll::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .team-col-foot { padding:7px 14px; font-size:11px; color:var(--muted); border-top:1px solid var(--border); flex-shrink:0; }
+  .team-modal-foot { padding:14px 18px; border-top:1px solid var(--border); display:flex; gap:10px; background:var(--surface2); flex-shrink:0; border-radius:0 0 16px 16px; }
+
+  /* Player items in left col */
+  .tm-player-item { display:flex; align-items:center; gap:9px; padding:7px 9px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; margin-bottom:5px; position:relative; }
+  .tm-player-avatar { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }
+  .tm-player-name { flex:1; font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tm-assign-wrap { position:relative; flex-shrink:0; }
+  .tm-plus-btn { width:26px; height:26px; border-radius:50%; background:var(--green); color:#000; border:none; font-size:19px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; transition:opacity 0.2s; }
+  .tm-plus-btn:hover { opacity:0.8; }
+  .tm-badge { display:flex; align-items:center; gap:5px; background:rgba(240,192,64,0.12); border:1px solid rgba(240,192,64,0.4); border-radius:12px; padding:3px 9px; font-size:11px; font-weight:600; color:var(--accent); cursor:pointer; white-space:nowrap; transition:background 0.15s; max-width:120px; overflow:hidden; text-overflow:ellipsis; }
+  .tm-badge:hover { background:rgba(240,192,64,0.22); }
+  .tm-dropdown { position:absolute; right:0; top:32px; background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 28px rgba(0,0,0,0.45); z-index:200; min-width:170px; overflow:hidden; }
+  .tm-dropdown.hidden { display:none; }
+  .tm-dropdown-label { padding:7px 12px 5px; font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; border-bottom:1px solid var(--border); }
+  .tm-dropdown-item { display:block; padding:9px 14px; font-size:13px; font-weight:500; cursor:pointer; transition:background 0.15s; white-space:nowrap; border:none; background:transparent; color:var(--text); width:100%; text-align:left; }
+  .tm-dropdown-item:hover { background:var(--surface2); }
+  .tm-dropdown-item.danger { color:var(--red); }
+  .tm-dropdown-item.danger:hover { background:rgba(224,90,90,0.1); }
+
+  /* Team cards in right col */
+  .tm-add-team-btn { width:100%; padding:10px; background:rgba(62,207,142,0.08); border:1.5px dashed rgba(62,207,142,0.4); border-radius:8px; color:var(--green); font-size:13px; font-weight:700; cursor:pointer; margin-bottom:8px; transition:all 0.2s; text-align:center; }
+  .tm-add-team-btn:hover { background:rgba(62,207,142,0.16); }
+  .tm-new-team-wrap { background:var(--bg); border:1px solid var(--accent); border-radius:8px; padding:10px; margin-bottom:8px; }
+  .tm-new-team-wrap.hidden { display:none; }
+  .tm-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; overflow:hidden; }
+  .tm-card-head { display:flex; align-items:center; gap:7px; padding:9px 11px; background:var(--surface); border-bottom:1px solid var(--border); cursor:pointer; user-select:none; }
+  .tm-card-chevron { font-size:9px; color:var(--muted); transition:transform 0.2s; flex-shrink:0; }
+  .tm-card-chevron.open { transform:rotate(90deg); }
+  .tm-card-name { flex:1; font-family:var(--font-display); font-size:15px; letter-spacing:1.5px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tm-card-name-input { flex:1; background:var(--bg); border:1px solid var(--accent); border-radius:5px; padding:3px 8px; color:var(--text); font-family:var(--font-display); font-size:14px; letter-spacing:1px; outline:none; min-width:0; }
+  .tm-card-btn { width:24px; height:24px; border-radius:5px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; transition:all 0.15s; flex-shrink:0; }
+  .tm-edit-btn { background:rgba(240,192,64,0.15); color:var(--accent); }
+  .tm-edit-btn:hover { background:var(--accent); color:#000; }
+  .tm-del-btn { background:rgba(224,90,90,0.15); color:var(--red); }
+  .tm-del-btn:hover { background:var(--red); color:#fff; }
+  .tm-card-body { padding:7px; }
+  .tm-member-item { display:flex; align-items:center; gap:7px; padding:5px 7px; border-radius:6px; margin-bottom:3px; background:var(--bg); border:1px solid var(--border); }
+  .tm-member-name { flex:1; font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tm-member-remove { width:18px; height:18px; border-radius:4px; background:rgba(224,90,90,0.15); color:var(--red); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:11px; flex-shrink:0; transition:all 0.15s; }
+  .tm-member-remove:hover { background:var(--red); color:#fff; }
+  .tm-card-foot { padding:4px 8px 7px; font-size:11px; color:var(--muted); }
+
+  /* Team score panel in right col (game running) */
+  .team-score-section { border-bottom:1px solid var(--border); padding:10px 12px; flex-shrink:0; }
+  .team-score-head { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:7px; font-weight:700; }
+  .team-score-row { display:flex; align-items:center; gap:9px; padding:7px 10px; border-radius:8px; margin-bottom:4px; background:var(--surface2); border:1px solid var(--border); transition:all 0.3s; }
+  .team-score-row.ts1 { border-color:var(--accent); background:rgba(240,192,64,0.08); }
+  .team-score-row.ts2 { border-color:rgba(192,192,192,0.35); }
+  .team-score-row.ts3 { border-color:rgba(180,100,40,0.35); }
+  .team-score-medal { font-size:16px; flex-shrink:0; width:22px; text-align:center; }
+  .team-score-name { flex:1; font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .team-score-pts { font-family:var(--font-display); font-size:22px; color:var(--accent); }
 </style>
 </head>
 <body>
@@ -524,7 +595,8 @@
       <div class="control-bar">
         <div class="game-phase" id="phase-label">VÁRAKOZÁS</div>
         <div style="display:flex;gap:9px;">
-          <button class="ctrl-btn ctrl-start" id="btn-start" onclick="openStartModal()">▶ JÁTÉK INDÍTÁSA</button>
+          <button class="ctrl-btn ctrl-start" id="btn-start" onclick="openStartModalNormal()">▶ JÁTÉK INDÍTÁSA</button>
+          <button class="ctrl-btn ctrl-teams" id="btn-teams" onclick="openTeamModal()">👥 CSAPATVERSENY</button>
           <button class="ctrl-btn ctrl-reveal hidden" id="btn-reveal" onclick="revealAnswer()">👁 MEGOLDÁS</button>
           <button class="ctrl-btn ctrl-next hidden" id="btn-next" onclick="nextQuestion()">KÖVETKEZŐ →</button>
           <button class="ctrl-btn ctrl-end hidden" id="btn-end" onclick="endGame()">■ BEFEJEZÉS</button>
@@ -580,6 +652,11 @@
             <span class="tag tag-green" id="player-count-tag">0 játékos</span>
             <button class="btn-secondary" style="font-size:11px;padding:4px 9px;" onclick="resetAllScores()">⟳ Nulláz</button>
           </div>
+        </div>
+        <!-- Csapat állás (csak team módban) -->
+        <div class="team-score-section hidden" id="team-score-section">
+          <div class="team-score-head">🏆 CSAPAT ÁLLÁS</div>
+          <div id="team-score-list"></div>
         </div>
         <div class="score-list" id="score-list">
           <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">Még nincsenek aktív játékosok...</div>
@@ -730,6 +807,14 @@ let currentInlineEditId=null,inlineCorrectOpt=0;
 let votes = {};           // { playerId: { cat, subtype, playerName } }
 let voteWinnerKey = null; // pl. 'Bibliai' vagy 'Bibliai|vers'
 
+// ── CSAPATVERSENY STATE ──────────────────────────────────────
+let gameMode = 'normal';       // 'normal' | 'teams'
+let teams = {};                // { teamId: { name, score, members: {pid:true} } }
+let tmCollapsed = new Set();   // összecsukott csapat kártyák
+let tmActiveDropPid = null;    // nyitott assign dropdown
+let tmEditingId = null;        // szerkesztés alatt lévő csapat ID
+let tmModalOpen = false;       // modal nyitva?
+
 // ============================================================
 // FIREBASE
 // ============================================================
@@ -767,6 +852,19 @@ function setupListeners() {
   if(!db)return;
   roomRef.child('players').on('value',snap=>{
     players=snap.val()||{};
+    // Auto-restore teamId a visszacsatlakozott játékosoknak team módban
+    if(gameMode==='teams'&&db){
+      Object.entries(players).forEach(([pid,player])=>{
+        if(player&&!player.teamId){
+          for(const [tid,team] of Object.entries(teams)){
+            if(team.members&&team.members[pid]){
+              roomRef.child('players').child(pid).child('teamId').set(tid);
+              break;
+            }
+          }
+        }
+      });
+    }
     updateScoreboard();
     updatePlayerChips();
     updateLobbyPanel();
@@ -774,8 +872,8 @@ function setupListeners() {
     const lobbyCnt  = Object.values(players).filter(p=>p.status==='lobby').length;
     document.getElementById('joined-count').textContent=activeCnt;
     document.getElementById('player-count-tag').textContent=activeCnt+' játékos';
-    // Szavazás frissítése ha változott a játékosok száma
     updateVoteMonitor();
+    if(tmModalOpen) renderTeamModal();
   });
   roomRef.child('answers').on('child_added',snap=>{
     const ans=snap.val();if(!ans)return;
@@ -798,6 +896,16 @@ function setupListeners() {
     if(players[pid]){
       players[pid].score=(players[pid].score||0)+pts;
       if(db)roomRef.child('players').child(pid).child('score').set(players[pid].score);
+      // ── CSAPATPONT ──────────────────────────────────────────
+      if(gameMode==='teams'&&players[pid].teamId){
+        const tid=players[pid].teamId;
+        if(db){
+          roomRef.child('teams').child(tid).child('score').transaction(cur=>(cur||0)+pts);
+        } else {
+          if(teams[tid]) teams[tid].score=(teams[tid].score||0)+pts;
+          updateTeamScoreboard();
+        }
+      }
       if(pts>0)showScoreDelta(pid,pts);
     }
     if(ans.answer>=0&&ans.answer<=3){answerCounts[ans.answer]++;updateAnswerStats();}
@@ -820,6 +928,26 @@ function setupListeners() {
     votes = snap.val() || {};
     updateVoteMonitor();
   });
+
+  // Csapatok figyelése
+  roomRef.child('teams').on('value', snap => {
+    teams = snap.val() || {};
+    updateTeamScoreboard();
+    if(tmModalOpen) renderTeamModal();
+    // Auto-restore teamId ha a teams adatok megérkeznek
+    if(gameMode==='teams'&&db){
+      Object.entries(players).forEach(([pid,player])=>{
+        if(player&&!player.teamId){
+          for(const [tid,team] of Object.entries(teams)){
+            if(team.members&&team.members[pid]){
+              roomRef.child('players').child(pid).child('teamId').set(tid);
+              break;
+            }
+          }
+        }
+      });
+    }
+  });
 }
 
 function showMain() {
@@ -829,7 +957,7 @@ function showMain() {
   const playerUrl=window.location.origin+window.location.pathname.replace('quiz-host.html','quiz-player.html')+'?room='+roomCode;
   document.getElementById('player-url').textContent=playerUrl;
   if(db){
-    roomRef.child('gameState').set({phase:'waiting'});
+    roomRef.child('gameState').set({phase:'waiting',mode:'normal'});
     // Host onDisconnect — váratlan kilépés esetén automatikus adattisztítás
     roomRef.child('players').onDisconnect().remove();
     roomRef.child('answers').onDisconnect().remove();
@@ -1380,7 +1508,9 @@ function nextQuestion() {
     // KRITIKUS: előbb töröljük a régi válaszokat, MAJD küldjük az új kérdést.
     // .finally() garantálja hogy a gameState.set() sikertelen remove() esetén is lefut.
     const gsData={
-      phase:'question',questionIndex:currentQIndex,
+      phase:'question',
+      mode: gameMode,
+      questionIndex:currentQIndex,
       question:{text:q.text,options:q.options,category:q.category,type:q.type||'egyéb',time:q.time,num:q.num||0},
       correctAnswer:q.correct,
       lastCorrectAnswer: prevCorrectIndex >= 0 ? prevCorrectIndex : null,
@@ -1431,7 +1561,7 @@ function startTimer(seconds) {
 function revealAnswer(fromTimer=false) {
   clearInterval(currentTimerInterval);gamePhase='revealed';
   document.querySelectorAll('.answer-card').forEach((card,i)=>card.classList.add(i===correctOptionIndex?'correct':'wrong'));
-  if(db)roomRef.child('gameState').update({phase:'revealed',correctAnswer:correctOptionIndex,revealedForIndex:currentQIndex});
+  if(db)roomRef.child('gameState').update({phase:'revealed',mode:gameMode,correctAnswer:correctOptionIndex,revealedForIndex:currentQIndex});
   document.getElementById('btn-reveal').classList.add('hidden');
   document.getElementById('btn-next').classList.remove('hidden');
   document.getElementById('phase-label').textContent='MEGOLDÁS MEGJELENÍTVE';
@@ -1458,7 +1588,7 @@ function startAutoAdvance() {
 
 function endGame() {
   clearInterval(currentTimerInterval);gamePhase='ended';
-  if(db)roomRef.child('gameState').update({phase:'ended'});
+  if(db)roomRef.child('gameState').update({phase:'ended',mode:gameMode});
   showResults();
 }
 
@@ -1481,12 +1611,21 @@ function newGame() {
   document.getElementById('results-screen').style.display='none';
   currentQIndex=-1;activeQuestions=[];gamePhase='waiting';players={};
   if(db){
-    roomRef.child('gameState').set({phase:'waiting'});
+    roomRef.child('gameState').set({phase:'waiting',mode:'normal'});
     roomRef.child('answers').remove();
     roomRef.child('players').remove();
     roomRef.child('votes').remove();
     roomRef.child('voteResult').remove();
+    // Team módban: csapatpontok nullázása, struktúra megmarad
+    if(gameMode==='teams'){
+      Object.keys(teams).forEach(tid=>{
+        roomRef.child('teams').child(tid).child('score').set(0);
+      });
+    }
+  } else {
+    Object.values(teams).forEach(t=>{ t.score=0; });
   }
+  gameMode='normal';
   votes = {}; voteWinnerKey = null;
   document.getElementById('waiting-state').classList.remove('hidden');
   document.getElementById('question-state').classList.add('hidden');
@@ -1503,7 +1642,27 @@ function updatePlayerChips() {
   const activeCnt=activePlayers.length;
   document.getElementById('joined-count').textContent=activeCnt;
 }
+function updateTeamScoreboard() {
+  const section = document.getElementById('team-score-section');
+  if(!section) return;
+  if(gameMode!=='teams'||Object.keys(teams).length===0){
+    section.classList.add('hidden'); return;
+  }
+  section.classList.remove('hidden');
+  const sorted=Object.entries(teams).sort((a,b)=>(b[1].score||0)-(a[1].score||0));
+  const medals=['🥇','🥈','🥉'];
+  const cls=['ts1','ts2','ts3'];
+  document.getElementById('team-score-list').innerHTML=sorted.map(([tid,t],i)=>`
+    <div class="team-score-row ${cls[i]||''}">
+      <div class="team-score-medal">${medals[i]||(i+1)+'.'}</div>
+      <div class="team-score-name">${htmlEsc(t.name)}</div>
+      <div class="team-score-pts">${t.score||0}</div>
+    </div>`).join('');
+}
+function htmlEsc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
 function updateScoreboard() {
+  updateTeamScoreboard();
   const sorted=Object.entries(players)
     .filter(([id,p])=>p.status==='active')
     .sort((a,b)=>(b[1].score||0)-(a[1].score||0));
@@ -1813,6 +1972,257 @@ function updateGridColumns() {
 function toggleLeftPanel()  { leftPanelOpen  = !leftPanelOpen;  updateGridColumns(); }
 function toggleRightPanel() { rightPanelOpen = !rightPanelOpen; updateGridColumns(); }
 
+// ── NORMÁL JÁTÉK INDÍTÁSA (gameMode reset) ────────────────────
+function openStartModalNormal() {
+  gameMode = 'normal';
+  openStartModal();
+}
+
+// ── CSAPATVERSENY MODAL ───────────────────────────────────────
+function openTeamModal() {
+  const actives = Object.values(players).filter(p=>p.status==='active');
+  if(actives.length===0){
+    alert('Még nincs aktív játékos!\nElőször engedd be a játékosokat a Játékban szekcióba.');
+    return;
+  }
+  tmModalOpen = true;
+  document.getElementById('team-modal').classList.remove('hidden');
+  renderTeamModal();
+}
+function closeTeamModal() {
+  tmModalOpen = false;
+  document.getElementById('team-modal').classList.add('hidden');
+  tmActiveDropPid = null;
+  tmEditingId = null;
+}
+function renderTeamModal() {
+  renderTmPlayers();
+  renderTmTeams();
+  updateTmSaveBtn();
+}
+
+// Bal oszlop: játékosok
+function renderTmPlayers() {
+  const actives = Object.entries(players).filter(([id,p])=>p.status==='active');
+  const list = document.getElementById('tm-player-list');
+  if(!list) return;
+  if(actives.length===0){
+    list.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">Nincs aktív játékos.</div>';
+    document.getElementById('tm-player-count').textContent='Összesen: 0 játékos';
+    return;
+  }
+  list.innerHTML = actives.map(([pid,p])=>{
+    const teamId = tmGetPlayerTeam(pid);
+    const tName  = teamId&&teams[teamId]?teams[teamId].name:null;
+    const color  = p.color||'#888';
+    const init   = (p.name||'?')[0].toUpperCase();
+    const hasTeams = Object.keys(teams).length>0;
+
+    const assignBtn = teamId
+      ? `<div class="tm-badge" onclick="tmShowDrop('${pid}',event)">${htmlEsc(tName)} ✓</div>`
+      : `<button class="tm-plus-btn" onclick="tmShowDrop('${pid}',event)" title="Csapathoz adás">+</button>`;
+
+    const dropItems = Object.entries(teams).map(([tid,t])=>{
+      if(tid===teamId) return '';
+      return `<button class="tm-dropdown-item" onclick="tmAssign('${pid}','${tid}')">${htmlEsc(t.name)}</button>`;
+    }).join('');
+    const dropRemove = teamId
+      ? `<button class="tm-dropdown-item danger" onclick="tmRemove('${pid}')">✕ Eltávolítás</button>`:'';
+    const noTeam = !hasTeams
+      ? '<div style="padding:8px 14px;font-size:12px;color:var(--muted);">Előbb hozz létre csapatot!</div>':'' ;
+
+    return `<div class="tm-player-item">
+      <div class="tm-player-avatar" style="background:${color}22;border:2px solid ${color};color:${color};">${init}</div>
+      <div class="tm-player-name">${htmlEsc(p.name||'Névtelen')}</div>
+      <div class="tm-assign-wrap" id="tm-wrap-${pid}">
+        ${assignBtn}
+        <div class="tm-dropdown hidden" id="tm-drop-${pid}">
+          <div class="tm-dropdown-label">Melyik csapatba?</div>
+          ${noTeam}${dropItems}${dropRemove}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('tm-player-count').textContent=`Összesen: ${actives.length} játékos`;
+}
+
+function tmGetPlayerTeam(pid) {
+  for(const [tid,t] of Object.entries(teams)){
+    if(t.members&&t.members[pid]) return tid;
+  }
+  return null;
+}
+
+// Jobb oszlop: csapatok
+function renderTmTeams() {
+  const list = document.getElementById('tm-team-list');
+  if(!list) return;
+  const entries = Object.entries(teams);
+  if(entries.length===0){
+    list.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">Még nincs csapat.<br>Adj hozzá egyet!</div>';
+    document.getElementById('tm-team-count').textContent='Összes csapat: 0';
+    return;
+  }
+  list.innerHTML = entries.map(([tid,t])=>{
+    const collapsed = tmCollapsed.has(tid);
+    const memberPids = Object.keys(t.members||{}).filter(pid=>players[pid]);
+    const isEditing = tmEditingId===tid;
+    const nameEl = isEditing
+      ? `<input class="tm-card-name-input" id="tm-edit-${tid}" value="${htmlEsc(t.name)}"
+           onclick="event.stopPropagation()"
+           onkeydown="if(event.key==='Enter')tmSaveName('${tid}')"
+           onblur="tmSaveName('${tid}')">`
+      : `<div class="tm-card-name">${htmlEsc(t.name)}</div>`;
+
+    const membersHTML = memberPids.map(pid=>{
+      const pl = players[pid];
+      if(!pl) return '';
+      const c=pl.color||'#888';
+      return `<div class="tm-member-item">
+        <div class="tm-player-avatar" style="background:${c}22;border:2px solid ${c};color:${c};width:22px;height:22px;font-size:11px;">${(pl.name||'?')[0].toUpperCase()}</div>
+        <div class="tm-member-name">${htmlEsc(pl.name||'Névtelen')}</div>
+        <button class="tm-member-remove" onclick="tmRemove('${pid}')" title="Eltávolítás">✕</button>
+      </div>`;
+    }).join('');
+
+    return `<div class="tm-card" id="tm-card-${tid}">
+      <div class="tm-card-head" onclick="tmToggleCollapse('${tid}')">
+        <div class="tm-card-chevron ${collapsed?'':'open'}">▶</div>
+        ${nameEl}
+        <button class="tm-card-btn tm-edit-btn" onclick="event.stopPropagation();tmStartEdit('${tid}')" title="Átnevezés">✏</button>
+        <button class="tm-card-btn tm-del-btn" onclick="event.stopPropagation();tmDeleteTeam('${tid}')" title="Törlés">✕</button>
+      </div>
+      ${collapsed?'':`<div class="tm-card-body">
+        ${memberPids.length===0
+          ?'<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px 0;">Adj hozzá játékosokat!</div>'
+          :membersHTML}
+      </div>
+      <div class="tm-card-foot">${memberPids.length} játékos</div>`}
+    </div>`;
+  }).join('');
+  document.getElementById('tm-team-count').textContent=`Összes csapat: ${entries.length}`;
+}
+
+function updateTmSaveBtn() {
+  const btn = document.getElementById('tm-save-btn');
+  if(!btn) return;
+  const entries = Object.entries(teams);
+  const ok = entries.length>=2 &&
+    entries.every(([tid,t])=>Object.keys(t.members||{}).filter(pid=>players[pid]).length>=1);
+  btn.disabled = !ok;
+  btn.style.opacity = ok?'1':'0.4';
+  btn.style.cursor  = ok?'pointer':'not-allowed';
+}
+
+// Dropdown kezelés
+function tmShowDrop(pid, event) {
+  event.stopPropagation();
+  if(tmActiveDropPid&&tmActiveDropPid!==pid){
+    const prev=document.getElementById('tm-drop-'+tmActiveDropPid);
+    if(prev) prev.classList.add('hidden');
+  }
+  const drop = document.getElementById('tm-drop-'+pid);
+  if(!drop) return;
+  const isOpen = !drop.classList.contains('hidden');
+  drop.classList.toggle('hidden');
+  tmActiveDropPid = isOpen ? null : pid;
+}
+function tmHideAllDrops() {
+  document.querySelectorAll('.tm-dropdown').forEach(d=>d.classList.add('hidden'));
+  tmActiveDropPid = null;
+}
+document.addEventListener('click', ()=> { if(tmModalOpen) tmHideAllDrops(); });
+
+function tmAssign(pid, teamId) {
+  tmRemoveSilent(pid);
+  if(db){
+    roomRef.child('teams').child(teamId).child('members').child(pid).set(true);
+    roomRef.child('players').child(pid).child('teamId').set(teamId);
+  } else {
+    if(!teams[teamId]) return;
+    if(!teams[teamId].members) teams[teamId].members={};
+    teams[teamId].members[pid]=true;
+    if(players[pid]) players[pid].teamId=teamId;
+    renderTeamModal();
+  }
+  tmHideAllDrops();
+}
+function tmRemove(pid) { tmRemoveSilent(pid); tmHideAllDrops(); if(!db) renderTeamModal(); }
+function tmRemoveSilent(pid) {
+  for(const [tid,t] of Object.entries(teams)){
+    if(t.members&&t.members[pid]){
+      if(db){
+        roomRef.child('teams').child(tid).child('members').child(pid).remove();
+        roomRef.child('players').child(pid).child('teamId').remove();
+      } else {
+        delete t.members[pid];
+        if(players[pid]) delete players[pid].teamId;
+      }
+      break;
+    }
+  }
+}
+
+// Új csapat
+function showNewTeamInput() {
+  document.getElementById('tm-new-team-wrap').classList.remove('hidden');
+  const inp=document.getElementById('tm-new-team-input');
+  inp.value=''; inp.focus();
+}
+function hideNewTeamInput() {
+  document.getElementById('tm-new-team-wrap').classList.add('hidden');
+}
+function confirmNewTeam() {
+  const name=document.getElementById('tm-new-team-input').value.trim();
+  if(!name){ document.getElementById('tm-new-team-input').focus(); return; }
+  const tid='t_'+Date.now()+'_'+Math.random().toString(36).substr(2,4);
+  const data={name,score:0,members:{}};
+  if(db){ roomRef.child('teams').child(tid).set(data); }
+  else { teams[tid]=data; renderTeamModal(); }
+  hideNewTeamInput();
+}
+function tmToggleCollapse(tid) {
+  if(tmEditingId===tid) return;
+  tmCollapsed.has(tid)?tmCollapsed.delete(tid):tmCollapsed.add(tid);
+  renderTmTeams(); updateTmSaveBtn();
+}
+function tmStartEdit(tid) {
+  tmEditingId=tid;
+  renderTmTeams();
+  setTimeout(()=>{ const inp=document.getElementById('tm-edit-'+tid); if(inp){inp.focus();inp.select();} },40);
+}
+function tmSaveName(tid) {
+  if(tmEditingId!==tid) return;
+  const inp=document.getElementById('tm-edit-'+tid);
+  if(!inp){tmEditingId=null;return;}
+  const name=inp.value.trim();
+  tmEditingId=null;
+  if(!name){ renderTmTeams(); return; }
+  if(db){ roomRef.child('teams').child(tid).child('name').set(name); }
+  else { if(teams[tid]) teams[tid].name=name; renderTeamModal(); }
+}
+function tmDeleteTeam(tid) {
+  const name=teams[tid]?.name||'csapat';
+  if(!confirm(`Törlöd a(z) "${name}" csapatot?\nA tagok visszakerülnek a beosztás nélküli listába.`)) return;
+  const memberPids=Object.keys(teams[tid]?.members||{});
+  if(db){
+    memberPids.forEach(pid=>roomRef.child('players').child(pid).child('teamId').remove());
+    roomRef.child('teams').child(tid).remove();
+  } else {
+    memberPids.forEach(pid=>{ if(players[pid]) delete players[pid].teamId; });
+    delete teams[tid];
+    tmCollapsed.delete(tid);
+    renderTeamModal();
+  }
+}
+
+function saveTeamsAndOpenStart() {
+  if(!document.getElementById('tm-save-btn')||document.getElementById('tm-save-btn').disabled) return;
+  gameMode='teams';
+  closeTeamModal();
+  openStartModal(); // gameMode='teams' már be van állítva, openStartModal nem írja felül
+}
+
 function openChangelog() {
   document.getElementById('changelog-modal').classList.remove('hidden');
 }
@@ -1954,6 +2364,47 @@ function closeChangelog() {
           <div class="changelog-date">2026.04.02</div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSAPATVERSENY MODAL -->
+<div class="team-modal-overlay hidden" id="team-modal" onclick="if(event.target===this)closeTeamModal()">
+  <div class="team-modal-inner">
+    <div class="team-modal-head">
+      <h3>👥 CSAPATVERSENY ÖSSZEÁLLÍTÁSA</h3>
+      <button class="changelog-close" onclick="closeTeamModal()">✕</button>
+    </div>
+    <div class="team-modal-body">
+      <!-- BAL OSZLOP: játékosok -->
+      <div class="team-col">
+        <div class="team-col-head">CSATLAKOZOTT JÁTÉKOSOK</div>
+        <div class="team-col-scroll" id="tm-player-list"></div>
+        <div class="team-col-foot" id="tm-player-count">Összesen: 0 játékos</div>
+      </div>
+      <!-- JOBB OSZLOP: csapatok -->
+      <div class="team-col">
+        <div class="team-col-head">CSAPATOK ÉS JÁTÉKOSOK</div>
+        <div class="team-col-scroll" id="tm-team-scroll">
+          <button class="tm-add-team-btn" onclick="showNewTeamInput()">+ Új Csapat Hozzáadása</button>
+          <div class="tm-new-team-wrap hidden" id="tm-new-team-wrap">
+            <input type="text" class="form-input" id="tm-new-team-input" placeholder="Csapat neve..." maxlength="30"
+              onkeydown="if(event.key==='Enter')confirmNewTeam()" style="margin-bottom:7px;">
+            <div style="display:flex;gap:7px;">
+              <button class="btn-save" style="flex:1;padding:8px;font-size:13px;" onclick="confirmNewTeam()">Hozzáadás</button>
+              <button class="btn-cancel-form" style="padding:8px 12px;" onclick="hideNewTeamInput()">Mégse</button>
+            </div>
+          </div>
+          <div id="tm-team-list"></div>
+          <div id="tm-team-count" style="font-size:11px;color:var(--muted);margin-top:4px;padding:4px 0;">Összes csapat: 0</div>
+        </div>
+      </div>
+    </div>
+    <div class="team-modal-foot">
+      <button class="btn-cancel-form" style="padding:12px 22px;font-size:14px;" onclick="closeTeamModal()">Mégse</button>
+      <button class="btn-save" id="tm-save-btn" style="flex:1;padding:12px;font-size:14px;opacity:0.4;cursor:not-allowed;" onclick="saveTeamsAndOpenStart()" disabled>
+        ✓ Beállítás mentése és játék kategória kiválasztása
+      </button>
     </div>
   </div>
 </div>
