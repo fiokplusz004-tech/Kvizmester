@@ -420,7 +420,8 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <button class="changelog-back" onclick="showMenu()">← Vissza</button>
   <div class="changelog-title">VERZIÓ</div>
   <div class="changelog-subtitle">Fejlesztési előzmények</div>
-  <div class="cl-item"><div class="cl-ver current">1.30</div><div><div class="cl-desc">Játékos elérhetőség státusz ellenőrzés + "Vissza a játékba" menüpont létrehozása — soft disconnect (játékos node megmarad képernyőzároláskor), automatikus újracsatlakozás, zöld/piros kapcsolat-jelző a Váróteremben és Játék közben, automatikus "Játékban" részhez navigálás a "Vissza a játékba" gombbal.</div></div></div>
+  <div class="cl-item"><div class="cl-ver current">2.0</div><div><div class="cl-desc">Csapatverseny játékmód — Játékosok csapatokba oszthatók (2–5 csapat), minden csapatnak egyedi neve adható. A csapatpontok valós időben összesítődnek: az egyes játékosok által szerzett pontok a saját csapatuk összpontszámába kerülnek. Játék közben „Csapattársak" és „Csapat pontunk" jelenik meg. Az eredmény képernyőn csapat dobogó és egyéni hozzájárulás is látható.</div></div></div>
+  <div class="cl-item"><div class="cl-ver">1.30</div><div><div class="cl-desc">Játékos elérhetőség státusz ellenőrzés + "Vissza a játékba" menüpont létrehozása — soft disconnect (játékos node megmarad képernyőzároláskor), automatikus újracsatlakozás, zöld/piros kapcsolat-jelző a Váróteremben és Játék közben, automatikus "Játékban" részhez navigálás a "Vissza a játékba" gombbal.</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.29</div><div><div class="cl-desc">Host felület bal és jobb oldali átdolgozása + váróterem bugfix — összecsukható bal/jobb panel (◀▶ toggle gomb, animációval), vastagabb és mindig látható kezelősáv. Váróterem kártya 2-soros elrendezés (nincs több vízszintes görgetés).</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.28</div><div><div class="cl-desc">Host jobb panel átrendezés — új sorrend: Szavazás → Váróterem → Játékban. Váróteremben új "Eltávolítás" gomb a játékos csendes eltávolítására. A "Játékban" szekció tartalmazza a pontállást és a játékoskezelő funkciókat.</div></div></div>
   <div class="cl-item"><div class="cl-ver">1.27</div><div><div class="cl-desc">Stale answer fix — válaszok kérdés-azonosítóval vannak ellátva, elavult válaszok nem befolyásolják az aktuális kérdés kiértékelését. Host oldali szekvenciális Firebase műveletek és onDisconnect védelem.</div></div></div>
@@ -477,7 +478,16 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     <p><strong style="color:var(--text)">4.</strong> A játék végén megjelenik a ranglista.</p>
     <p><strong style="color:var(--text)">5.</strong> A játék után az <strong style="color:var(--text)">Eredményeim</strong> gombbal visszanézheted az összes kérdést: melyiket találtad el, melyiket nem, és hány pontot szereztél kérdésenként.</p>
     <p><strong style="color:var(--text)">6.</strong> Ha hibás kérdést találsz, a 🚩 <strong style="color:var(--text)">Jelentés</strong> gombbal visszajelzést küldhetsz.</p>
-    <p><strong style="color:var(--text)">7.</strong> A ranglista képernyőn a <strong style="color:var(--text)">Vissza a játékba</strong> gomb akkor válik aktívvá, ha a host visszalépett a főmenübe és készen áll a következő körre. Amíg ez nem történik meg, a gomb szürke és <em>„Várakozás a host-ra..."</em> feliratot mutat. Ha megnyomod, automatikusan a játékba kerülsz — nem kell újra bejelentkezni.</p>
+    <p><strong style="color:var(--text)">7.</strong> A ranglista képernyőn a <strong style="color:var(--text)">Vissza a játékba</strong> gomb akkor válik aktívvá, ha a host visszalépett a főmenübe és készen áll a következő körre.</p>
+  </div>
+  <div class="guide-divider"></div>
+  <div class="guide-section">
+    <div class="guide-section-title">👥 Csapatverseny játékmód</div>
+    <p>A <strong style="color:var(--text)">Csapatverseny</strong> egy különleges játékmód, amelyben a játékosok 2–5 csapatba vannak osztva, és a csapatok versenyeznek egymás ellen.</p>
+    <p><strong style="color:var(--text)">Hogyan működik?</strong> A host a játék indítása előtt csapatokba osztja a játékosokat. Minden csapatnak egyedi neve van. A kérdések ugyanúgy jelennek meg mint normál módban — te egyénileg válaszolsz, de a pontjaid a <strong style="color:var(--text)">csapatod összpontszámába</strong> kerülnek, nem az egyéni ranglistádba.</p>
+    <p><strong style="color:var(--text)">Mit látsz játék közben?</strong> A bal felső sarokban <strong style="color:var(--text)">„Csapat pontunk"</strong> felirat jelenik meg a csapatod aktuális összpontszámával. A játékosok panelen a <strong style="color:var(--text)">„Csapattársak"</strong> felirat alatt csak a saját csapatod tagjait látod — és azt, hogy ki válaszolt már.</p>
+    <p><strong style="color:var(--text)">Eredmény képernyő:</strong> A játék végén egy csapat dobogó jelenik meg az összes csapat végeredményével. Alatta látható a saját csapatod részletes teljesítménye — ki mennyi pontot hozott a közös győzelemhez.</p>
+    <p><strong style="color:var(--text)">Fontos:</strong> Ha a host csapatversenyt indít, de valaki nincs csapatba osztva, az a játékos a váróteremben marad amíg a host be nem osztja valamelyik csapatba.</p>
   </div>
   <div class="guide-section">
     <div class="guide-section-title">🏆 Pontozás</div>
@@ -1850,7 +1860,7 @@ window.addEventListener('appinstalled', () => hideBanner());
 </script>
 
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 1.30</div>
+<div class="version-badge">Játék verzió: 2.0</div>
 
 </body>
 </html>
