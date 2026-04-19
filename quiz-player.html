@@ -279,6 +279,27 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     font-family:var(--font-body); pointer-events:none; opacity:0.6;
   }
 
+  /* ── AKASZTÓFA KÉPERNYŐ ─────────────────────────────────── */
+  #hangman-screen { display:none; width:100%; max-width:420px; min-height:100vh; min-height:100dvh; flex-direction:column; }
+  .hm-word-row-p { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; padding:8px 0; }
+  .hm-tile-p { width:32px; height:40px; border-bottom:2.5px solid var(--text); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:22px; color:var(--text); transition:all 0.3s; }
+  .hm-tile-p.space { border-bottom-color:transparent; width:14px; }
+  .hm-tile-p.revealed { color:var(--accent); border-bottom-color:var(--accent); animation:correctPulse 0.4s ease; }
+  .hm-tile-p.reveal-all { color:var(--red); border-bottom-color:var(--red); }
+  .hm-keyboard { display:flex; flex-direction:column; gap:6px; padding:8px 0 4px; }
+  .hm-key-row { display:flex; gap:5px; justify-content:center; flex-wrap:wrap; }
+  .hm-key { min-width:36px; height:40px; padding:0 8px; background:var(--surface2); border:1.5px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:16px; color:var(--text); cursor:pointer; transition:all 0.15s; -webkit-user-select:none; user-select:none; }
+  .hm-key:active { transform:scale(0.92); }
+  .hm-key.correct { background:rgba(62,207,142,0.15); border-color:var(--green); color:var(--green); pointer-events:none; }
+  .hm-key.wrong { background:rgba(224,90,90,0.12); border-color:rgba(224,90,90,0.4); color:var(--red); pointer-events:none; opacity:0.55; }
+  .hm-key.disabled { pointer-events:none; opacity:0.4; }
+  .hm-lives-p { display:flex; gap:5px; justify-content:center; }
+  .hm-life-p { font-size:20px; transition:opacity 0.3s; }
+  .hm-life-p.lost { opacity:0.18; filter:grayscale(1); }
+  .hm-result-banner-p { text-align:center; padding:8px 0; }
+  .hm-solved-p { font-family:var(--font-display); font-size:28px; letter-spacing:2px; color:var(--green); }
+  .hm-failed-p { font-family:var(--font-display); font-size:28px; letter-spacing:2px; color:var(--red); }
+
   /* CHANGELOG képernyő */
   #changelog-screen {
     display:none; flex-direction:column; width:100%; max-width:400px;
@@ -684,6 +705,57 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div id="hist-list"></div>
 </div>
 
+<!-- AKASZTÓFA KÉPERNYŐ -->
+<div id="hangman-screen">
+  <div class="game-topbar">
+    <div>
+      <div class="my-score-label" id="hm-score-label">PONTOM</div>
+      <div class="my-score-val" id="hm-my-score">0</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;">IDŐ</div>
+      <div style="font-family:var(--font-display);font-size:32px;color:var(--accent);line-height:1;" id="hm-timer-num">60</div>
+    </div>
+    <div class="my-rank">
+      <div class="my-rank-label">HELYEZÉS</div>
+      <div class="my-rank-val" id="hm-my-rank">#—</div>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div style="width:100%;height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:10px;">
+    <div id="hm-timer-bar-p" style="height:100%;background:var(--accent);border-radius:2px;transition:width 1s linear;width:100%;"></div>
+  </div>
+
+  <!-- Round indicator -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div style="font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;" id="hm-round-label-p">1/5. SZÓ</div>
+    <div style="font-size:10px;letter-spacing:1px;padding:3px 10px;border-radius:4px;background:rgba(224,90,43,0.12);color:#e05a2b;border:1px solid rgba(224,90,43,0.28);text-transform:uppercase;" id="hm-cat-p">—</div>
+  </div>
+
+  <!-- Result banner -->
+  <div class="hm-result-banner-p" id="hm-result-banner-p"></div>
+
+  <!-- Gallows + Word area -->
+  <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:10px;">
+    <div id="hm-gallows-p" style="flex-shrink:0;"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;flex:1;">
+      <div class="hm-word-row-p" id="hm-word-row-p"></div>
+      <div class="hm-lives-p" id="hm-lives-p"></div>
+    </div>
+  </div>
+
+  <!-- Keyboard -->
+  <div class="hm-keyboard" id="hm-keyboard-p"></div>
+
+  <!-- Wrong letters row -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:6px 0;min-height:28px;" id="hm-wrong-row-p"></div>
+
+  <div style="padding:8px 0 4px;">
+    <button class="btn-back-game" onclick="backToMenu()">↺ Főmenü</button>
+  </div>
+</div>
+
 <div class="score-delta-overlay" id="score-delta"></div>
 
 <!-- JELENTÉS MODAL -->
@@ -763,7 +835,7 @@ window.addEventListener('load', () => {
 // ── KÉPERNYŐ VÁLTÁS ──────────────────────────────────────────
 function hideAll() {
   ['menu-screen','guide-screen','unavailable-screen','lobby-screen',
-   'waiting-screen','game-screen','result-screen','history-screen','changelog-screen']
+   'waiting-screen','game-screen','result-screen','history-screen','changelog-screen','hangman-screen']
     .forEach(id => document.getElementById(id).style.display = 'none');
 }
 function showMenu() {
@@ -927,9 +999,17 @@ function setupListeners() {
     } else if (state.phase === 'revealed') {
       const revealIdx = typeof state.revealedForIndex === 'number' ? state.revealedForIndex : state.questionIndex;
       revealAnswers(state.correctAnswer, revealIdx);
+    } else if (state.phase === 'hangman-active' || state.phase === 'hangman-revealed') {
+      // Akasztófa: hangmanState-ből olvassuk az állapotot (külön listener kezeli)
     } else if (state.phase === 'ended') {
       const gameVisible = document.getElementById('game-screen').style.display !== 'none';
-      if (gameVisible) showResults();
+      const hangmanVisible = document.getElementById('hangman-screen').style.display !== 'none';
+      if (gameVisible || hangmanVisible) showResults();
+      hostReadyForRejoin = false;
+      updateReturnToGameBtn();
+    } else if (state.phase === 'hangman-ended') {
+      const hangmanVisible = document.getElementById('hangman-screen').style.display !== 'none';
+      if (hangmanVisible) showResults();
       hostReadyForRejoin = false;
       updateReturnToGameBtn();
     } else if (state.phase === 'waiting') {
@@ -1009,6 +1089,16 @@ function setupListeners() {
   // Szavazás eredmény figyelése (valós idejű frissítés)
   roomRef.child('voteResult').on('value', snap => {
     if (myVoteSubmitted) updateVoteResultsDisplay();
+  });
+
+  // ── AKASZTÓFA: hangmanState figyelése ────────────────────
+  roomRef.child('hangmanState').on('value', snap => {
+    const state = snap.val();
+    if (!state) return;
+    if (myPlayerStatus !== 'active') return;
+    if (state.phase === 'hangman-active' || state.phase === 'hangman-revealed') {
+      showHangmanScreen(state);
+    }
   });
 }
 
@@ -1578,11 +1668,13 @@ function showWaitingForTeam() {
 
 function backToMenu() {
   stopTimer();
+  stopHangmanTimer();
   if (roomRef) {
     roomRef.child('gameState').off();
     roomRef.child('players').off();
     roomRef.child('answers').off();
     roomRef.child('voteResult').off();
+    roomRef.child('hangmanState').off();
     if (playerId) {
       roomRef.child('votes').child(playerId).remove();
       roomRef.child('players').child(playerId).child('status').off();
@@ -1598,10 +1690,209 @@ function backToMenu() {
   lastKnownCorrectAnswer = -1;
   hostReadyForRejoin = false;
   gameMode = 'normal'; myTeamId = null; myTeamName = ''; teamScores = {};
+  hmKeyboardDisabled = false;
   document.getElementById('my-score').textContent = '0';
   document.getElementById('my-rank').textContent = '#—';
   updateGameModeUI();
   showMenu();
+}
+
+// ============================================================
+// AKASZTÓFA — JÁTÉKOS OLDAL
+// ============================================================
+const HU_LETTERS_P = ['A','Á','B','C','D','E','É','F','G','H','I','Í','J','K','L','M','N','O','Ó','Ö','Ő','P','R','S','T','U','Ú','Ü','Ű','V','Z'];
+const HM_KEY_ROWS = [
+  ['A','Á','B','C','D','E','É','F'],
+  ['G','H','I','Í','J','K','L','M'],
+  ['N','O','Ó','Ö','Ő','P','R','S'],
+  ['T','U','Ú','Ü','Ű','V','Z'],
+];
+
+let hmKeyboardDisabled = false;
+let hmTimerIntervalP = null;
+let hmTimerValueP = 60;
+let hmTimeLimitP = 60;
+let hmCurrentPhase = 'idle';
+
+function stopHangmanTimer() {
+  clearInterval(hmTimerIntervalP);
+}
+
+function showHangmanScreen(state) {
+  hideAll();
+  const screen = document.getElementById('hangman-screen');
+  screen.style.display = 'flex';
+  screen.style.flexDirection = 'column';
+
+  const guessed = state.guessedLetters || {};
+  const wrong = state.wrongLetters || {};
+  const word = state.word || '';
+  const revealed = state.phase === 'hangman-revealed';
+  hmCurrentPhase = state.phase;
+  hmKeyboardDisabled = revealed;
+
+  // Update score display
+  document.getElementById('hm-my-score').textContent = myScore;
+  document.getElementById('hm-my-rank').textContent = document.getElementById('my-rank').textContent;
+
+  // Category + round
+  document.getElementById('hm-cat-p').textContent = state.category || '—';
+  document.getElementById('hm-round-label-p').textContent =
+    (typeof state.roundIndex==='number' ? state.roundIndex+1 : '?') +
+    '/' + (state.totalRounds||'?') + '. SZÓ';
+
+  // Timer
+  hmTimeLimitP = state.timeLimit || 60;
+  if(!revealed) {
+    stopHangmanTimer();
+    // Estimate remaining time from startTime
+    if(state.startTime) {
+      const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+      hmTimerValueP = Math.max(0, hmTimeLimitP - elapsed);
+    } else {
+      hmTimerValueP = hmTimeLimitP;
+    }
+    startHangmanTimerP();
+  } else {
+    stopHangmanTimer();
+    hmTimerValueP = 0;
+    updateHangmanTimerUI(0);
+  }
+
+  // Word tiles
+  renderHangmanWordP(word, guessed, revealed, state.solved);
+
+  // Gallows
+  document.getElementById('hm-gallows-p').innerHTML = buildHangmanSVGP(Object.keys(wrong).length, 90, 100);
+
+  // Lives
+  renderHangmanLivesP(Object.keys(wrong).length);
+
+  // Keyboard
+  renderHangmanKeyboardP(guessed, wrong, revealed);
+
+  // Wrong letters
+  renderHangmanWrongP(wrong);
+
+  // Result banner
+  const bannerEl = document.getElementById('hm-result-banner-p');
+  if(revealed) {
+    if(state.solved) {
+      bannerEl.innerHTML = '<div class="hm-solved-p">✓ MEGOLDVA!</div>';
+    } else {
+      bannerEl.innerHTML = '<div class="hm-failed-p">✗ NEM SIKERÜLT</div>';
+    }
+  } else {
+    bannerEl.innerHTML = '';
+  }
+}
+
+function renderHangmanWordP(word, guessed, revealed, solved) {
+  const row = document.getElementById('hm-word-row-p');
+  if(!row) return;
+  row.innerHTML = word.split('').map(l => {
+    if(l === ' ') return '<div class="hm-tile-p space"></div>';
+    const isGuessed = guessed[l];
+    let cls = '';
+    if(isGuessed) cls = (revealed && !solved) ? 'reveal-all' : 'revealed';
+    return `<div class="hm-tile-p ${cls}">${isGuessed ? l : ''}</div>`;
+  }).join('');
+}
+
+function renderHangmanKeyboardP(guessed, wrong, disabled) {
+  const kb = document.getElementById('hm-keyboard-p');
+  if(!kb) return;
+  kb.innerHTML = HM_KEY_ROWS.map(row =>
+    `<div class="hm-key-row">${row.map(l => {
+      let cls = '';
+      if(guessed[l]) cls = 'correct';
+      else if(wrong[l]) cls = 'wrong';
+      else if(disabled) cls = 'disabled';
+      return `<div class="hm-key ${cls}" onclick="submitHangmanLetter('${l}')">${l}</div>`;
+    }).join('')}</div>`
+  ).join('');
+}
+
+function renderHangmanLivesP(wrongCount) {
+  const el = document.getElementById('hm-lives-p');
+  if(!el) return;
+  el.innerHTML = Array.from({length:6}, (_,i) =>
+    `<div class="hm-life-p${i<wrongCount?' lost':''}">❤️</div>`
+  ).join('');
+}
+
+function renderHangmanWrongP(wrong) {
+  const el = document.getElementById('hm-wrong-row-p');
+  if(!el) return;
+  const wrongArr = Object.keys(wrong);
+  if(wrongArr.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = wrongArr.map(l =>
+    `<div style="width:26px;height:26px;border-radius:5px;background:rgba(224,90,90,0.12);border:1px solid rgba(224,90,90,0.35);color:var(--red);font-family:var(--font-display);font-size:14px;display:flex;align-items:center;justify-content:center;">${l}</div>`
+  ).join('');
+}
+
+function buildHangmanSVGP(wrongCount, w, h) {
+  let svg = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block;">`;
+  svg += `<line x1="8" y1="${h-4}" x2="${w-8}" y2="${h-4}" stroke="#2a2a3d" stroke-width="3" stroke-linecap="round"/>`;
+  svg += `<line x1="${w/2-20}" y1="${h-4}" x2="${w/2-20}" y2="8" stroke="#2a2a3d" stroke-width="3" stroke-linecap="round"/>`;
+  svg += `<line x1="${w/2-20}" y1="8" x2="${w/2+18}" y2="8" stroke="#2a2a3d" stroke-width="3" stroke-linecap="round"/>`;
+  svg += `<line x1="${w/2+18}" y1="8" x2="${w/2+18}" y2="20" stroke="#2a2a3d" stroke-width="2" stroke-linecap="round"/>`;
+  const cx = w/2+18, ry = 20;
+  if(wrongCount>=1) svg += `<circle cx="${cx}" cy="${ry+9}" r="9" stroke="var(--red)" stroke-width="2" fill="none"/>`;
+  if(wrongCount>=2) svg += `<line x1="${cx}" y1="${ry+18}" x2="${cx}" y2="${ry+38}" stroke="var(--red)" stroke-width="2" stroke-linecap="round"/>`;
+  if(wrongCount>=3) svg += `<line x1="${cx}" y1="${ry+23}" x2="${cx-14}" y2="${ry+33}" stroke="var(--red)" stroke-width="2" stroke-linecap="round"/>`;
+  if(wrongCount>=4) svg += `<line x1="${cx}" y1="${ry+23}" x2="${cx+14}" y2="${ry+33}" stroke="var(--red)" stroke-width="2" stroke-linecap="round"/>`;
+  if(wrongCount>=5) svg += `<line x1="${cx}" y1="${ry+38}" x2="${cx-12}" y2="${ry+55}" stroke="var(--red)" stroke-width="2" stroke-linecap="round"/>`;
+  if(wrongCount>=6) svg += `<line x1="${cx}" y1="${ry+38}" x2="${cx+12}" y2="${ry+55}" stroke="var(--red)" stroke-width="2" stroke-linecap="round"/>`;
+  svg += '</svg>';
+  return svg;
+}
+
+function submitHangmanLetter(letter) {
+  if(hmKeyboardDisabled || hmCurrentPhase !== 'hangman-active') return;
+  if(!db || !roomRef || !playerId) return;
+  // Disable key immediately (optimistic UI)
+  const keys = document.querySelectorAll('#hm-keyboard-p .hm-key');
+  keys.forEach(k => { if(k.textContent === letter) k.classList.add('disabled'); });
+  // Write guess to Firebase (child_added deduplicated by host)
+  roomRef.child('hangmanGuesses').child(letter).set({
+    playerId,
+    playerName,
+    ts: firebase.database.ServerValue.TIMESTAMP
+  });
+}
+
+function startHangmanTimerP() {
+  clearInterval(hmTimerIntervalP);
+  updateHangmanTimerUI(hmTimerValueP);
+  hmTimerIntervalP = setInterval(() => {
+    hmTimerValueP--;
+    updateHangmanTimerUI(hmTimerValueP);
+    if(hmTimerValueP <= 0) {
+      clearInterval(hmTimerIntervalP);
+      hmKeyboardDisabled = true;
+      renderHangmanKeyboardP({}, {}, true);
+    }
+  }, 1000);
+}
+
+function updateHangmanTimerUI(val) {
+  const numEl = document.getElementById('hm-timer-num');
+  const barEl = document.getElementById('hm-timer-bar-p');
+  if(numEl) {
+    if(val > 60) {
+      const m = Math.floor(val/60), s = val%60;
+      numEl.textContent = m+':'+(s<10?'0':'')+s;
+    } else {
+      numEl.textContent = val;
+    }
+    numEl.style.color = val <= 10 ? 'var(--red)' : 'var(--accent)';
+  }
+  if(barEl) {
+    const pct = hmTimeLimitP > 0 ? (val/hmTimeLimitP*100) : 0;
+    barEl.style.width = pct + '%';
+    barEl.style.background = val <= 10 ? 'var(--red)' : 'var(--accent)';
+  }
 }
 
 function updatePlayersChips(answeredSet) {
