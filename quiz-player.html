@@ -299,6 +299,13 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .hm-result-banner-p { text-align:center; padding:8px 0; }
   .hm-solved-p { font-family:var(--font-display); font-size:28px; letter-spacing:2px; color:var(--green); }
   .hm-failed-p { font-family:var(--font-display); font-size:28px; letter-spacing:2px; color:var(--red); }
+  .hm-my-turn-banner { font-family:var(--font-display); font-size:22px; letter-spacing:3px; color:var(--accent); text-align:center; padding:6px 0; animation:correctPulse 1s ease infinite; }
+  .hm-other-turn-banner { font-size:13px; color:var(--muted); text-align:center; padding:4px 0; letter-spacing:1px; }
+  .hm-hint-btn { width:100%; padding:11px; background:rgba(240,192,64,0.1); color:var(--accent); border:1.5px solid rgba(240,192,64,0.35); border-radius:10px; font-family:var(--font-display); font-size:17px; letter-spacing:1.5px; cursor:pointer; transition:all 0.15s; }
+  .hm-hint-btn:active { transform:scale(0.97); background:rgba(240,192,64,0.2); }
+  .hm-hint-btn:disabled { opacity:0.35; cursor:not-allowed; transform:none; }
+  .hm-hint-reveal-box { background:rgba(240,192,64,0.08); border:1px solid rgba(240,192,64,0.3); border-radius:10px; padding:10px 14px; font-size:14px; color:var(--text); line-height:1.55; text-align:center; }
+  .hm-hint-reveal-box strong { color:var(--accent); font-family:var(--font-display); font-size:22px; }
 
   /* CHANGELOG képernyő */
   #changelog-screen {
@@ -733,8 +740,14 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     <div style="font-size:10px;letter-spacing:1px;padding:3px 10px;border-radius:4px;background:rgba(224,90,43,0.12);color:#e05a2b;border:1px solid rgba(224,90,43,0.28);text-transform:uppercase;" id="hm-cat-p">—</div>
   </div>
 
+  <!-- Assignment banner (solo mode) -->
+  <div id="hm-assignment-banner-p"></div>
+
   <!-- Result banner -->
   <div class="hm-result-banner-p" id="hm-result-banner-p"></div>
+
+  <!-- Hint reveal display -->
+  <div id="hm-hint-reveal-p" style="margin-bottom:6px;"></div>
 
   <!-- Gallows + Word area -->
   <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:10px;">
@@ -747,6 +760,11 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
 
   <!-- Keyboard -->
   <div class="hm-keyboard" id="hm-keyboard-p"></div>
+
+  <!-- Segítség gomb -->
+  <div style="padding:4px 0;">
+    <button class="hm-hint-btn" id="hm-hint-btn-p" onclick="requestHangmanHint()">💡 Segítség (2x)</button>
+  </div>
 
   <!-- Wrong letters row -->
   <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:6px 0;min-height:28px;" id="hm-wrong-row-p"></div>
@@ -1675,6 +1693,7 @@ function backToMenu() {
     roomRef.child('answers').off();
     roomRef.child('voteResult').off();
     roomRef.child('hangmanState').off();
+    roomRef.child('hangmanHintRequests').off();
     if (playerId) {
       roomRef.child('votes').child(playerId).remove();
       roomRef.child('players').child(playerId).child('status').off();
@@ -1691,6 +1710,8 @@ function backToMenu() {
   hostReadyForRejoin = false;
   gameMode = 'normal'; myTeamId = null; myTeamName = ''; teamScores = {};
   hmKeyboardDisabled = false;
+  hmModeP = 'coop'; hmAssignedPidP = null; hmAssignedNameP = '';
+  hmHintsUsedP = 0; hmHintRevealP = null;
   document.getElementById('my-score').textContent = '0';
   document.getElementById('my-rank').textContent = '#—';
   updateGameModeUI();
@@ -1701,11 +1722,12 @@ function backToMenu() {
 // AKASZTÓFA — JÁTÉKOS OLDAL
 // ============================================================
 const HU_LETTERS_P = ['A','Á','B','C','D','E','É','F','G','H','I','Í','J','K','L','M','N','O','Ó','Ö','Ő','P','R','S','T','U','Ú','Ü','Ű','V','Z'];
+// Magyar QWERTZ billentyűzet (kép alapján) + hiányzó ékezetes betűk
 const HM_KEY_ROWS = [
-  ['A','Á','B','C','D','E','É','F'],
-  ['G','H','I','Í','J','K','L','M'],
-  ['N','O','Ó','Ö','Ő','P','R','S'],
-  ['T','U','Ú','Ü','Ű','V','Z'],
+  ['Q','W','E','R','T','Z','U','I','O','P','Ö'],
+  ['A','S','D','F','G','H','J','K','L','É','Á'],
+  ['Y','X','C','V','B','N','M','Ü'],
+  ['Í','Ó','Ő','Ú','Ű'],
 ];
 
 let hmKeyboardDisabled = false;
@@ -1713,6 +1735,12 @@ let hmTimerIntervalP = null;
 let hmTimerValueP = 60;
 let hmTimeLimitP = 60;
 let hmCurrentPhase = 'idle';
+// Solo mód + segítség state
+let hmModeP = 'coop';
+let hmAssignedPidP = null;
+let hmAssignedNameP = '';
+let hmHintsUsedP = 0;
+let hmHintRevealP = null;
 
 function stopHangmanTimer() {
   clearInterval(hmTimerIntervalP);
@@ -1729,7 +1757,14 @@ function showHangmanScreen(state) {
   const word = state.word || '';
   const revealed = state.phase === 'hangman-revealed';
   hmCurrentPhase = state.phase;
-  hmKeyboardDisabled = revealed;
+  // Solo mód + hint állapot
+  hmModeP = state.mode || 'coop';
+  hmAssignedPidP = state.assignedPlayerId || null;
+  hmAssignedNameP = state.assignedPlayerName || '';
+  hmHintsUsedP = state.hintsUsed || 0;
+  hmHintRevealP = state.hintReveal || null;
+  const isMyTurn = hmModeP === 'coop' || hmAssignedPidP === playerId;
+  hmKeyboardDisabled = revealed || !isMyTurn;
 
   // Update score display
   document.getElementById('hm-my-score').textContent = myScore;
@@ -1762,17 +1797,28 @@ function showHangmanScreen(state) {
   // Word tiles
   renderHangmanWordP(word, guessed, revealed, state.solved);
 
+  // Total wrong count = real wrong letters + penalty hits (_H1, _H2)
+  const totalWrongCount = Object.keys(wrong).length; // includes _H keys
   // Gallows
-  document.getElementById('hm-gallows-p').innerHTML = buildHangmanSVGP(Object.keys(wrong).length, 90, 100);
+  document.getElementById('hm-gallows-p').innerHTML = buildHangmanSVGP(totalWrongCount, 90, 100);
 
   // Lives
-  renderHangmanLivesP(Object.keys(wrong).length);
+  renderHangmanLivesP(totalWrongCount);
 
   // Keyboard
   renderHangmanKeyboardP(guessed, wrong, revealed);
 
-  // Wrong letters
+  // Wrong letters (filter penalty keys)
   renderHangmanWrongP(wrong);
+
+  // Assignment banner
+  renderAssignmentBannerP();
+
+  // Hint button state
+  updateHintButtonP(revealed);
+
+  // Hint reveal
+  renderHintRevealP();
 
   // Result banner
   const bannerEl = document.getElementById('hm-result-banner-p');
@@ -1802,13 +1848,18 @@ function renderHangmanWordP(word, guessed, revealed, solved) {
 function renderHangmanKeyboardP(guessed, wrong, disabled) {
   const kb = document.getElementById('hm-keyboard-p');
   if(!kb) return;
+  // Solo: ha nem az én köröm, az összes billentyű letiltva (de a guessed/wrong státusz látható)
+  const isMyTurn = hmModeP === 'coop' || hmAssignedPidP === playerId;
+  const fullyDisabled = disabled || !isMyTurn;
   kb.innerHTML = HM_KEY_ROWS.map(row =>
     `<div class="hm-key-row">${row.map(l => {
       let cls = '';
       if(guessed[l]) cls = 'correct';
-      else if(wrong[l]) cls = 'wrong';
-      else if(disabled) cls = 'disabled';
-      return `<div class="hm-key ${cls}" onclick="submitHangmanLetter('${l}')">${l}</div>`;
+      else if(wrong[l]) cls = 'wrong';  // wrong only for real letters, not _H keys
+      else if(fullyDisabled) cls = 'disabled';
+      const clickHandler = (!fullyDisabled && !guessed[l] && !wrong[l])
+        ? `onclick="submitHangmanLetter('${l}')"` : '';
+      return `<div class="hm-key ${cls}" ${clickHandler}>${l}</div>`;
     }).join('')}</div>`
   ).join('');
 }
@@ -1824,14 +1875,76 @@ function renderHangmanLivesP(wrongCount) {
 function renderHangmanWrongP(wrong) {
   const el = document.getElementById('hm-wrong-row-p');
   if(!el) return;
-  const wrongArr = Object.keys(wrong);
+  const wrongArr = Object.keys(wrong).filter(l => !l.startsWith('_'));
   if(wrongArr.length === 0) { el.innerHTML = ''; return; }
   el.innerHTML = wrongArr.map(l =>
     `<div style="width:26px;height:26px;border-radius:5px;background:rgba(224,90,90,0.12);border:1px solid rgba(224,90,90,0.35);color:var(--red);font-family:var(--font-display);font-size:14px;display:flex;align-items:center;justify-content:center;">${l}</div>`
   ).join('');
 }
 
-function buildHangmanSVGP(wrongCount, w, h) {
+function renderAssignmentBannerP() {
+  const el = document.getElementById('hm-assignment-banner-p');
+  if(!el) return;
+  if(hmModeP !== 'solo') { el.innerHTML = ''; return; }
+  const isMyTurn = hmAssignedPidP === playerId;
+  if(isMyTurn) {
+    el.innerHTML = '<div class="hm-my-turn-banner">🎯 TE KÖVETKEZEL!</div>';
+  } else {
+    el.innerHTML = '<div class="hm-other-turn-banner">Éppen ' + (hmAssignedNameP || '?') + ' tippel...</div>';
+  }
+}
+
+function updateHintButtonP(revealed) {
+  const btn = document.getElementById('hm-hint-btn-p');
+  if(!btn) return;
+  const isMyTurn = hmModeP === 'coop' || hmAssignedPidP === playerId;
+  const canUse = isMyTurn && !revealed && hmHintsUsedP < 2;
+  btn.disabled = !canUse;
+  const remaining = 2 - hmHintsUsedP;
+  if(hmHintsUsedP === 0) {
+    btn.textContent = '💡 Segítség (2x) — −1 élet';
+  } else if(hmHintsUsedP === 1) {
+    btn.textContent = '💡 Segítség (még 1x) — −1 élet';
+  } else {
+    btn.textContent = '💡 Segítség — nem elérhető';
+  }
+  // Solo: elrejtjük ha nem az én köröm
+  btn.style.display = (hmModeP === 'solo' && !isMyTurn) ? 'none' : '';
+}
+
+function renderHintRevealP() {
+  const el = document.getElementById('hm-hint-reveal-p');
+  if(!el) return;
+  if(!hmHintRevealP) { el.innerHTML = ''; return; }
+  if(hmHintRevealP.type === 'text') {
+    el.innerHTML = '<div class="hm-hint-reveal-box">💡 ' + hmHintRevealP.value + '</div>';
+  } else if(hmHintRevealP.type === 'letter') {
+    el.innerHTML = '<div class="hm-hint-reveal-box">💡 Felfedett betű: <strong>' + hmHintRevealP.value + '</strong></div>';
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function requestHangmanHint() {
+  const isMyTurn = hmModeP === 'coop' || hmAssignedPidP === playerId;
+  if(!isMyTurn || hmHintsUsedP >= 2 || hmCurrentPhase !== 'hangman-active') return;
+  if(!db || !roomRef || !playerId) return;
+  // Optimistic UI: disable button immediately
+  const btn = document.getElementById('hm-hint-btn-p');
+  if(btn) btn.disabled = true;
+  // Write hint request to Firebase
+  const reqKey = playerId + '_h' + (hmHintsUsedP + 1);
+  roomRef.child('hangmanHintRequests').child(reqKey).set({
+    playerId,
+    playerName,
+    hintNumber: hmHintsUsedP + 1,
+    ts: firebase.database.ServerValue.TIMESTAMP
+  });
+}
+
+function buildHangmanSVGP(wrongCountRaw, w, h) {
+  // wrongCountRaw may include penalty keys (_H1, _H2), count only real wrong letters + penalties
+  const wrongCount = wrongCountRaw;
   let svg = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block;">`;
   svg += `<line x1="8" y1="${h-4}" x2="${w-8}" y2="${h-4}" stroke="#2a2a3d" stroke-width="3" stroke-linecap="round"/>`;
   svg += `<line x1="${w/2-20}" y1="${h-4}" x2="${w/2-20}" y2="8" stroke="#2a2a3d" stroke-width="3" stroke-linecap="round"/>`;
@@ -1850,6 +1963,8 @@ function buildHangmanSVGP(wrongCount, w, h) {
 
 function submitHangmanLetter(letter) {
   if(hmKeyboardDisabled || hmCurrentPhase !== 'hangman-active') return;
+  // Solo: csak az aktuális tippelő küldhet
+  if(hmModeP === 'solo' && hmAssignedPidP !== playerId) return;
   if(!db || !roomRef || !playerId) return;
   // Disable key immediately (optimistic UI)
   const keys = document.querySelectorAll('#hm-keyboard-p .hm-key');

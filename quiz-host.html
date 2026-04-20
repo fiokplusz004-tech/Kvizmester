@@ -632,6 +632,8 @@
             <div class="hm-cat-tag" id="hm-cat-tag">—</div>
             <div style="font-size:11px;color:var(--muted);letter-spacing:2px;" id="hm-round-label">1/5. SZÓ</div>
           </div>
+          <div id="hm-assignment-host" style="display:none;font-family:var(--font-display);font-size:16px;letter-spacing:2px;color:var(--accent);text-align:center;padding:2px 0;"></div>
+          <div id="hm-hints-host" style="font-size:11px;color:var(--muted);letter-spacing:1px;text-align:center;min-height:16px;"></div>
           <div id="hm-result-banner"></div>
           <div style="display:flex;align-items:center;justify-content:center;gap:32px;width:100%;">
             <div id="hm-gallows-wrap"></div>
@@ -873,17 +875,25 @@ let tmEditingId = null;        // szerkesztés alatt lévő csapat ID
 let tmModalOpen = false;       // modal nyitva?
 
 // ── AKASZTÓFA STATE ───────────────────────────────────────────
-let hangmanWords = [];         // [{word, category}] — feltöltött szólista
+let hangmanWords = [];         // [{word, category, hint?}] — feltöltött szólista
 let hangmanActiveWords = [];   // aktuális játék szólistája
 let hangmanWordIndex = -1;     // aktuális szó indexe
 let hangmanTimeLimit = 60;     // másodpercben
 let hangmanTimerInterval = null;
 let hangmanTimerValue = 60;
 let hmGuessedLetters = {};     // { 'D': true, ... } — helyes tippek
-let hmWrongLetters = {};       // { 'E': true, ... } — hibás tippek
+let hmWrongLetters = {};       // { 'E': true, ... } — hibás tippek + '_H1'/'_H2' büntetőpontok
 let hmRoundPhase = 'idle';     // 'idle'|'active'|'revealed'|'ended'
 let hmProcessedLetters = new Set(); // deduplikáció
 let hmLastGuessers = {};       // { letter: { playerName, correct } }
+// ── SOLO MÓD + SEGÍTSÉG ──────────────────────────────────────
+let hangmanMode = 'coop';          // 'coop' | 'solo'
+let hmPlayerQueue = [];            // [{id, name}] — solo módban a sor
+let hmCurrentAssignedPid = null;   // aktuális tippelő játékos ID
+let hmCurrentAssignedName = '';    // aktuális tippelő neve
+let hmHintsUsed = 0;               // 0 | 1 | 2
+let hmCurrentHint = null;          // hint szöveg az aktuális szóhoz
+let hmHintProcessed = new Set();   // feldolgozott hint kérés ID-k
 
 // ============================================================
 // FIREBASE
@@ -1029,6 +1039,18 @@ function setupListeners() {
     if(!data) return;
     processHangmanGuess(letter, data.playerId, data.playerName);
   });
+
+  // ── AKASZTÓFA: segítség kérések figyelése ─────────────────
+  roomRef.child('hangmanHintRequests').on('child_added', snap => {
+    if(hmRoundPhase !== 'active') return;
+    const data = snap.val();
+    if(!data || hmHintProcessed.has(snap.key)) return;
+    hmHintProcessed.add(snap.key);
+    // Solo: csak az aktuális tippelő kérhet segítséget
+    if(hangmanMode === 'solo' && data.playerId !== hmCurrentAssignedPid) return;
+    if(hmHintsUsed >= 2) return;
+    processHangmanHintRequest(data.playerId, data.playerName);
+  });
 }
 
 function showMain() {
@@ -1046,6 +1068,7 @@ function showMain() {
     roomRef.child('voteResult').onDisconnect().remove();
     roomRef.child('hangmanGuesses').onDisconnect().remove();
     roomRef.child('hangmanState').onDisconnect().remove();
+    roomRef.child('hangmanHintRequests').onDisconnect().remove();
     roomRef.child('gameState').onDisconnect().set({phase:'waiting'});
   }
   try{new QRCode(document.getElementById('qr-code'),{text:playerUrl,width:180,height:180,colorDark:'#000',colorLight:'#fff'});}catch(e){}
@@ -1703,6 +1726,7 @@ function newGame() {
     roomRef.child('voteResult').remove();
     roomRef.child('hangmanGuesses').remove();
     roomRef.child('hangmanState').remove();
+    roomRef.child('hangmanHintRequests').remove();
     // Team módban: csapatpontok nullázása, struktúra megmarad
     if(gameMode==='teams'){
       Object.keys(teams).forEach(tid=>{
@@ -1716,6 +1740,8 @@ function newGame() {
   votes = {}; voteWinnerKey = null;
   hmRoundPhase = 'idle'; hangmanWordIndex = -1; hangmanActiveWords = [];
   hmGuessedLetters = {}; hmWrongLetters = {}; hmProcessedLetters = new Set(); hmLastGuessers = {};
+  hangmanMode = 'coop'; hmPlayerQueue = []; hmCurrentAssignedPid = null; hmCurrentAssignedName = '';
+  hmHintsUsed = 0; hmCurrentHint = null; hmHintProcessed = new Set();
   clearInterval(hangmanTimerInterval);
   document.getElementById('waiting-state').classList.remove('hidden');
   document.getElementById('question-state').classList.add('hidden');
@@ -2403,6 +2429,17 @@ function startHangmanGame() {
   const timeSel = document.getElementById('hm-time-select');
   hangmanTimeLimit = parseInt(timeSel.value);
   const count = countSel.value==='all'?hangmanWords.length:Math.min(parseInt(countSel.value),hangmanWords.length);
+  // Solo: compute player queue
+  if(hangmanMode === 'solo') {
+    const activePlayers = Object.entries(players).filter(([id,p]) => p.status==='active');
+    const shuffledPlayers = [...activePlayers].sort(()=>Math.random()-0.5);
+    hmPlayerQueue = shuffledPlayers.map(([id,p]) => ({id, name:p.name}));
+    if(hmPlayerQueue.length === 0) { alert('Nincs aktív játékos!'); return; }
+  } else {
+    hmPlayerQueue = [];
+  }
+  hmCurrentAssignedPid = null; hmCurrentAssignedName = '';
+  hmHintsUsed = 0; hmCurrentHint = null; hmHintProcessed = new Set();
   // Shuffle and slice
   const shuffled = [...hangmanWords].sort(()=>Math.random()-0.5);
   hangmanActiveWords = shuffled.slice(0, count);
@@ -2429,22 +2466,41 @@ function nextHangmanWord() {
   hmWrongLetters = {};
   hmProcessedLetters = new Set();
   hmLastGuessers = {};
+  hmHintProcessed = new Set();
+  hmHintsUsed = 0;
+  hmCurrentHint = entry.hint || null;
   hmRoundPhase = 'active';
   hangmanTimerValue = hangmanTimeLimit;
+  // Solo: assign player
+  if(hangmanMode === 'solo' && hmPlayerQueue.length > 0) {
+    const assigned = hmPlayerQueue[hangmanWordIndex % hmPlayerQueue.length];
+    hmCurrentAssignedPid = assigned.id;
+    hmCurrentAssignedName = assigned.name;
+  } else {
+    hmCurrentAssignedPid = null;
+    hmCurrentAssignedName = '';
+  }
   // Publish state to Firebase
   const hmData = {
     phase: 'hangman-active',
+    mode: hangmanMode,
     word: entry.word,
     category: entry.category,
+    hint: hmCurrentHint,
     guessedLetters: {},
     wrongLetters: {},
     timeLimit: hangmanTimeLimit,
     roundIndex: hangmanWordIndex,
     totalRounds: hangmanActiveWords.length,
     solved: false,
+    assignedPlayerId: hmCurrentAssignedPid || null,
+    assignedPlayerName: hmCurrentAssignedName || null,
+    hintsUsed: 0,
+    hintReveal: null,
     startTime: db ? firebase.database.ServerValue.TIMESTAMP : Date.now()
   };
   if(db){
+    roomRef.child('hangmanHintRequests').remove();
     roomRef.child('hangmanGuesses').remove().finally(()=>{
       roomRef.child('hangmanState').set(hmData);
       roomRef.child('gameState').set({phase:'hangman-active'});
@@ -2479,6 +2535,8 @@ function startHangmanTimer(word) {
 
 function processHangmanGuess(letter, pid, playerName) {
   if(hmRoundPhase !== 'active') return;
+  // Solo: csak az aktuális tippelő küldhet betűt
+  if(hangmanMode === 'solo' && pid !== hmCurrentAssignedPid) return;
   const entry = hangmanActiveWords[hangmanWordIndex];
   if(!entry) return;
   const wordLetters = entry.word.toUpperCase().split('');
@@ -2560,7 +2618,7 @@ function renderHangmanStageHost(word, category, guessed, wrong, revealed, roundI
   // Wrong letters
   const wrongEl = document.getElementById('hm-wrong-row');
   if(wrongEl){
-    const wrongArr = Object.keys(wrong);
+    const wrongArr = Object.keys(wrong).filter(l => !l.startsWith('_'));
     wrongEl.innerHTML = wrongArr.length===0
       ? '<span style="font-size:12px;color:var(--muted);">—</span>'
       : wrongArr.map(l=>`<div class="hm-wrong-badge">${l}</div>`).join('');
@@ -2568,10 +2626,10 @@ function renderHangmanStageHost(word, category, guessed, wrong, revealed, roundI
   // Lives
   const livesEl = document.getElementById('hm-lives');
   if(livesEl){
-    const wrongCount = Object.keys(wrong).length;
+    const wrongCount = Object.keys(wrong).length; // includes penalty _H keys
     livesEl.innerHTML = Array.from({length:6},(_, i)=>`<div class="hm-life${i<wrongCount?' lost':''}">❤️</div>`).join('');
   }
-  // Gallows SVG
+  // Gallows SVG — total wrong count includes penalty keys (_H1, _H2)
   const gallowsEl = document.getElementById('hm-gallows-wrap');
   if(gallowsEl) gallowsEl.innerHTML = buildHangmanSVG(Object.keys(wrong).length, 120, 130);
   // Category + round
@@ -2579,6 +2637,19 @@ function renderHangmanStageHost(word, category, guessed, wrong, revealed, roundI
   if(catEl) catEl.textContent = category;
   const roundEl = document.getElementById('hm-round-label');
   if(roundEl) roundEl.textContent = (roundIdx+1)+'/'+total+'. SZÓ';
+  // Solo assignment display
+  const assignEl = document.getElementById('hm-assignment-host');
+  if(assignEl) {
+    if(hangmanMode === 'solo' && hmCurrentAssignedName) {
+      assignEl.textContent = '🎯 TIPPELŐ: ' + hmCurrentAssignedName.toUpperCase();
+      assignEl.style.display = '';
+    } else {
+      assignEl.style.display = 'none';
+    }
+  }
+  // Hints used display
+  const hintsEl = document.getElementById('hm-hints-host');
+  if(hintsEl) hintsEl.textContent = hmHintsUsed > 0 ? '💡 Segítség: '+hmHintsUsed+'/2 használva' : '';
   // Result banner
   const bannerEl = document.getElementById('hm-result-banner');
   if(bannerEl){
@@ -2594,6 +2665,61 @@ function renderHangmanStageHost(word, category, guessed, wrong, revealed, roundI
     ).join('');
     guessersEl.innerHTML = chips;
   }
+}
+
+function setHangmanMode(mode) {
+  hangmanMode = mode;
+  const coopBtn = document.getElementById('hm-mode-coop');
+  const soloBtn = document.getElementById('hm-mode-solo');
+  if(coopBtn) { coopBtn.className = mode==='coop'?'btn-save':'btn-cancel-form'; coopBtn.style.cssText='flex:1;padding:9px;font-size:13px;'; }
+  if(soloBtn) { soloBtn.className = mode==='solo'?'btn-save':'btn-cancel-form'; soloBtn.style.cssText='flex:1;padding:9px;font-size:13px;'; }
+  const info = document.getElementById('hm-mode-info');
+  if(info) {
+    info.textContent = mode==='coop'
+      ? 'Kooperatív: minden játékos együtt tippelhet minden szónál.'
+      : 'Solo kör: minden játékos saját szót kap — csak ő tippelhet, csak ő kap pontot.';
+  }
+  updateHangmanStartInfo();
+}
+
+function processHangmanHintRequest(pid, playerName) {
+  if(hmHintsUsed >= 2) return;
+  const entry = hangmanActiveWords[hangmanWordIndex];
+  if(!entry) return;
+  hmHintsUsed++;
+  const penaltyKey = '_H' + hmHintsUsed;
+  hmWrongLetters[penaltyKey] = true;
+  let hintReveal = null;
+  // 1. segítség: hint szöveg ha van, különben véletlen betű
+  if(hmHintsUsed === 1 && hmCurrentHint) {
+    hintReveal = { type: 'text', value: hmCurrentHint };
+  } else {
+    // Véletlen nem kitalált betű felfedése
+    const unguessed = [...new Set(entry.word.split('').filter(l => l !== ' ' && !hmGuessedLetters[l]))];
+    if(unguessed.length > 0) {
+      const revLetter = unguessed[Math.floor(Math.random() * unguessed.length)];
+      hmGuessedLetters[revLetter] = true;
+      hintReveal = { type: 'letter', value: revLetter };
+      if(db) roomRef.child('hangmanState').child('guessedLetters').child(revLetter).set(true);
+    }
+  }
+  if(db) {
+    roomRef.child('hangmanState').update({
+      hintsUsed: hmHintsUsed,
+      hintReveal: hintReveal,
+      wrongLetters: { ...hmWrongLetters }
+    });
+  }
+  // Szó megoldva?
+  if(hintReveal && hintReveal.type === 'letter') {
+    const solved = entry.word.split('').every(l => l === ' ' || hmGuessedLetters[l]);
+    if(solved) { revealHangmanWord(false, true); return; }
+  }
+  // 6 hiba = veszített
+  // Total failures = real wrong letters + penalty keys
+  if(Object.keys(hmWrongLetters).length >= 6) { revealHangmanWord(false, false, true); return; }
+  renderHangmanStageHost(entry.word, entry.category, hmGuessedLetters, hmWrongLetters, false, hangmanWordIndex, hangmanActiveWords.length);
+  updateScoreboard();
 }
 
 function buildHangmanSVG(wrongCount, w, h) {
@@ -2777,9 +2903,9 @@ function closeChangelog() {
       <div class="modal-field" style="margin-bottom:8px;">
         <label>Szólista importálása (JSON)</label>
         <div style="font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-family:monospace;white-space:pre;overflow-x:auto;">[
-  {"word": "DÁVID", "category": "Bibliai — Személy"},
+  {"word": "DÁVID", "category": "Bibliai — Személy", "hint": "Ő volt Góliát legyőzője"},
   {"word": "BETLEHEM", "category": "Bibliai — Helység"},
-  {"word": "JERUZSÁLEM", "category": "Bibliai — Helység"}
+  {"word": "JERUZSÁLEM", "category": "Bibliai — Helység", "hint": "Salamon temploma itt állt"}
 ]</div>
         <textarea id="hm-import-ta" rows="5" style="font-family:monospace;font-size:11px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);outline:none;resize:vertical;" placeholder="Ide illeszd be a JSON-t..."></textarea>
       </div>
@@ -2792,6 +2918,23 @@ function closeChangelog() {
     <!-- Word list preview -->
     <div style="flex:1;overflow-y:auto;margin-bottom:14px;max-height:200px;border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--bg);">
       <div id="hm-modal-word-list"></div>
+    </div>
+
+    <!-- Import guide update: hint field info -->
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;">
+      💡 A <code style="color:var(--accent);">"hint"</code> mező opcionális — ha megadod, az első segítség kéréskor ez jelenik meg a játékosnál. Ha hiányzik, egy véletlen betűt fed fel a rendszer.
+    </div>
+
+    <!-- Mode selector -->
+    <div class="modal-field" style="margin-bottom:14px;">
+      <label>Játékmód</label>
+      <div style="display:flex;gap:8px;">
+        <button id="hm-mode-coop" class="btn-save" style="flex:1;padding:9px;font-size:13px;" onclick="setHangmanMode('coop')">🤝 Kooperatív</button>
+        <button id="hm-mode-solo" class="btn-cancel-form" style="flex:1;padding:9px;font-size:13px;" onclick="setHangmanMode('solo')">🎯 Solo kör</button>
+      </div>
+      <div id="hm-mode-info" style="font-size:11px;color:var(--muted);margin-top:7px;padding:7px 10px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+        Kooperatív: minden játékos együtt tippeléhet minden szónál.
+      </div>
     </div>
 
     <!-- Config -->
