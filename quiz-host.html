@@ -423,6 +423,17 @@
   .hm-failed-banner { font-family:var(--font-display); font-size:36px; letter-spacing:3px; color:var(--red); text-align:center; animation:slideUp 0.4s ease; }
 
   /* Hangman modal */
+  /* Akasztófa host bevezető számláló */
+  .hm-intro-overlay {
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:14px;
+    background:rgba(10,10,15,0.92); border-radius:12px; z-index:10;
+  }
+  .hm-intro-overlay.hidden { display:none !important; }
+  .hm-intro-countdown-ring { position:relative; width:72px; height:72px; flex-shrink:0; }
+  .hm-intro-title { font-family:var(--font-display); font-size:20px; letter-spacing:3px; color:var(--accent); }
+  .hm-intro-subtitle { font-size:12px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+
   .hm-word-list-item { display:flex; align-items:center; gap:10px; padding:8px 11px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; margin-bottom:5px; }
   .hm-word-text { font-family:var(--font-display); font-size:15px; letter-spacing:1.5px; flex:1; }
   .hm-word-cat { font-size:11px; color:var(--muted); padding:2px 7px; background:var(--border); border-radius:4px; }
@@ -623,7 +634,21 @@
         </div>
 
         <!-- AKASZTÓFA STATE -->
-        <div class="hangman-state hidden" id="hangman-state">
+        <div class="hangman-state hidden" id="hangman-state" style="position:relative;">
+          <!-- Bevezető visszaszámláló overlay -->
+          <div class="hm-intro-overlay hidden" id="hm-intro-overlay">
+            <div class="hm-intro-title">🎬 BEVEZETŐ JÁTSZIK</div>
+            <div class="hm-intro-countdown-ring">
+              <svg width="72" height="72" viewBox="0 0 72 72" style="transform:rotate(-90deg);">
+                <circle cx="36" cy="36" r="30" fill="none" stroke="var(--border)" stroke-width="4"/>
+                <circle id="hm-intro-ring" cx="36" cy="36" r="30" fill="none" stroke="var(--accent)" stroke-width="4"
+                  stroke-linecap="round" stroke-dasharray="188.5" stroke-dashoffset="0"
+                  style="transition:stroke-dashoffset 1s linear;"/>
+              </svg>
+              <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--font-display);font-size:22px;color:var(--accent);" id="hm-intro-counter">16</div>
+            </div>
+            <div class="hm-intro-subtitle">Játékosok látják a sztorit...</div>
+          </div>
           <div class="hm-timer-bar-wrap">
             <div class="timer-bar-bg"><div class="timer-bar-fill" id="hm-timer-bar" style="width:100%"></div></div>
             <div class="timer-display" id="hm-timer-display">60</div>
@@ -1743,6 +1768,9 @@ function newGame() {
   hangmanMode = 'coop'; hmPlayerQueue = []; hmCurrentAssignedPid = null; hmCurrentAssignedName = '';
   hmHintsUsed = 0; hmCurrentHint = null; hmHintProcessed = new Set();
   clearInterval(hangmanTimerInterval);
+  clearInterval(_hmIntroCountdownTimer);
+  const introOverlay = document.getElementById('hm-intro-overlay');
+  if(introOverlay) introOverlay.classList.add('hidden');
   document.getElementById('waiting-state').classList.remove('hidden');
   document.getElementById('question-state').classList.add('hidden');
   document.getElementById('hangman-state').classList.add('hidden');
@@ -2454,7 +2482,19 @@ function startHangmanGame() {
   document.getElementById('waiting-state').classList.add('hidden');
   document.getElementById('question-state').classList.add('hidden');
   document.getElementById('hangman-state').classList.remove('hidden');
-  nextHangmanWord();
+
+  // Bevezető animáció: hangman-intro phase → játékosok látják a sztorit
+  // Az animáció ~16s → utána indul a játék automatikusan
+  const INTRO_DURATION = 16500; // ms — 3 phrase × (5s + 0.6s gap) + 0.8s bg fadein + 0.9s fadeout
+  if(db) {
+    roomRef.child('gameState').set({phase: 'hangman-intro'});
+  }
+  // Host: visszaszámláló megjelenítése
+  showHangmanIntroCountdownHost(INTRO_DURATION);
+  // Játék indítása automatikusan az intro után
+  setTimeout(() => {
+    nextHangmanWord();
+  }, INTRO_DURATION);
 }
 
 function nextHangmanWord() {
@@ -2665,6 +2705,38 @@ function renderHangmanStageHost(word, category, guessed, wrong, revealed, roundI
     ).join('');
     guessersEl.innerHTML = chips;
   }
+}
+
+let _hmIntroCountdownTimer = null;
+
+function showHangmanIntroCountdownHost(durationMs) {
+  const overlay = document.getElementById('hm-intro-overlay');
+  const ring    = document.getElementById('hm-intro-ring');
+  const counter = document.getElementById('hm-intro-counter');
+  if(!overlay || !ring || !counter) return;
+
+  overlay.classList.remove('hidden');
+  const CIRCUMFERENCE = 188.5;
+  const totalSec = Math.round(durationMs / 1000);
+  let remaining = totalSec;
+
+  function updateRing() {
+    const pct = remaining / totalSec;
+    ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - pct);
+    counter.textContent = remaining;
+  }
+  updateRing();
+
+  clearInterval(_hmIntroCountdownTimer);
+  _hmIntroCountdownTimer = setInterval(() => {
+    remaining--;
+    if(remaining <= 0) {
+      clearInterval(_hmIntroCountdownTimer);
+      overlay.classList.add('hidden');
+      return;
+    }
+    updateRing();
+  }, 1000);
 }
 
 function setHangmanMode(mode) {

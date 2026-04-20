@@ -279,6 +279,41 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
     font-family:var(--font-body); pointer-events:none; opacity:0.6;
   }
 
+  /* ── AKASZTÓFA BEVEZETŐ (STORY) ────────────────────────── */
+  #hangman-intro-screen {
+    display:none; position:fixed; inset:0; z-index:500;
+    background:#000; flex-direction:column;
+    align-items:center; justify-content:center; padding:32px;
+  }
+  .story-bg-fade { animation: storyBgIn 1s ease forwards; }
+  @keyframes storyBgIn { from{opacity:0} to{opacity:1} }
+  .story-text-wrap {
+    text-align:center; max-width:360px; width:100%;
+    opacity:0;
+    pointer-events:none;
+  }
+  .story-text-wrap.story-anim {
+    animation: storyPhrase 5s ease forwards;
+  }
+  @keyframes storyPhrase {
+    0%   { opacity:0; transform:translateY(14px); }
+    22%  { opacity:1; transform:translateY(0); }
+    72%  { opacity:1; transform:translateY(0); }
+    100% { opacity:0; transform:translateY(-10px); }
+  }
+  .story-line {
+    font-family:'DM Sans',sans-serif;
+    font-size:20px; font-weight:500;
+    color:#f0f0f8; line-height:1.7;
+    letter-spacing:0.3px;
+  }
+  .story-line em { color:#f0c040; font-style:normal; font-weight:600; }
+  .story-skip-hint {
+    position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
+    font-size:11px; color:#3a3a52; letter-spacing:2px; text-transform:uppercase;
+    pointer-events:none;
+  }
+
   /* ── AKASZTÓFA KÉPERNYŐ ─────────────────────────────────── */
   #hangman-screen { display:none; width:100%; max-width:420px; min-height:100vh; min-height:100dvh; flex-direction:column; }
   .hm-word-row-p { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; padding:8px 0; }
@@ -712,6 +747,14 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div id="hist-list"></div>
 </div>
 
+<!-- AKASZTÓFA BEVEZETŐ -->
+<div id="hangman-intro-screen">
+  <div class="story-text-wrap" id="story-text-wrap">
+    <div class="story-line" id="story-line"></div>
+  </div>
+  <div class="story-skip-hint">Az intro automatikusan elindul...</div>
+</div>
+
 <!-- AKASZTÓFA KÉPERNYŐ -->
 <div id="hangman-screen">
   <div class="game-topbar">
@@ -853,7 +896,8 @@ window.addEventListener('load', () => {
 // ── KÉPERNYŐ VÁLTÁS ──────────────────────────────────────────
 function hideAll() {
   ['menu-screen','guide-screen','unavailable-screen','lobby-screen',
-   'waiting-screen','game-screen','result-screen','history-screen','changelog-screen','hangman-screen']
+   'waiting-screen','game-screen','result-screen','history-screen','changelog-screen',
+   'hangman-screen','hangman-intro-screen']
     .forEach(id => document.getElementById(id).style.display = 'none');
 }
 function showMenu() {
@@ -1017,8 +1061,13 @@ function setupListeners() {
     } else if (state.phase === 'revealed') {
       const revealIdx = typeof state.revealedForIndex === 'number' ? state.revealedForIndex : state.questionIndex;
       revealAnswers(state.correctAnswer, revealIdx);
+    } else if (state.phase === 'hangman-intro') {
+      if (myPlayerStatus === 'active') showHangmanIntro();
     } else if (state.phase === 'hangman-active' || state.phase === 'hangman-revealed') {
       // Akasztófa: hangmanState-ből olvassuk az állapotot (külön listener kezeli)
+      // Ha még az intro képernyőn vagyunk, zárjuk be (pl. gyors indítás)
+      const introVisible = document.getElementById('hangman-intro-screen').style.display !== 'none';
+      if (introVisible) { clearHangmanIntroTimers(); document.getElementById('hangman-intro-screen').style.display = 'none'; }
     } else if (state.phase === 'ended') {
       const gameVisible = document.getElementById('game-screen').style.display !== 'none';
       const hangmanVisible = document.getElementById('hangman-screen').style.display !== 'none';
@@ -1712,6 +1761,7 @@ function backToMenu() {
   hmKeyboardDisabled = false;
   hmModeP = 'coop'; hmAssignedPidP = null; hmAssignedNameP = '';
   hmHintsUsedP = 0; hmHintRevealP = null;
+  clearHangmanIntroTimers();
   document.getElementById('my-score').textContent = '0';
   document.getElementById('my-rank').textContent = '#—';
   updateGameModeUI();
@@ -1880,6 +1930,74 @@ function renderHangmanWrongP(wrong) {
   el.innerHTML = wrongArr.map(l =>
     `<div style="width:26px;height:26px;border-radius:5px;background:rgba(224,90,90,0.12);border:1px solid rgba(224,90,90,0.35);color:var(--red);font-family:var(--font-display);font-size:14px;display:flex;align-items:center;justify-content:center;">${l}</div>`
   ).join('');
+}
+
+// ── AKASZTÓFA BEVEZETŐ ANIMÁCIÓ ─────────────────────────────
+let _hmIntroTimers = [];
+
+function clearHangmanIntroTimers() {
+  _hmIntroTimers.forEach(t => clearTimeout(t));
+  _hmIntroTimers = [];
+}
+
+function showHangmanIntro() {
+  hideAll();
+  clearHangmanIntroTimers();
+  const screen = document.getElementById('hangman-intro-screen');
+  screen.style.display = 'flex';
+  screen.style.opacity = '0';
+  screen.style.transition = 'opacity 1s ease';
+
+  // Szövegek
+  const phrases = [
+    'Egy gonosz diktatúra <em>börtönbe zárt</em> téged és csapatodat.',
+    'Halálbüntetéssel fenyegetnek.<br>Már csak <em>1 lehetőségetek</em> maradt.',
+    'Ki kell találnotok a szavakat.<br><em>Mindenkinek a sajátját.</em>',
+  ];
+
+  // Timing (ms)
+  // Phrase animation: storyPhrase keyframe = 5s
+  //   0%→22%: fade in (1.1s) | 22%→72%: hold (2.5s) | 72%→100%: fade out (1.4s)
+  // Gap between phrases: 0.5s
+  const PHRASE_DUR  = 5000;   // ms — matches storyPhrase animation
+  const PHRASE_GAP  = 600;    // ms between phrases
+  const BG_FADE_IN  = 800;    // ms for bg fade in before first text
+  const AFTER_LAST  = 200;    // ms after last phrase before auto-close
+
+  // Background fade in
+  _hmIntroTimers.push(setTimeout(() => {
+    screen.style.opacity = '1';
+  }, 30));
+
+  // Show each phrase in sequence
+  phrases.forEach((text, i) => {
+    const startMs = BG_FADE_IN + i * (PHRASE_DUR + PHRASE_GAP);
+
+    _hmIntroTimers.push(setTimeout(() => {
+      const wrap = document.getElementById('story-text-wrap');
+      const line = document.getElementById('story-line');
+      if(!wrap || !line) return;
+      // Reset animation by removing class, forcing reflow, then re-adding
+      wrap.classList.remove('story-anim');
+      line.innerHTML = text;
+      void wrap.offsetWidth; // force reflow
+      wrap.classList.add('story-anim');
+    }, startMs));
+  });
+
+  // After all phrases: fade out screen, then hide
+  const totalMs = BG_FADE_IN + phrases.length * (PHRASE_DUR + PHRASE_GAP) + AFTER_LAST;
+  _hmIntroTimers.push(setTimeout(() => {
+    screen.style.transition = 'opacity 0.8s ease';
+    screen.style.opacity = '0';
+  }, totalMs));
+
+  _hmIntroTimers.push(setTimeout(() => {
+    screen.style.display = 'none';
+    screen.style.opacity = '';
+    screen.style.transition = '';
+    // Cleanup — game screen will be shown by hangmanState listener when host sends hangman-active
+  }, totalMs + 900));
 }
 
 function renderAssignmentBannerP() {
