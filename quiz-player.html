@@ -1137,6 +1137,9 @@ function setupListeners() {
       const revealIdx = typeof state.revealedForIndex === 'number' ? state.revealedForIndex : state.questionIndex;
       revealAnswers(state.correctAnswer, revealIdx);
     } else if (state.phase === 'hangman-intro') {
+      // Új akasztófa kör kezdődik — visszaállítjuk a gomb állapotot
+      hostReadyForRejoin = false;
+      updateHangmanReturnBtn();
       if (myPlayerStatus === 'active') showHangmanIntro();
     } else if (state.phase === 'hangman-active' || state.phase === 'hangman-revealed') {
       // Akasztófa: hangmanState-ből olvassuk az állapotot (külön listener kezeli)
@@ -1144,20 +1147,24 @@ function setupListeners() {
       const introVisible = document.getElementById('hangman-intro-screen').style.display !== 'none';
       if (introVisible) { clearHangmanIntroTimers(); document.getElementById('hangman-intro-screen').style.display = 'none'; }
     } else if (state.phase === 'ended') {
+      hostReadyForRejoin = false;
       const gameVisible = document.getElementById('game-screen').style.display !== 'none';
       const hangmanVisible = document.getElementById('hangman-screen').style.display !== 'none';
       if (gameVisible || hangmanVisible) showResults();
-      hostReadyForRejoin = false;
       updateReturnToGameBtn();
     } else if (state.phase === 'hangman-ended') {
+      // FONTOS: hostReadyForRejoin nullázása ELŐBB kell mint a showHangmanResults() hívás,
+      // mert a showHangmanResults() belsőleg azonnal updateHangmanReturnBtn()-t hív,
+      // és a korábbi waiting fázisból megmaradt true értékkel aktívvá tenné a gombot.
+      hostReadyForRejoin = false;
+      updateReturnToGameBtn();
+      updateHangmanReturnBtn();
       const hangmanVisible = document.getElementById('hangman-screen').style.display !== 'none';
       const introVisible   = document.getElementById('hangman-intro-screen').style.display !== 'none';
       if (hangmanVisible || introVisible) {
         clearHangmanIntroTimers();
         showHangmanResults();
       }
-      hostReadyForRejoin = false;
-      updateReturnToGameBtn();
     } else if (state.phase === 'waiting') {
       hostReadyForRejoin = true;
       updateReturnToGameBtn();
