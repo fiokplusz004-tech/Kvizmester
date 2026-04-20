@@ -334,6 +334,41 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .hm-result-banner-p { text-align:center; padding:8px 0; }
   .hm-solved-p { font-family:var(--font-display); font-size:28px; letter-spacing:2px; color:var(--green); }
   .hm-failed-p { font-family:var(--font-display); font-size:28px; letter-spacing:2px; color:var(--red); }
+  .hm-failed-p { font-family:var(--font-display); font-size:28px; letter-spacing:2px; color:var(--red); }
+
+  /* ── AKASZTÓFA VÉGEREDMÉNY ──────────────────────────────── */
+  #hangman-result-screen {
+    display:none; width:100%; max-width:420px; padding:24px 0 48px; margin:0 auto;
+    flex-direction:column; gap:0;
+  }
+  .hmr-title { font-family:var(--font-display); font-size:52px; letter-spacing:4px; color:var(--accent); text-align:center; line-height:1; margin-bottom:4px; }
+  .hmr-subtitle { font-size:11px; color:var(--muted); letter-spacing:3px; text-transform:uppercase; text-align:center; margin-bottom:24px; }
+  .hmr-cols { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+  .hmr-col-head { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; text-align:center; padding:6px 0; border-radius:6px; margin-bottom:10px; }
+  .hmr-col-head.alive { background:rgba(62,207,142,0.12); color:var(--green); }
+  .hmr-col-head.fallen { background:rgba(224,90,90,0.1); color:var(--red); }
+  .hmr-row { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:8px; margin-bottom:6px; }
+  .hmr-row.alive { background:rgba(62,207,142,0.07); border:1px solid rgba(62,207,142,0.2); }
+  .hmr-row.fallen { background:rgba(224,90,90,0.05); border:1px solid rgba(224,90,90,0.15); }
+  .hmr-row-name { font-size:13px; font-weight:600; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hmr-row-word { font-size:9px; letter-spacing:1.5px; font-family:var(--font-display); color:var(--muted); flex-shrink:0; }
+  .hmr-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
+  .hmr-stat { border-radius:10px; padding:10px 12px; text-align:center; }
+  .hmr-stat.s-alive { background:rgba(62,207,142,0.07); border:1px solid rgba(62,207,142,0.18); }
+  .hmr-stat.s-fallen { background:rgba(224,90,90,0.05); border:1px solid rgba(224,90,90,0.14); }
+  .hmr-stat-num { font-family:var(--font-display); font-size:36px; line-height:1; }
+  .hmr-stat-num.alive { color:var(--green); }
+  .hmr-stat-num.fallen { color:var(--red); }
+  .hmr-stat-lbl { font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
+  .hmr-my-result { text-align:center; padding:14px; border-radius:12px; margin-bottom:20px; }
+  .hmr-my-result.survived { background:rgba(62,207,142,0.08); border:1px solid rgba(62,207,142,0.25); }
+  .hmr-my-result.died { background:rgba(224,90,90,0.06); border:1px solid rgba(224,90,90,0.2); }
+  .hmr-my-icon { font-size:40px; line-height:1; margin-bottom:6px; }
+  .hmr-my-status { font-family:var(--font-display); font-size:22px; letter-spacing:3px; }
+  .hmr-my-status.survived { color:var(--green); }
+  .hmr-my-status.died { color:var(--red); }
+  .hmr-my-word { font-size:12px; color:var(--muted); margin-top:4px; }
+
   .hm-my-turn-banner { font-family:var(--font-display); font-size:22px; letter-spacing:3px; color:var(--accent); text-align:center; padding:6px 0; animation:correctPulse 1s ease infinite; }
   .hm-other-turn-banner { font-size:13px; color:var(--muted); text-align:center; padding:4px 0; letter-spacing:1px; }
   .hm-hint-btn { width:100%; padding:11px; background:rgba(240,192,64,0.1); color:var(--accent); border:1.5px solid rgba(240,192,64,0.35); border-radius:10px; font-family:var(--font-display); font-size:17px; letter-spacing:1.5px; cursor:pointer; transition:all 0.15s; }
@@ -747,6 +782,46 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <div id="hist-list"></div>
 </div>
 
+<!-- AKASZTÓFA VÉGEREDMÉNY -->
+<div id="hangman-result-screen">
+  <!-- Saját eredmény kiemelés (felül) -->
+  <div id="hmr-my-result"></div>
+
+  <div class="hmr-title">VÉGE</div>
+  <div class="hmr-subtitle" id="hmr-subtitle">A játék befejeződött</div>
+
+  <!-- Statisztika -->
+  <div class="hmr-stats">
+    <div class="hmr-stat s-alive">
+      <div class="hmr-stat-num alive" id="hmr-survivor-count">0</div>
+      <div class="hmr-stat-lbl">Túlélő</div>
+    </div>
+    <div class="hmr-stat s-fallen">
+      <div class="hmr-stat-num fallen" id="hmr-fallen-count">0</div>
+      <div class="hmr-stat-lbl">Elesett</div>
+    </div>
+  </div>
+
+  <!-- Két oszlop -->
+  <div class="hmr-cols">
+    <div>
+      <div class="hmr-col-head alive">✓ Túlélők</div>
+      <div id="hmr-survivors-list">
+        <div style="font-size:12px;color:var(--muted);text-align:center;padding:8px 0;">—</div>
+      </div>
+    </div>
+    <div>
+      <div class="hmr-col-head fallen">✕ Elesettek</div>
+      <div id="hmr-fallen-list">
+        <div style="font-size:12px;color:var(--muted);text-align:center;padding:8px 0;">—</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-lobby" id="hmr-btn-return" onclick="returnToGame()" disabled>⏳ VÁRAKOZÁS A HOST-RA...</button>
+  <button class="btn-lobby" onclick="backToMenu()">↺ VISSZA A FŐMENÜBE</button>
+</div>
+
 <!-- AKASZTÓFA BEVEZETŐ -->
 <div id="hangman-intro-screen">
   <div class="story-text-wrap" id="story-text-wrap">
@@ -897,7 +972,7 @@ window.addEventListener('load', () => {
 function hideAll() {
   ['menu-screen','guide-screen','unavailable-screen','lobby-screen',
    'waiting-screen','game-screen','result-screen','history-screen','changelog-screen',
-   'hangman-screen','hangman-intro-screen']
+   'hangman-screen','hangman-intro-screen','hangman-result-screen']
     .forEach(id => document.getElementById(id).style.display = 'none');
 }
 function showMenu() {
@@ -1076,12 +1151,17 @@ function setupListeners() {
       updateReturnToGameBtn();
     } else if (state.phase === 'hangman-ended') {
       const hangmanVisible = document.getElementById('hangman-screen').style.display !== 'none';
-      if (hangmanVisible) showResults();
+      const introVisible   = document.getElementById('hangman-intro-screen').style.display !== 'none';
+      if (hangmanVisible || introVisible) {
+        clearHangmanIntroTimers();
+        showHangmanResults();
+      }
       hostReadyForRejoin = false;
       updateReturnToGameBtn();
     } else if (state.phase === 'waiting') {
       hostReadyForRejoin = true;
       updateReturnToGameBtn();
+      updateHangmanReturnBtn();
       // Team módban: pontszám felirat frissítése
       if(gameMode==='teams') updateGameModeUI();
     }
@@ -1166,6 +1246,15 @@ function setupListeners() {
     if (state.phase === 'hangman-active' || state.phase === 'hangman-revealed') {
       showHangmanScreen(state);
     }
+  });
+
+  // ── AKASZTÓFA: végeredmény figyelése ─────────────────────
+  roomRef.child('hangmanResults').on('value', snap => {
+    const data = snap.val();
+    if (!data) return;
+    // Ha az eredmény képernyő már látszik, frissítjük (pl. késő adat érkezés)
+    const resultVisible = document.getElementById('hangman-result-screen').style.display !== 'none';
+    if (resultVisible) renderHangmanResults(data);
   });
 }
 
@@ -1467,6 +1556,116 @@ function backToResults() {
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
+// ── AKASZTÓFA VÉGEREDMÉNY ────────────────────────────────────
+function showHangmanResults() {
+  hideAll();
+  const screen = document.getElementById('hangman-result-screen');
+  screen.style.display = 'flex';
+  screen.style.flexDirection = 'column';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  updateHangmanReturnBtn();
+  // Adatok lekérése Firebase-ből
+  if (db && roomRef) {
+    roomRef.child('hangmanResults').once('value', snap => {
+      const data = snap.val();
+      if (data) renderHangmanResults(data);
+    });
+  }
+}
+
+function renderHangmanResults(data) {
+  if (!data || !data.players) return;
+  const players_list = data.players;
+  const survivors = players_list.filter(p => p.survived);
+  const fallen    = players_list.filter(p => !p.survived);
+
+  // Számok
+  const sc = document.getElementById('hmr-survivor-count');
+  const fc = document.getElementById('hmr-fallen-count');
+  if (sc) sc.textContent = survivors.length;
+  if (fc) fc.textContent = fallen.length;
+
+  // Subtitle
+  const sub = document.getElementById('hmr-subtitle');
+  if (sub) {
+    sub.textContent = data.mode === 'solo'
+      ? 'Solo kör — egyéni eredmények'
+      : 'Kooperatív — csapat eredmény';
+  }
+
+  // Saját eredmény kiemelés
+  const myResult = players_list.find(p => p.pid === playerId);
+  const myResEl = document.getElementById('hmr-my-result');
+  if (myResEl && myResult) {
+    const survived = myResult.survived;
+    myResEl.className = 'hmr-my-result ' + (survived ? 'survived' : 'died');
+    myResEl.innerHTML =
+      '<div class="hmr-my-icon">' + (survived ? '🟢' : '💀') + '</div>' +
+      '<div class="hmr-my-status ' + (survived ? 'survived' : 'died') + '">' +
+        (survived ? 'MEGMENEKÜLTÉL' : 'ELESETTÉL') +
+      '</div>' +
+      (myResult.word && myResult.word !== '—'
+        ? '<div class="hmr-my-word">Szavad: <strong style="font-family:var(--font-display);font-size:14px;color:var(--text);letter-spacing:1px;">' + myResult.word + '</strong></div>'
+        : '');
+  } else if (myResEl) {
+    myResEl.innerHTML = '';
+  }
+
+  // Túlélők lista
+  const surEl = document.getElementById('hmr-survivors-list');
+  if (surEl) {
+    if (survivors.length === 0) {
+      surEl.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px 0;">—</div>';
+    } else {
+      surEl.innerHTML = survivors.map(p => {
+        const isMe = p.pid === playerId;
+        const init = (p.name || '?')[0].toUpperCase();
+        const col  = p.color || '#888';
+        const showWord = data.mode === 'solo' && p.word && p.word !== '—';
+        return '<div class="hmr-row alive">' +
+          '<div style="width:24px;height:24px;border-radius:50%;background:' + col + '22;border:1.5px solid ' + col + ';color:' + col + ';display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:12px;flex-shrink:0;">' + init + '</div>' +
+          '<div class="hmr-row-name" style="' + (isMe ? 'color:var(--accent);' : '') + '">' + (p.name || 'Névtelen') + (isMe ? ' 👤' : '') + '</div>' +
+          (showWord ? '<div class="hmr-row-word">' + p.word + '</div>' : '') +
+        '</div>';
+      }).join('');
+    }
+  }
+
+  // Elesettek lista
+  const falEl = document.getElementById('hmr-fallen-list');
+  if (falEl) {
+    if (fallen.length === 0) {
+      falEl.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px 0;">—</div>';
+    } else {
+      falEl.innerHTML = fallen.map(p => {
+        const isMe = p.pid === playerId;
+        const init = (p.name || '?')[0].toUpperCase();
+        const col  = p.color || '#888';
+        const showWord = data.mode === 'solo' && p.word && p.word !== '—';
+        return '<div class="hmr-row fallen">' +
+          '<div style="width:24px;height:24px;border-radius:50%;background:' + col + '22;border:1.5px solid ' + col + ';color:' + col + ';display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:12px;flex-shrink:0;">' + init + '</div>' +
+          '<div class="hmr-row-name" style="' + (isMe ? 'color:var(--red);' : '') + '">' + (p.name || 'Névtelen') + (isMe ? ' 👤' : '') + '</div>' +
+          (showWord ? '<div class="hmr-row-word">' + p.word + '</div>' : '') +
+        '</div>';
+      }).join('');
+    }
+  }
+}
+
+function updateHangmanReturnBtn() {
+  const btn = document.getElementById('hmr-btn-return');
+  if (!btn) return;
+  if (hostReadyForRejoin) {
+    btn.disabled = false;
+    btn.textContent = '🎮 VISSZA A JÁTÉKBA';
+    btn.style.cssText = 'background:rgba(240,192,64,0.08);border-color:var(--accent);color:var(--accent);';
+  } else {
+    btn.disabled = true;
+    btn.textContent = '⏳ VÁRAKOZÁS A HOST-RA...';
+    btn.style.cssText = '';
+  }
+}
+
 // ── VISSZA A JÁTÉKBA — gomb állapot kezelő ───────────────────
 // Akkor aktiválódik, ha a host már visszalépett (phase:'waiting' érkezett)
 // Addig szürke és letiltott: "Várakozás a host-ra..."
@@ -1495,9 +1694,11 @@ async function returnToGame() {
   if (!hostReadyForRejoin) return;           // extra guard
   if (!db || !roomRef || !playerId) { backToMenu(); return; }
 
-  // Gomb azonnal letiltva — dupla kattintás ellen
+  // Gomb azonnal letiltva — dupla kattintás ellen (mindkét gomb)
   const btn = document.getElementById('btn-return-to-game');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Csatlakozás...'; }
+  const hmrBtn = document.getElementById('hmr-btn-return');
+  if (hmrBtn) { hmrBtn.disabled = true; hmrBtn.textContent = '⏳ Csatlakozás...'; }
 
   try {
     // Ellenőrzés: a gameState valóban 'waiting'-e még?
@@ -1743,6 +1944,7 @@ function backToMenu() {
     roomRef.child('voteResult').off();
     roomRef.child('hangmanState').off();
     roomRef.child('hangmanHintRequests').off();
+    roomRef.child('hangmanResults').off();
     if (playerId) {
       roomRef.child('votes').child(playerId).remove();
       roomRef.child('players').child(playerId).child('status').off();

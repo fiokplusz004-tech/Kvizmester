@@ -919,6 +919,7 @@ let hmCurrentAssignedName = '';    // aktuális tippelő neve
 let hmHintsUsed = 0;               // 0 | 1 | 2
 let hmCurrentHint = null;          // hint szöveg az aktuális szóhoz
 let hmHintProcessed = new Set();   // feldolgozott hint kérés ID-k
+let hmPlayerResults = {};          // { pid: { name, color, word, survived } }
 
 // ============================================================
 // FIREBASE
@@ -1094,6 +1095,7 @@ function showMain() {
     roomRef.child('hangmanGuesses').onDisconnect().remove();
     roomRef.child('hangmanState').onDisconnect().remove();
     roomRef.child('hangmanHintRequests').onDisconnect().remove();
+    roomRef.child('hangmanResults').onDisconnect().remove();
     roomRef.child('gameState').onDisconnect().set({phase:'waiting'});
   }
   try{new QRCode(document.getElementById('qr-code'),{text:playerUrl,width:180,height:180,colorDark:'#000',colorLight:'#fff'});}catch(e){}
@@ -1752,6 +1754,7 @@ function newGame() {
     roomRef.child('hangmanGuesses').remove();
     roomRef.child('hangmanState').remove();
     roomRef.child('hangmanHintRequests').remove();
+    roomRef.child('hangmanResults').remove();
     // Team módban: csapatpontok nullázása, struktúra megmarad
     if(gameMode==='teams'){
       Object.keys(teams).forEach(tid=>{
@@ -1767,6 +1770,7 @@ function newGame() {
   hmGuessedLetters = {}; hmWrongLetters = {}; hmProcessedLetters = new Set(); hmLastGuessers = {};
   hangmanMode = 'coop'; hmPlayerQueue = []; hmCurrentAssignedPid = null; hmCurrentAssignedName = '';
   hmHintsUsed = 0; hmCurrentHint = null; hmHintProcessed = new Set();
+  hmPlayerResults = {};
   clearInterval(hangmanTimerInterval);
   clearInterval(_hmIntroCountdownTimer);
   const introOverlay = document.getElementById('hm-intro-overlay');
@@ -2618,6 +2622,30 @@ function revealHangmanWord(fromTimer=false, solved=false, failed=false) {
   // Reveal all letters
   entry.word.split('').forEach(l=>{ hmGuessedLetters[l]=true; });
   const isSolved = solved || (!fromTimer && !failed && entry.word.split('').every(l=>hmGuessedLetters[l]));
+
+  // ── Eredmény rögzítése ─────────────────────────────────────
+  if(hangmanMode === 'solo' && hmCurrentAssignedPid) {
+    // Solo: csak az aktuális tippelő kap eredményt
+    const col = players[hmCurrentAssignedPid]?.color || '#888';
+    hmPlayerResults[hmCurrentAssignedPid] = {
+      name: hmCurrentAssignedName,
+      color: col,
+      word: entry.word,
+      survived: isSolved
+    };
+  } else if(hangmanMode === 'coop') {
+    // Coop: az utolsó kör eredménye felülírja — mindenki azonos sorsra jut
+    const activePids = Object.entries(players).filter(([,p]) => p.status === 'active');
+    activePids.forEach(([pid, p]) => {
+      hmPlayerResults[pid] = {
+        name: p.name,
+        color: p.color || '#888',
+        word: entry.word,
+        survived: isSolved
+      };
+    });
+  }
+
   if(db){
     roomRef.child('hangmanState').update({
       phase: 'hangman-revealed',
@@ -2636,9 +2664,30 @@ function revealHangmanWord(fromTimer=false, solved=false, failed=false) {
 function endHangmanGame() {
   clearInterval(hangmanTimerInterval);
   hmRoundPhase = 'ended';
+
+  // Eredmények összeállítása Firebase-be
+  const resultPlayers = Object.entries(hmPlayerResults).map(([pid, r]) => ({
+    pid, name: r.name, color: r.color, word: r.word, survived: r.survived
+  }));
+  // Ha valamelyik aktív játékos nincs még a results-ben (pl. coop, nem volt kör),
+  // adjuk hozzá az aktív játékosokat is
+  Object.entries(players).forEach(([pid, p]) => {
+    if(p.status === 'active' && !hmPlayerResults[pid]) {
+      resultPlayers.push({ pid, name: p.name, color: p.color||'#888', word: '—', survived: false });
+    }
+  });
+  const survivorCount = resultPlayers.filter(r => r.survived).length;
+  const fallenCount   = resultPlayers.filter(r => !r.survived).length;
+
   if(db){
+    roomRef.child('hangmanResults').set({
+      mode: hangmanMode,
+      players: resultPlayers,
+      survivorCount,
+      fallenCount
+    });
     roomRef.child('hangmanState').update({phase:'hangman-ended'});
-    roomRef.child('gameState').set({phase:'ended'});
+    roomRef.child('gameState').set({phase:'hangman-ended'});
     roomRef.child('hangmanGuesses').remove();
   }
   showResults();
