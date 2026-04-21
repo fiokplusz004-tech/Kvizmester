@@ -919,7 +919,7 @@ let hmCurrentAssignedName = '';    // aktuális tippelő neve
 let hmHintsUsed = 0;               // 0 | 1 | 2
 let hmCurrentHint = null;          // hint szöveg az aktuális szóhoz
 let hmHintProcessed = new Set();   // feldolgozott hint kérés ID-k
-let hmPlayerResults = {};          // { pid: { name, color, word, survived } }
+let hmPlayerResults = {};          // { pid: { name, color, word, survived, solvedCount, failedCount } }
 
 // ============================================================
 // FIREBASE
@@ -2625,13 +2625,22 @@ function revealHangmanWord(fromTimer=false, solved=false, failed=false) {
 
   // ── Eredmény rögzítése ─────────────────────────────────────
   if(hangmanMode === 'solo' && hmCurrentAssignedPid) {
-    // Solo: csak az aktuális tippelő kap eredményt
-    const col = players[hmCurrentAssignedPid]?.color || '#888';
-    hmPlayerResults[hmCurrentAssignedPid] = {
+    // Solo — többségi szabály: megoldott >= kihagyott → túlél
+    // Ha egy játékos többször kerül sorra, az összes körét figyelembe vesszük.
+    const pid = hmCurrentAssignedPid;
+    const col = players[pid]?.color || '#888';
+    const prev = hmPlayerResults[pid];
+    const solvedCount  = (prev?.solvedCount  || 0) + (isSolved ? 1 : 0);
+    const failedCount  = (prev?.failedCount  || 0) + (isSolved ? 0 : 1);
+    hmPlayerResults[pid] = {
       name: hmCurrentAssignedName,
       color: col,
-      word: entry.word,
-      survived: isSolved
+      word: entry.word,            // utolsó szó megjelenítéshez (player kompatibilis)
+      solvedCount,
+      failedCount,
+      // B szabály: solvedCount >= failedCount → túlél (döntetlen esetén is)
+      // Feltétel: legalább 1 szót megkísérelt (solvedCount + failedCount > 0)
+      survived: (solvedCount + failedCount > 0) && (solvedCount >= failedCount)
     };
   } else if(hangmanMode === 'coop') {
     // Coop: az utolsó kör eredménye felülírja — mindenki azonos sorsra jut
@@ -2641,6 +2650,8 @@ function revealHangmanWord(fromTimer=false, solved=false, failed=false) {
         name: p.name,
         color: p.color || '#888',
         word: entry.word,
+        solvedCount: isSolved ? 1 : 0,
+        failedCount: isSolved ? 0 : 1,
         survived: isSolved
       };
     });
