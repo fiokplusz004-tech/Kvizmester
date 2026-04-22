@@ -746,7 +746,7 @@
       <div class="control-bar">
         <div class="game-phase" id="phase-label">VÁRAKOZÁS</div>
         <div style="display:flex;gap:9px;">
-          <button class="ctrl-btn ctrl-start" id="btn-start" onclick="openStartModalNormal()">▶ JÁTÉK INDÍTÁSA</button>
+          <button class="ctrl-btn ctrl-start" id="btn-start" onclick="openStartModalNormal()">👤 EGYÉNI VERSENY</button>
           <button class="ctrl-btn ctrl-teams" id="btn-teams" onclick="openTeamModal()">👥 CSAPATVERSENY</button>
           <button class="ctrl-btn ctrl-hangman" id="btn-hangman" onclick="openHangmanModal()">🔤 AKASZTÓFA</button>
           <button class="ctrl-btn ctrl-reveal hidden" id="btn-reveal" onclick="revealAnswer()">👁 MEGOLDÁS</button>
@@ -3019,7 +3019,7 @@ function closeChangelog() {
 }
 </script>
 <!-- VERSION BADGE -->
-<div class="version-badge">Játék verzió: 2.0</div>
+<div class="version-badge">Játék verzió: 2.5</div>
 
 <!-- CHANGELOG MODAL -->
 <div class="changelog-overlay hidden" id="changelog-modal" onclick="if(event.target===this)closeChangelog()">
@@ -3030,7 +3030,27 @@ function closeChangelog() {
     </div>
     <div class="changelog-scroll">
       <div class="changelog-item">
-        <div><div class="changelog-ver current">2.0</div></div>
+        <div><div class="changelog-ver current">2.5</div></div>
+        <div><div class="changelog-desc">Akasztófa játékmódhoz szó adatbázis és indítási felület átdolgozása — Firebase-alapú, perzisztens szó adatbázis a host felületen (bal panel, Szó adatbázis fül). Kategóriák szabadon meghatározhatók, átnevezhetők, törölhetők és 30 szín közül egyedi színnel jelölhetők. Szavakhoz 2 opcionális segítség adható. Tömeges JSON import/export, manuális szerkesztés. Az Akasztófa indítása modál átdolgozva: adatbázisból tölt, kategória grid, 1–50 szó, session-szintű kijátszott-szó nyomkövetés.</div></div>
+      </div>
+      <div class="changelog-item">
+        <div><div class="changelog-ver">2.4</div></div>
+        <div><div class="changelog-desc">Akasztófa játékmód következetesség javítása — Segítség kérés (💡) gomb: 2 alkalom, mindkettő −1 életet von le. Első segítség szöveges tipp, második egy véletlen betűt fed fel. Solo módban csak az aktuális tippelő kérhet segítséget. Javított pontszámlálás és életszámok szinkronizálása.</div></div>
+      </div>
+      <div class="changelog-item">
+        <div><div class="changelog-ver">2.3</div></div>
+        <div><div class="changelog-desc">Akasztófa játékmód játék vége menüpont átdolgozása — Külön eredmény képernyő: túlélők és elesettek két oszlopban, személyes kiemelés (megmenekültél / elesettél), statisztika. Solo módban az adott szó is megjelenik. „Vissza a játékba" gomb a host visszatérésekor aktiválódik.</div></div>
+      </div>
+      <div class="changelog-item">
+        <div><div class="changelog-ver">2.2</div></div>
+        <div><div class="changelog-desc">Akasztófa játékmód intro bevezetése — A játék indításakor ~16 másodperces filmszerű bevezető animáció jelenik meg a játékosoknál (fekete háttér, 3 egymás után megjelenő mondatos sztori). A host felületen visszaszámlálós gyűrű mutatja az intro hátralévő idejét.</div></div>
+      </div>
+      <div class="changelog-item">
+        <div><div class="changelog-ver">2.1</div></div>
+        <div><div class="changelog-desc">Akasztófa játékmód integrálása — Két játékmód: Kooperatív (mindenki együtt tippel) és Solo kör (minden játékos saját szót kap, felváltva tippelnek). Magyar ábécés billentyűzet, életek, akasztófa SVG grafika, valós idejű Firebase szinkron. Játék végi túlélő/elesett eredmény.</div></div>
+      </div>
+      <div class="changelog-item">
+        <div><div class="changelog-ver">2.0</div></div>
         <div><div class="changelog-desc">Csapatverseny játékmód — Játékosok csapatokba oszthatók (2–5 csapat), minden csapatnak egyedi neve adható. A csapatpontok valós időben összesítődnek: az egyes játékosok által szerzett pontok a saját csapatuk összpontszámába kerülnek. A legvégén a legtöbb pontot szerzett csapat győz. Játék közben a játékosnál „Csapattársak" és „Csapat pontunk" jelenik meg. Az eredmény képernyőn csapat dobogó és egyéni hozzájárulás is látható.</div></div>
       </div>
       <div class="changelog-item">
