@@ -2503,25 +2503,34 @@ function updateHangmanModalCategoryGrid() {
   const totalFresh = wordDB.filter(w => !usedHangmanWordIds.has(w.id)).length;
   const totalAll = wordDB.length;
 
-  let html = `<div class="hm-cat-chip-btn${hmSelectedCat==='all'?' hm-cat-selected':''}" onclick="selectHMCat('all')" style="cursor:pointer;padding:8px 12px;border-radius:8px;border:2px solid ${hmSelectedCat==='all'?'var(--accent2)':'var(--border)'};background:${hmSelectedCat==='all'?'rgba(224,90,43,0.1)':'var(--surface2)'};transition:all 0.15s;display:inline-block;margin:3px;">
-    <div style="font-size:13px;font-weight:600;color:${hmSelectedCat==='all'?'var(--accent2)':'var(--text)'};">Összes (vegyesen)</div>
-    <div style="font-size:10px;color:var(--muted);margin-top:2px;">${totalFresh} szabad / ${totalAll} összes</div>
-  </div>`;
+  // "Összes (vegyesen)" chip — no data-cat quoting issue, value is always 'all'
+  const allActive = hmSelectedCat === 'all';
+  let html = '<div class="hm-cat-chip-btn' + (allActive ? ' hm-cat-selected' : '') + '"'
+    + ' data-cat="all" onclick="selectHMCat(this.dataset.cat)"'
+    + ' style="cursor:pointer;padding:8px 12px;border-radius:8px;border:2px solid ' + (allActive ? 'var(--accent2)' : 'var(--border)') + ';background:' + (allActive ? 'rgba(224,90,43,0.1)' : 'var(--surface2)') + ';transition:all 0.15s;display:inline-block;margin:3px;">'
+    + '<div style="font-size:13px;font-weight:600;color:' + (allActive ? 'var(--accent2)' : 'var(--text)') + ';">Összes (vegyesen)</div>'
+    + '<div style="font-size:10px;color:var(--muted);margin-top:2px;">' + totalFresh + ' szabad / ' + totalAll + ' összes</div>'
+    + '</div>';
 
   cats.forEach(cat => {
     const catWords = wordDB.filter(w => w.category === cat.name);
     const freshCount = catWords.filter(w => !usedHangmanWordIds.has(w.id)).length;
     const color = cat.color || '#888';
     const isActive = hmSelectedCat === cat.name;
-    html += `<div class="hm-cat-chip-btn${isActive?' hm-cat-selected':''}" onclick="selectHMCat(${JSON.stringify(cat.name)})" style="cursor:pointer;padding:8px 12px;border-radius:8px;border:2px solid ${isActive?color:'var(--border)'};background:${isActive?color+'22':'var(--surface2)'};transition:all 0.15s;display:inline-block;margin:3px;">
-      <div style="font-size:13px;font-weight:600;color:${isActive?color:'var(--text)'};">${htmlEsc(cat.name)}</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px;">${freshCount} szabad / ${catWords.length} összes</div>
-    </div>`;
+    const safeAttr = htmlEsc(cat.name);
+    const borderColor = isActive ? color : 'var(--border)';
+    const bgColor = isActive ? color + '22' : 'var(--surface2)';
+    const textColor = isActive ? color : 'var(--text)';
+    html += '<div class="hm-cat-chip-btn' + (isActive ? ' hm-cat-selected' : '') + '"'
+      + ' data-cat="' + safeAttr + '" onclick="selectHMCat(this.dataset.cat)"'
+      + ' style="cursor:pointer;padding:8px 12px;border-radius:8px;border:2px solid ' + borderColor + ';background:' + bgColor + ';transition:all 0.15s;display:inline-block;margin:3px;">'
+      + '<div style="font-size:13px;font-weight:600;color:' + textColor + ';">' + safeAttr + '</div>'
+      + '<div style="font-size:10px;color:var(--muted);margin-top:2px;">' + freshCount + ' szabad / ' + catWords.length + ' összes</div>'
+      + '</div>';
   });
 
-  grid.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:0;">${html}</div>`;
+  grid.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:0;">' + html + '</div>';
 }
-
 function selectHMCat(catName) {
   hmSelectedCat = catName;
   updateHangmanModalCategoryGrid();
@@ -3326,16 +3335,15 @@ function renderWdbCatFilter() {
   const cats = Object.values(wordDBCategories).sort((a,b) => a.name.localeCompare(b.name, 'hu'));
   const totalCount = wordDB.length;
   const isAllActive = wdbFilterCat === 'all';
-  let html = `<span class="wdb-cat-chip${isAllActive?' active':''}" onclick="setWdbFilter('all')"
-    style="${isAllActive?'background:var(--muted);color:#000;border-color:var(--muted);':''}">Mind (${totalCount})</span>`;
+  let html = `<span class="wdb-cat-chip${isAllActive?' active':''}" data-cat="all" onclick="setWdbFilter(this.dataset.cat)" style="${isAllActive?'background:var(--muted);color:#000;border-color:var(--muted);':''}">Mind (${totalCount})</span>`;
   cats.forEach(cat => {
     const cnt = wordDB.filter(w => w.category === cat.name).length;
     const color = cat.color || '#888';
     const isActive = wdbFilterCat === cat.name;
-    html += `<span class="wdb-cat-chip${isActive?' active':''}" onclick="setWdbFilter(${JSON.stringify(cat.name)})"
-      style="${isActive ? `background:${color}22;color:${color};border-color:${color};` : `border-color:${color}44;color:${color};`}">
-      ${htmlEsc(cat.name)} (${cnt})
-    </span>`;
+    const safeAttr = htmlEsc(cat.name);
+    const activeStyle = `background:${color}22;color:${color};border-color:${color};`;
+    const inactiveStyle = `border-color:${color}44;color:${color};`;
+    html += `<span class="wdb-cat-chip${isActive?' active':''}" data-cat="${safeAttr}" onclick="setWdbFilter(this.dataset.cat)" style="${isActive ? activeStyle : inactiveStyle}">${safeAttr} (${cnt})</span>`;
   });
   el.innerHTML = html;
 }
@@ -3369,19 +3377,19 @@ function renderWdbWordList() {
   el.innerHTML = filtered.map(w => {
     const color = wdbGetCatColor(w.category);
     const isUsed = usedHangmanWordIds.has(w.id);
-    return `<div class="wdb-card${isUsed?' wdb-used':''}" id="wdbcard-${w.id}" style="border-left-color:${color};">
-      <div class="wdb-actions">
-        <button class="q-btn-sm q-btn-edit" onclick="openWdbEdit(${JSON.stringify(w.id)})">✎</button>
-        <button class="q-btn-sm q-btn-del" onclick="deleteWdbWord(${JSON.stringify(w.id)})">✕</button>
-      </div>
-      <div class="wdb-card-word">${htmlEsc(w.word)}${isUsed?' <span style="font-size:9px;color:var(--muted);font-family:var(--font-body);letter-spacing:0;font-weight:400;">kijátszott</span>':''}</div>
-      <div><span class="wdb-card-cat" style="background:${color}20;color:${color};border:1px solid ${color}40;">${htmlEsc(w.category)}</span></div>
-      <div class="wdb-card-hints">
-        ${w.hint1 ? `<span style="color:var(--blue);">1:</span> ${htmlEsc(w.hint1)}<br>` : ''}
-        ${w.hint2 ? `<span style="color:var(--blue);">2:</span> ${htmlEsc(w.hint2)}` : ''}
-        ${!w.hint1 && !w.hint2 ? '<span style="color:var(--border);">Nincs segítség</span>' : ''}
-      </div>
-    </div>`;
+    // Use data-id attributes to avoid onclick double-quote conflicts with Firebase push keys
+    return '<div class="wdb-card' + (isUsed ? ' wdb-used' : '') + '" id="wdbcard-' + w.id + '" style="border-left-color:' + color + ';">'
+      + '<div class="wdb-actions">'
+      + '<button class="q-btn-sm q-btn-edit" data-id="' + w.id + '" onclick="openWdbEdit(this.dataset.id)">✎</button>'
+      + '<button class="q-btn-sm q-btn-del" data-id="' + w.id + '" onclick="deleteWdbWord(this.dataset.id)">✕</button>'
+      + '</div>'
+      + '<div class="wdb-card-word">' + htmlEsc(w.word) + (isUsed ? ' <span style="font-size:9px;color:var(--muted);font-family:var(--font-body);letter-spacing:0;font-weight:400;">kijátszott</span>' : '') + '</div>'
+      + '<div><span class="wdb-card-cat" style="background:' + color + '20;color:' + color + ';border:1px solid ' + color + '40;">' + htmlEsc(w.category) + '</span></div>'
+      + '<div class="wdb-card-hints">'
+      + (w.hint1 ? '<span style="color:var(--blue);">1:</span> ' + htmlEsc(w.hint1) + '<br>' : '')
+      + (w.hint2 ? '<span style="color:var(--blue);">2:</span> ' + htmlEsc(w.hint2) : '')
+      + (!w.hint1 && !w.hint2 ? '<span style="color:var(--border);">Nincs segítség</span>' : '')
+      + '</div></div>';
   }).join('');
 }
 
