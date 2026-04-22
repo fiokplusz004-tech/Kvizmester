@@ -506,6 +506,28 @@
   .team-score-medal { font-size:16px; flex-shrink:0; width:22px; text-align:center; }
   .team-score-name { flex:1; font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .team-score-pts { font-family:var(--font-display); font-size:22px; color:var(--accent); }
+
+  /* ── PANEL TABS ─────────────────────────────────────────── */
+  .panel-tabs { display:flex; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--surface); }
+  .panel-tab { flex:1; padding:10px 6px; background:transparent; border:none; border-bottom:3px solid transparent; color:var(--muted); font-family:var(--font-body); font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+  .panel-tab.active { color:var(--accent2); border-bottom-color:var(--accent2); }
+  .panel-tab-content { display:none; flex-direction:column; flex:1; overflow:hidden; min-height:0; }
+  .panel-tab-content.active { display:flex; }
+
+  /* ── WORD DB PANEL ─────────────────────────────────────── */
+  .wdb-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:7px; border-left:4px solid #888; position:relative; }
+  .wdb-card.wdb-used { opacity:0.45; }
+  .wdb-card-word { font-family:var(--font-display); font-size:17px; letter-spacing:2px; color:var(--text); margin-bottom:4px; padding-right:52px; }
+  .wdb-card-cat { display:inline-block; font-size:10px; padding:2px 8px; border-radius:4px; margin-bottom:6px; }
+  .wdb-card-hints { font-size:11px; color:var(--muted); line-height:1.65; }
+  .wdb-cat-chip { display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer; border:1.5px solid var(--border); transition:all 0.2s; background:transparent; color:var(--muted); white-space:nowrap; }
+  .wdb-cat-chip.active { color:#fff; }
+  .wdb-cat-manager-row { display:flex; align-items:center; gap:7px; padding:6px 8px; background:var(--bg); border:1px solid var(--border); border-radius:7px; margin-bottom:5px; }
+
+  /* ── COLOR PICKER ─────────────────────────────────────── */
+  .color-swatch { width:24px; height:24px; border-radius:50%; cursor:pointer; border:2.5px solid transparent; transition:all 0.15s; flex-shrink:0; }
+  .color-swatch.selected { border-color:#fff; transform:scale(1.18); box-shadow:0 0 0 1px rgba(255,255,255,0.4); }
+  .color-swatch-grid { display:flex; flex-wrap:wrap; gap:6px; padding:4px 0; }
 </style>
 </head>
 <body>
@@ -548,61 +570,110 @@
   <div class="main-grid">
     <!-- LEFT -->
     <div class="panel-left">
-      <div class="panel-header">
-        <h3>KÉRDÉSEK</h3>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <span class="tag tag-yellow" id="q-count">0 db</span>
-          <button class="btn-danger" onclick="deleteAllQuestions()">🗑 Mind törlése</button>
+      <!-- TABS -->
+      <div class="panel-tabs">
+        <button class="panel-tab active" id="tab-questions" onclick="switchPanelTab('questions')">Kvíz kérdések</button>
+        <button class="panel-tab" id="tab-worddb" onclick="switchPanelTab('worddb')">Szó adatbázis</button>
+      </div>
+
+      <!-- TAB: KÉRDÉSEK -->
+      <div class="panel-tab-content active" id="tabcontent-questions">
+        <div class="panel-header">
+          <h3>KÉRDÉSEK</h3>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span class="tag tag-yellow" id="q-count">0 db</span>
+            <button class="btn-danger" onclick="deleteAllQuestions()">🗑 Mind törlése</button>
+          </div>
+        </div>
+        <div class="panel-content" id="panel-content">
+
+          <!-- NEW Q FORM -->
+          <div class="add-q-form hidden" id="add-q-form">
+            <h4>Új kérdés hozzáadása</h4>
+            <div class="correct-note">💡 A zöld körre kattintva jelöld meg a <span>helyes választ</span> — A=1., B=2., C=3., D=4. (fentről lefele)</div>
+            <textarea class="form-input" id="nq-text" rows="2" placeholder="A kérdés szövege..."></textarea>
+            <div class="options-grid">
+              <div class="option-input-wrap"><input class="form-input" type="text" id="nq-a" placeholder="A — 1. válasz"><div class="correct-mark" onclick="nqSelectCorrect(0)"></div></div>
+              <div class="option-input-wrap"><input class="form-input" type="text" id="nq-b" placeholder="B — 2. válasz"><div class="correct-mark" onclick="nqSelectCorrect(1)"></div></div>
+              <div class="option-input-wrap"><input class="form-input" type="text" id="nq-c" placeholder="C — 3. válasz"><div class="correct-mark" onclick="nqSelectCorrect(2)"></div></div>
+              <div class="option-input-wrap"><input class="form-input" type="text" id="nq-d" placeholder="D — 4. válasz"><div class="correct-mark" onclick="nqSelectCorrect(3)"></div></div>
+            </div>
+            <div class="form-row">
+              <select class="form-input" id="nq-cat" onchange="toggleBiblicalType('nq')">
+                <option value="Általános">Általános</option>
+                <option value="Bibliai">Bibliai</option>
+                <option value="Filmek">Filmek</option>
+                <option value="Természet">Természet</option>
+                <option value="Történelem">Történelem</option>
+                <option value="Sport">Sport</option>
+                <option value="Tudomány">Tudomány</option>
+                <option value="Zene">Zene</option>
+                <option value="Földrajz">Földrajz</option>
+              </select>
+              <select class="form-input" id="nq-time">
+                <option value="20">20 mp</option>
+                <option value="30" selected>30 mp</option>
+                <option value="45">45 mp</option>
+                <option value="60">60 mp</option>
+              </select>
+            </div>
+            <select class="form-input hidden" id="nq-type">
+              <option value="egyéb">Bibliai típus: (általános)</option>
+              <option value="vers">📖 Vers felismerés</option>
+              <option value="személy">👤 Személy</option>
+              <option value="évszám">📅 Évszám / Időpont</option>
+              <option value="helység">📍 Helység</option>
+              <option value="esemény">⚡ Esemény</option>
+            </select>
+            <div class="form-actions">
+              <button class="btn-save" onclick="saveNewQuestion()">✓ Mentés</button>
+              <button class="btn-cancel-form" onclick="hideNewQuestionForm()">Mégse</button>
+            </div>
+          </div>
+
+          <div class="cat-tree" id="cat-tree"></div>
+          <div id="q-list"></div>
         </div>
       </div>
-      <div class="panel-content" id="panel-content">
 
-        <!-- NEW Q FORM -->
-        <div class="add-q-form hidden" id="add-q-form">
-          <h4>Új kérdés hozzáadása</h4>
-          <div class="correct-note">💡 A zöld körre kattintva jelöld meg a <span>helyes választ</span> — A=1., B=2., C=3., D=4. (fentről lefele)</div>
-          <textarea class="form-input" id="nq-text" rows="2" placeholder="A kérdés szövege..."></textarea>
-          <div class="options-grid">
-            <div class="option-input-wrap"><input class="form-input" type="text" id="nq-a" placeholder="A — 1. válasz"><div class="correct-mark" onclick="nqSelectCorrect(0)"></div></div>
-            <div class="option-input-wrap"><input class="form-input" type="text" id="nq-b" placeholder="B — 2. válasz"><div class="correct-mark" onclick="nqSelectCorrect(1)"></div></div>
-            <div class="option-input-wrap"><input class="form-input" type="text" id="nq-c" placeholder="C — 3. válasz"><div class="correct-mark" onclick="nqSelectCorrect(2)"></div></div>
-            <div class="option-input-wrap"><input class="form-input" type="text" id="nq-d" placeholder="D — 4. válasz"><div class="correct-mark" onclick="nqSelectCorrect(3)"></div></div>
-          </div>
-          <div class="form-row">
-            <select class="form-input" id="nq-cat" onchange="toggleBiblicalType('nq')">
-              <option value="Általános">Általános</option>
-              <option value="Bibliai">Bibliai</option>
-              <option value="Filmek">Filmek</option>
-              <option value="Természet">Természet</option>
-              <option value="Történelem">Történelem</option>
-              <option value="Sport">Sport</option>
-              <option value="Tudomány">Tudomány</option>
-              <option value="Zene">Zene</option>
-              <option value="Földrajz">Földrajz</option>
-            </select>
-            <select class="form-input" id="nq-time">
-              <option value="20">20 mp</option>
-              <option value="30" selected>30 mp</option>
-              <option value="45">45 mp</option>
-              <option value="60">60 mp</option>
-            </select>
-          </div>
-          <select class="form-input hidden" id="nq-type">
-            <option value="egyéb">Bibliai típus: (általános)</option>
-            <option value="vers">📖 Vers felismerés</option>
-            <option value="személy">👤 Személy</option>
-            <option value="évszám">📅 Évszám / Időpont</option>
-            <option value="helység">📍 Helység</option>
-            <option value="esemény">⚡ Esemény</option>
-          </select>
-          <div class="form-actions">
-            <button class="btn-save" onclick="saveNewQuestion()">✓ Mentés</button>
-            <button class="btn-cancel-form" onclick="hideNewQuestionForm()">Mégse</button>
+      <!-- TAB: SZÓ ADATBÁZIS -->
+      <div class="panel-tab-content" id="tabcontent-worddb">
+        <div class="panel-header" style="flex-wrap:wrap;gap:5px;">
+          <h3 style="color:var(--accent2);">SZÓ ADATBÁZIS</h3>
+          <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+            <span class="tag" id="wdb-word-count" style="background:rgba(224,90,43,0.15);color:var(--accent2);">0 szó</span>
+            <button class="btn-secondary" style="font-size:11px;padding:4px 9px;" onclick="showWdbNewForm()">+ Új szó</button>
+            <button class="btn-secondary" style="font-size:11px;padding:4px 9px;" onclick="wdbExportAll()">⬇ Export</button>
+            <button class="btn-secondary" style="font-size:11px;padding:4px 9px;" onclick="openWdbImportModal()">⬆ Import</button>
           </div>
         </div>
-
-        <div class="cat-tree" id="cat-tree"></div>
-        <div id="q-list"></div>
+        <div class="panel-content" id="wdb-panel-content" style="padding:8px 10px;">
+          <!-- SEARCH -->
+          <input type="text" placeholder="Keresés szóban, segítségben..." class="form-input" style="margin-bottom:7px;" oninput="setWdbSearch(this.value)" id="wdb-search-input">
+          <!-- CATEGORY FILTER -->
+          <div id="wdb-cat-filter" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;"></div>
+          <!-- CATEGORY MANAGER TOGGLE -->
+          <button id="wdb-cat-manager-btn" onclick="toggleWdbCatManager()" style="width:100%;padding:7px;background:transparent;color:var(--accent2);border:1px solid rgba(224,90,43,0.35);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;margin-bottom:8px;letter-spacing:1px;text-align:left;">Kategóriák kezelése ▶</button>
+          <!-- CATEGORY MANAGER -->
+          <div class="hidden" id="wdb-cat-manager" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:10px;">
+            <div id="wdb-cat-manager-list"></div>
+          </div>
+          <!-- NEW / EDIT WORD FORM -->
+          <div class="add-q-form hidden" id="wdb-add-form" style="margin-bottom:10px;">
+            <h4 id="wdb-form-title">Új szó hozzáadása</h4>
+            <input type="text" class="form-input" id="wdb-form-word" placeholder="SZÓ (pl. JERUZSÁLEM)" style="font-family:var(--font-display);font-size:15px;letter-spacing:1.5px;" oninput="this.value=this.value.toUpperCase()">
+            <input type="text" class="form-input" id="wdb-form-cat" placeholder="Kategória (pl. Bibliai)" list="wdb-cat-datalist">
+            <datalist id="wdb-cat-datalist"></datalist>
+            <input type="text" class="form-input" id="wdb-form-hint1" placeholder="💡 1. segítség (opcionális)">
+            <input type="text" class="form-input" id="wdb-form-hint2" placeholder="💡 2. segítség (opcionális)">
+            <div class="form-actions">
+              <button class="btn-save" onclick="saveWdbWord()">✓ Mentés</button>
+              <button class="btn-cancel-form" onclick="hideWdbForm()">Mégse</button>
+            </div>
+          </div>
+          <!-- WORD LIST -->
+          <div id="wdb-word-list"></div>
+        </div>
       </div>
     </div>
 
@@ -900,7 +971,7 @@ let tmEditingId = null;        // szerkesztés alatt lévő csapat ID
 let tmModalOpen = false;       // modal nyitva?
 
 // ── AKASZTÓFA STATE ───────────────────────────────────────────
-let hangmanWords = [];         // [{word, category, hint?}] — feltöltött szólista
+let hangmanWords = [];         // (legacy local — replaced by wordDB from Firebase)
 let hangmanActiveWords = [];   // aktuális játék szólistája
 let hangmanWordIndex = -1;     // aktuális szó indexe
 let hangmanTimeLimit = 60;     // másodpercben
@@ -917,9 +988,31 @@ let hmPlayerQueue = [];            // [{id, name}] — solo módban a sor
 let hmCurrentAssignedPid = null;   // aktuális tippelő játékos ID
 let hmCurrentAssignedName = '';    // aktuális tippelő neve
 let hmHintsUsed = 0;               // 0 | 1 | 2
-let hmCurrentHint = null;          // hint szöveg az aktuális szóhoz
+let hmCurrentHint1 = null;         // 1. segítség szöveg
+let hmCurrentHint2 = null;         // 2. segítség szöveg
 let hmHintProcessed = new Set();   // feldolgozott hint kérés ID-k
 let hmPlayerResults = {};          // { pid: { name, color, word, survived, solvedCount, failedCount } }
+let hmSelectedCat = 'all';         // hangman modal kategória-szűrő
+let usedHangmanWordIds = new Set(); // session-szinten kijátszott szó ID-k
+
+// ── SZÓ ADATBÁZIS STATE ──────────────────────────────────────
+let wordDB = [];               // [{id, word, category, hint1?, hint2?}]
+let wordDBCategories = {};     // { catId: {name, color} }
+let wdbFilterCat = 'all';
+let wdbSearchTerm = '';
+let wdbEditWordId = null;
+let wdbCatManagerVisible = false;
+let wdbEditCatId = null;
+let wdbColorPickerCatId = null;
+let wdbSelectedColor = '#e05a2b';
+
+const WDB_COLORS = [
+  '#f0c040','#e05a2b','#3ecf8e','#5a8fe0','#c05ae0','#e05a8f',
+  '#5ae0d4','#e0c05a','#e05a5a','#a05ae0','#5ac0e0','#e09060',
+  '#ff6b6b','#4ecdc4','#45b7d1','#96ceb4','#ffeaa7','#a8e6cf',
+  '#ff8b94','#ffaaa5','#c3b1e1','#dcedc1','#a8d8ea','#aa96da',
+  '#f7d6e0','#b5ead7','#ffdac1','#e2f0cb','#b5d8eb','#d4a5a5'
+];
 
 // ============================================================
 // FIREBASE
@@ -1076,6 +1169,21 @@ function setupListeners() {
     if(hangmanMode === 'solo' && data.playerId !== hmCurrentAssignedPid) return;
     if(hmHintsUsed >= 2) return;
     processHangmanHintRequest(data.playerId, data.playerName);
+  });
+
+  // ── SZÓ ADATBÁZIS figyelése ───────────────────────────────
+  roomRef.child('hangmanWordDB').on('value', snap => {
+    wordDB = snap.val()
+      ? Object.entries(snap.val()).map(([id,w]) => ({...w, id}))
+      : [];
+    renderWordDB();
+    updateHangmanModalCategoryGrid();
+  });
+
+  roomRef.child('hangmanWordCategories').on('value', snap => {
+    wordDBCategories = snap.val() || {};
+    renderWordDB();
+    updateHangmanModalCategoryGrid();
   });
 }
 
@@ -1769,8 +1877,9 @@ function newGame() {
   hmRoundPhase = 'idle'; hangmanWordIndex = -1; hangmanActiveWords = [];
   hmGuessedLetters = {}; hmWrongLetters = {}; hmProcessedLetters = new Set(); hmLastGuessers = {};
   hangmanMode = 'coop'; hmPlayerQueue = []; hmCurrentAssignedPid = null; hmCurrentAssignedName = '';
-  hmHintsUsed = 0; hmCurrentHint = null; hmHintProcessed = new Set();
+  hmHintsUsed = 0; hmCurrentHint1 = null; hmCurrentHint2 = null; hmHintProcessed = new Set();
   hmPlayerResults = {};
+  usedHangmanWordIds = new Set();
   clearInterval(hangmanTimerInterval);
   clearInterval(_hmIntroCountdownTimer);
   const introOverlay = document.getElementById('hm-intro-overlay');
@@ -2378,90 +2487,110 @@ function saveTeamsAndOpenStart() {
 const HU_LETTERS = ['A','Á','B','C','D','E','É','F','G','H','I','Í','J','K','L','M','N','O','Ó','Ö','Ő','P','R','S','T','U','Ú','Ü','Ű','V','Z'];
 
 function openHangmanModal() {
-  const modal = document.getElementById('hangman-modal');
-  modal.classList.remove('hidden');
-  renderHangmanWordList();
+  document.getElementById('hangman-modal').classList.remove('hidden');
+  hmSelectedCat = 'all';
+  updateHangmanModalCategoryGrid();
   updateHangmanStartInfo();
 }
 function closeHangmanModal() {
   document.getElementById('hangman-modal').classList.add('hidden');
 }
 
-function renderHangmanWordList() {
-  const list = document.getElementById('hm-modal-word-list');
-  if(!list) return;
-  if(hangmanWords.length === 0){
-    list.innerHTML='<div style="text-align:center;padding:12px;color:var(--muted);font-size:13px;">Még nincs szó importálva.</div>';
-    return;
-  }
-  list.innerHTML = hangmanWords.map((w,i)=>`
-    <div class="hm-word-list-item">
-      <div class="hm-word-text">${htmlEsc(w.word)}</div>
-      <div class="hm-word-cat">${htmlEsc(w.category)}</div>
-      <button class="hm-word-del" onclick="deleteHangmanWord(${i})">✕</button>
-    </div>`).join('');
+function updateHangmanModalCategoryGrid() {
+  const grid = document.getElementById('hm-cat-grid');
+  if(!grid) return;
+  const cats = Object.values(wordDBCategories).sort((a,b) => a.name.localeCompare(b.name, 'hu'));
+  const totalFresh = wordDB.filter(w => !usedHangmanWordIds.has(w.id)).length;
+  const totalAll = wordDB.length;
+
+  let html = `<div class="hm-cat-chip-btn${hmSelectedCat==='all'?' hm-cat-selected':''}" onclick="selectHMCat('all')" style="cursor:pointer;padding:8px 12px;border-radius:8px;border:2px solid ${hmSelectedCat==='all'?'var(--accent2)':'var(--border)'};background:${hmSelectedCat==='all'?'rgba(224,90,43,0.1)':'var(--surface2)'};transition:all 0.15s;display:inline-block;margin:3px;">
+    <div style="font-size:13px;font-weight:600;color:${hmSelectedCat==='all'?'var(--accent2)':'var(--text)'};">Összes (vegyesen)</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:2px;">${totalFresh} szabad / ${totalAll} összes</div>
+  </div>`;
+
+  cats.forEach(cat => {
+    const catWords = wordDB.filter(w => w.category === cat.name);
+    const freshCount = catWords.filter(w => !usedHangmanWordIds.has(w.id)).length;
+    const color = cat.color || '#888';
+    const isActive = hmSelectedCat === cat.name;
+    html += `<div class="hm-cat-chip-btn${isActive?' hm-cat-selected':''}" onclick="selectHMCat(${JSON.stringify(cat.name)})" style="cursor:pointer;padding:8px 12px;border-radius:8px;border:2px solid ${isActive?color:'var(--border)'};background:${isActive?color+'22':'var(--surface2)'};transition:all 0.15s;display:inline-block;margin:3px;">
+      <div style="font-size:13px;font-weight:600;color:${isActive?color:'var(--text)'};">${htmlEsc(cat.name)}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px;">${freshCount} szabad / ${catWords.length} összes</div>
+    </div>`;
+  });
+
+  grid.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:0;">${html}</div>`;
 }
 
-function deleteHangmanWord(idx) {
-  hangmanWords.splice(idx, 1);
-  renderHangmanWordList();
-  updateHangmanStartInfo();
-}
-
-function importHangmanWords() {
-  const raw = document.getElementById('hm-import-ta').value.trim();
-  if(!raw){ alert('Kérlek illeszd be a JSON-t!'); return; }
-  try {
-    const parsed = JSON.parse(raw);
-    if(!Array.isArray(parsed)) throw new Error('Tömbnek kell lennie [ ... ]');
-    let added = 0; const errors = [];
-    parsed.forEach((item,i)=>{
-      if(!item.word||typeof item.word!=='string'){ errors.push('Sor '+(i+1)+': hiányzó word mező'); return; }
-      const w = item.word.trim().toUpperCase();
-      if(w.length < 2){ errors.push('Sor '+(i+1)+': túl rövid szó ('+item.word+')'); return; }
-      hangmanWords.push({ word:w, category:(item.category||'Általános').trim() });
-      added++;
-    });
-    document.getElementById('hm-import-ta').value = '';
-    renderHangmanWordList();
-    updateHangmanStartInfo();
-    const msg = errors.length > 0
-      ? `✅ ${added} szó importálva.\n\n⚠️ ${errors.length} hiba:\n${errors.join('\n')}`
-      : `✅ ${added} szó sikeresen importálva!`;
-    alert(msg);
-  } catch(e) { alert('❌ Import hiba: '+e.message); }
-}
-
-function clearHangmanWords() {
-  if(!confirm('Törlöd az összes szót?')) return;
-  hangmanWords = [];
-  renderHangmanWordList();
+function selectHMCat(catName) {
+  hmSelectedCat = catName;
+  updateHangmanModalCategoryGrid();
   updateHangmanStartInfo();
 }
 
 function updateHangmanStartInfo() {
   const info = document.getElementById('hm-start-info');
-  if(!info) return;
-  const countSel = document.getElementById('hm-count-select');
   const timeSel = document.getElementById('hm-time-select');
-  const count = countSel ? (countSel.value==='all'?hangmanWords.length:Math.min(parseInt(countSel.value),hangmanWords.length)) : hangmanWords.length;
+  const countInput = document.getElementById('hm-count-input');
+  if(!info) return;
+
+  let pool = hmSelectedCat === 'all' ? wordDB : wordDB.filter(w => w.category === hmSelectedCat);
+  const fresh = pool.filter(w => !usedHangmanWordIds.has(w.id));
+  const usedCount = pool.length - fresh.length;
+  const effectivePool = fresh.length > 0 ? fresh : pool;
+
+  const maxWordsEl = document.getElementById('hm-max-words');
+  if(maxWordsEl) maxWordsEl.textContent = effectivePool.length;
+
+  const requestedCount = countInput ? Math.max(1, Math.min(parseInt(countInput.value)||5, 50)) : 5;
+  const actualCount = Math.min(requestedCount, effectivePool.length);
   const timeLabel = timeSel ? timeSel.options[timeSel.selectedIndex].text : '';
-  if(hangmanWords.length===0){
-    info.innerHTML='<span style="color:var(--red);">⚠️ Nincs importált szó!</span>';
-  } else {
-    info.innerHTML=`Elérhető: <strong style="color:var(--text);">${hangmanWords.length} szó</strong> — Játékban: <strong style="color:var(--accent);">${count} szó</strong> — Időkorlát: <strong style="color:var(--accent);">${timeLabel}</strong>`;
+
+  if(pool.length === 0) {
+    info.innerHTML = '<span style="color:var(--red);">⚠️ Nincs szó ebben a kategóriában! Töltsd fel a Szó adatbázisban.</span>';
+    const btn = document.getElementById('hm-start-btn');
+    if(btn){ btn.disabled=true; btn.style.opacity='0.4'; btn.style.cursor='not-allowed'; }
+    return;
   }
+  info.innerHTML = `Pool: <strong style="color:var(--text);">${pool.length} szó</strong>` +
+    (usedCount > 0 ? ` <span style="color:var(--muted);">(${usedCount} kizárva ebből a session-ből)</span>` : '') +
+    ` — Játékban: <strong style="color:var(--accent);">${actualCount} szó</strong>` +
+    ` — Időkorlát: <strong style="color:var(--accent);">${timeLabel}</strong>`;
   const btn = document.getElementById('hm-start-btn');
-  if(btn){ btn.disabled=hangmanWords.length===0; btn.style.opacity=hangmanWords.length===0?'0.4':'1'; }
+  if(btn){ btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer'; }
+}
+
+function clampHMCount() {
+  const input = document.getElementById('hm-count-input');
+  if(!input) return;
+  let val = parseInt(input.value);
+  if(isNaN(val) || val < 1) val = 1;
+  if(val > 50) val = 50;
+  input.value = val;
+}
+
+function setHMCountAll() {
+  const input = document.getElementById('hm-count-input');
+  const maxEl = document.getElementById('hm-max-words');
+  if(!input || !maxEl) return;
+  input.value = parseInt(maxEl.textContent) || 1;
+  updateHangmanStartInfo();
 }
 
 function startHangmanGame() {
-  if(hangmanWords.length===0){ alert('Adj hozzá legalább 1 szót!'); return; }
-  const countSel = document.getElementById('hm-count-select');
+  const countInput = document.getElementById('hm-count-input');
   const timeSel = document.getElementById('hm-time-select');
   hangmanTimeLimit = parseInt(timeSel.value);
-  const count = countSel.value==='all'?hangmanWords.length:Math.min(parseInt(countSel.value),hangmanWords.length);
-  // Solo: compute player queue
+
+  let pool = hmSelectedCat === 'all' ? wordDB : wordDB.filter(w => w.category === hmSelectedCat);
+  if(pool.length === 0) { alert('Nincs szó ebben a kategóriában!'); return; }
+
+  const fresh = pool.filter(w => !usedHangmanWordIds.has(w.id));
+  const effectivePool = fresh.length > 0 ? fresh : pool;
+
+  const requestedCount = Math.max(1, Math.min(parseInt(countInput?.value||5), 50));
+  const count = Math.min(requestedCount, effectivePool.length);
+
   if(hangmanMode === 'solo') {
     const activePlayers = Object.entries(players).filter(([id,p]) => p.status==='active');
     const shuffledPlayers = [...activePlayers].sort(()=>Math.random()-0.5);
@@ -2471,31 +2600,25 @@ function startHangmanGame() {
     hmPlayerQueue = [];
   }
   hmCurrentAssignedPid = null; hmCurrentAssignedName = '';
-  hmHintsUsed = 0; hmCurrentHint = null; hmHintProcessed = new Set();
-  // Shuffle and slice
-  const shuffled = [...hangmanWords].sort(()=>Math.random()-0.5);
+  hmHintsUsed = 0; hmCurrentHint1 = null; hmCurrentHint2 = null; hmHintProcessed = new Set();
+
+  const shuffled = [...effectivePool].sort(()=>Math.random()-0.5);
   hangmanActiveWords = shuffled.slice(0, count);
   hangmanWordIndex = -1;
   closeHangmanModal();
-  // Hide quiz buttons, show hangman buttons
   document.getElementById('btn-start').classList.add('hidden');
   document.getElementById('btn-teams').classList.add('hidden');
   document.getElementById('btn-hangman').classList.add('hidden');
   document.getElementById('btn-hm-end').classList.remove('hidden');
-  // Show hangman stage
   document.getElementById('waiting-state').classList.add('hidden');
   document.getElementById('question-state').classList.add('hidden');
   document.getElementById('hangman-state').classList.remove('hidden');
 
-  // Bevezető animáció: hangman-intro phase → játékosok látják a sztorit
-  // Az animáció ~16s → utána indul a játék automatikusan
-  const INTRO_DURATION = 16500; // ms — 3 phrase × (5s + 0.6s gap) + 0.8s bg fadein + 0.9s fadeout
+  const INTRO_DURATION = 16500;
   if(db) {
     roomRef.child('gameState').set({phase: 'hangman-intro'});
   }
-  // Host: visszaszámláló megjelenítése
   showHangmanIntroCountdownHost(INTRO_DURATION);
-  // Játék indítása automatikusan az intro után
   setTimeout(() => {
     nextHangmanWord();
   }, INTRO_DURATION);
@@ -2512,9 +2635,12 @@ function nextHangmanWord() {
   hmLastGuessers = {};
   hmHintProcessed = new Set();
   hmHintsUsed = 0;
-  hmCurrentHint = entry.hint || null;
+  hmCurrentHint1 = entry.hint1 || entry.hint || null;
+  hmCurrentHint2 = entry.hint2 || null;
   hmRoundPhase = 'active';
   hangmanTimerValue = hangmanTimeLimit;
+  // Mark word as used this session
+  if(entry.id) usedHangmanWordIds.add(entry.id);
   // Solo: assign player
   if(hangmanMode === 'solo' && hmPlayerQueue.length > 0) {
     const assigned = hmPlayerQueue[hangmanWordIndex % hmPlayerQueue.length];
@@ -2530,7 +2656,8 @@ function nextHangmanWord() {
     mode: hangmanMode,
     word: entry.word,
     category: entry.category,
-    hint: hmCurrentHint,
+    hint1: hmCurrentHint1,
+    hint2: hmCurrentHint2,
     guessedLetters: {},
     wrongLetters: {},
     timeLimit: hangmanTimeLimit,
@@ -2822,9 +2949,10 @@ function processHangmanHintRequest(pid, playerName) {
   const penaltyKey = '_H' + hmHintsUsed;
   hmWrongLetters[penaltyKey] = true;
   let hintReveal = null;
-  // 1. segítség: hint szöveg ha van, különben véletlen betű
-  if(hmHintsUsed === 1 && hmCurrentHint) {
-    hintReveal = { type: 'text', value: hmCurrentHint };
+  // Use hint1 for first request, hint2 for second; fallback to letter reveal
+  const textHint = hmHintsUsed === 1 ? hmCurrentHint1 : hmCurrentHint2;
+  if(textHint) {
+    hintReveal = { type: 'text', value: textHint };
   } else {
     // Véletlen nem kitalált betű felfedése
     const unguessed = [...new Set(entry.word.split('').filter(l => l !== ' ' && !hmGuessedLetters[l]))];
@@ -2847,8 +2975,6 @@ function processHangmanHintRequest(pid, playerName) {
     const solved = entry.word.split('').every(l => l === ' ' || hmGuessedLetters[l]);
     if(solved) { revealHangmanWord(false, true); return; }
   }
-  // 6 hiba = veszített
-  // Total failures = real wrong letters + penalty keys
   if(Object.keys(hmWrongLetters).length >= 6) { revealHangmanWord(false, false, true); return; }
   renderHangmanStageHost(entry.word, entry.category, hmGuessedLetters, hmWrongLetters, false, hangmanWordIndex, hangmanActiveWords.length);
   updateScoreboard();
@@ -3027,52 +3153,31 @@ function closeChangelog() {
 
 <!-- HANGMAN MODAL -->
 <div class="modal-overlay hidden" id="hangman-modal" onclick="if(event.target===this)closeHangmanModal()">
-  <div class="modal" style="max-width:600px;max-height:88vh;display:flex;flex-direction:column;">
-    <h3>🔤 AKASZTÓFA BEÁLLÍTÁS</h3>
+  <div class="modal" style="max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+    <h3>🔤 AKASZTÓFA INDÍTÁSA</h3>
 
-    <!-- Import section -->
-    <div style="margin-bottom:14px;">
-      <div class="modal-field" style="margin-bottom:8px;">
-        <label>Szólista importálása (JSON)</label>
-        <div style="font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-family:monospace;white-space:pre;overflow-x:auto;">[
-  {"word": "DÁVID", "category": "Bibliai — Személy", "hint": "Ő volt Góliát legyőzője"},
-  {"word": "BETLEHEM", "category": "Bibliai — Helység"},
-  {"word": "JERUZSÁLEM", "category": "Bibliai — Helység", "hint": "Salamon temploma itt állt"}
-]</div>
-        <textarea id="hm-import-ta" rows="5" style="font-family:monospace;font-size:11px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);outline:none;resize:vertical;" placeholder="Ide illeszd be a JSON-t..."></textarea>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn-save" style="flex:1;padding:9px;font-size:13px;" onclick="importHangmanWords()">⬆ Importálás</button>
-        <button class="btn-cancel-form" style="padding:9px 14px;" onclick="clearHangmanWords()">🗑 Mind törlése</button>
-      </div>
-    </div>
-
-    <!-- Word list preview -->
-    <div style="flex:1;overflow-y:auto;margin-bottom:14px;max-height:200px;border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--bg);">
-      <div id="hm-modal-word-list"></div>
-    </div>
-
-    <!-- Import guide update: hint field info -->
-    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;">
-      💡 A <code style="color:var(--accent);">"hint"</code> mező opcionális — ha megadod, az első segítség kéréskor ez jelenik meg a játékosnál. Ha hiányzik, egy véletlen betűt fed fel a rendszer.
+    <!-- Category selector -->
+    <div class="modal-field" style="margin-bottom:12px;">
+      <label>Szó kategória</label>
+      <div id="hm-cat-grid" style="min-height:40px;"></div>
     </div>
 
     <!-- Mode selector -->
     <div class="modal-field" style="margin-bottom:14px;">
       <label>Játékmód</label>
       <div style="display:flex;gap:8px;">
-        <button id="hm-mode-coop" class="btn-save" style="flex:1;padding:9px;font-size:13px;" onclick="setHangmanMode('coop')">🤝 Kooperatív</button>
-        <button id="hm-mode-solo" class="btn-cancel-form" style="flex:1;padding:9px;font-size:13px;" onclick="setHangmanMode('solo')">🎯 Solo kör</button>
+        <button id="hm-mode-coop" class="btn-save" style="flex:1;padding:9px;font-size:13px;" onclick="setHangmanMode('coop')">Kooperatív</button>
+        <button id="hm-mode-solo" class="btn-cancel-form" style="flex:1;padding:9px;font-size:13px;" onclick="setHangmanMode('solo')">Solo kör</button>
       </div>
       <div id="hm-mode-info" style="font-size:11px;color:var(--muted);margin-top:7px;padding:7px 10px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
-        Kooperatív: minden játékos együtt tippeléhet minden szónál.
+        Kooperatív: minden játékos együtt tippelhet minden szónál.
       </div>
     </div>
 
     <!-- Config -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
       <div class="modal-field" style="margin:0;">
-        <label>Időkorlát körönként</label>
+        <label>Időkorlát / szó</label>
         <select id="hm-time-select" onchange="updateHangmanStartInfo()">
           <option value="30">30 másodperc</option>
           <option value="60" selected>1 perc</option>
@@ -3081,13 +3186,16 @@ function closeChangelog() {
         </select>
       </div>
       <div class="modal-field" style="margin:0;">
-        <label>Körök száma</label>
-        <select id="hm-count-select" onchange="updateHangmanStartInfo()">
-          <option value="3">3 szó</option>
-          <option value="5" selected>5 szó</option>
-          <option value="10">10 szó</option>
-          <option value="all">Mind (összes)</option>
-        </select>
+        <label>Szavak száma</label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" id="hm-count-input" min="1" max="50" value="5"
+            style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-family:var(--font-display);font-size:20px;text-align:center;outline:none;width:60px;"
+            oninput="clampHMCount();updateHangmanStartInfo()">
+          <div style="flex:1;">
+            <div style="font-size:10px;color:var(--muted);">max: <span id="hm-max-words">0</span></div>
+            <button onclick="setHMCountAll()" style="font-size:10px;padding:3px 7px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:5px;cursor:pointer;white-space:nowrap;">Mind</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -3140,6 +3248,432 @@ function closeChangelog() {
     </div>
   </div>
 </div>
+
+<!-- WORD DB IMPORT MODAL -->
+<div class="modal-overlay hidden" id="wdb-import-modal" onclick="if(event.target===this)closeWdbImportModal()">
+  <div class="modal" style="max-width:560px;">
+    <h3>⬆ SZÓ IMPORTÁLÁS</h3>
+    <div style="font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;line-height:1.8;white-space:pre-wrap;font-family:monospace;">[
+  {"word":"DÁVID","category":"Bibliai","hint1":"Király volt Izraelben","hint2":"Ő győzte le Góliátot"},
+  {"word":"BETLEHEM","category":"Bibliai","hint1":"Jézus születési helye"},
+  {"word":"MÁTRIX","category":"Filmek","hint2":"A főszereplő neve Neo"}
+]
+
+word: kötelező, min. 2 karakter (auto NAGYBETŰ)
+category: kategória neve — ha nem létezik, automatikusan létrejön
+hint1, hint2: opcionális segítségek</div>
+    <div class="modal-field">
+      <textarea id="wdb-import-ta" rows="8" style="font-family:monospace;font-size:11px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);outline:none;resize:vertical;" placeholder="Ide illeszd be a JSON-t..."></textarea>
+    </div>
+    <div style="display:flex;gap:9px;">
+      <button class="btn-save" style="flex:1;" onclick="doWdbImport()">⬆ Importálás</button>
+      <button class="btn-cancel-form" onclick="closeWdbImportModal()">Mégse</button>
+    </div>
+  </div>
+</div>
+
+<!-- COLOR PICKER MODAL -->
+<div class="modal-overlay hidden" id="wdb-color-picker-modal" onclick="if(event.target===this)closeWdbColorPicker()">
+  <div class="modal" style="max-width:380px;">
+    <h3 style="font-size:20px;">Kategória színe</h3>
+    <div id="wdb-color-picker-title" style="font-size:13px;color:var(--muted);margin-bottom:16px;"></div>
+    <div class="color-swatch-grid" id="wdb-color-swatch-grid" style="margin-bottom:20px;"></div>
+    <div style="display:flex;gap:9px;">
+      <button class="btn-save" style="flex:1;" onclick="saveWdbCatColor()">✓ Mentés</button>
+      <button class="btn-cancel-form" onclick="closeWdbColorPicker()">Mégse</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// PANEL TAB SWITCHING
+// ============================================================
+function switchPanelTab(tab) {
+  ['questions','worddb'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('tabcontent-'+t).classList.toggle('active', t===tab);
+  });
+}
+
+// ============================================================
+// SZÓ ADATBÁZIS — RENDER
+// ============================================================
+function wdbGetCatColor(catName) {
+  const cat = Object.values(wordDBCategories).find(c => c.name === catName);
+  return cat ? cat.color : '#6b6b8a';
+}
+
+function renderWordDB() {
+  renderWdbCatFilter();
+  renderWdbWordList();
+  renderWdbCatManager();
+  updateWdbCatDatalist();
+  const badge = document.getElementById('wdb-word-count');
+  if(badge) badge.textContent = wordDB.length + ' szó';
+}
+
+function updateWdbCatDatalist() {
+  const dl = document.getElementById('wdb-cat-datalist');
+  if(!dl) return;
+  const cats = Object.values(wordDBCategories).sort((a,b) => a.name.localeCompare(b.name, 'hu'));
+  dl.innerHTML = cats.map(c => `<option value="${htmlEsc(c.name)}">`).join('');
+}
+
+function renderWdbCatFilter() {
+  const el = document.getElementById('wdb-cat-filter');
+  if(!el) return;
+  const cats = Object.values(wordDBCategories).sort((a,b) => a.name.localeCompare(b.name, 'hu'));
+  const totalCount = wordDB.length;
+  const isAllActive = wdbFilterCat === 'all';
+  let html = `<span class="wdb-cat-chip${isAllActive?' active':''}" onclick="setWdbFilter('all')"
+    style="${isAllActive?'background:var(--muted);color:#000;border-color:var(--muted);':''}">Mind (${totalCount})</span>`;
+  cats.forEach(cat => {
+    const cnt = wordDB.filter(w => w.category === cat.name).length;
+    const color = cat.color || '#888';
+    const isActive = wdbFilterCat === cat.name;
+    html += `<span class="wdb-cat-chip${isActive?' active':''}" onclick="setWdbFilter(${JSON.stringify(cat.name)})"
+      style="${isActive ? `background:${color}22;color:${color};border-color:${color};` : `border-color:${color}44;color:${color};`}">
+      ${htmlEsc(cat.name)} (${cnt})
+    </span>`;
+  });
+  el.innerHTML = html;
+}
+
+function setWdbFilter(cat) {
+  wdbFilterCat = cat;
+  renderWdbCatFilter();
+  renderWdbWordList();
+}
+
+function setWdbSearch(val) {
+  wdbSearchTerm = val.toLowerCase().trim();
+  renderWdbWordList();
+}
+
+function renderWdbWordList() {
+  const el = document.getElementById('wdb-word-list');
+  if(!el) return;
+  let filtered = wdbFilterCat === 'all' ? wordDB : wordDB.filter(w => w.category === wdbFilterCat);
+  if(wdbSearchTerm) {
+    filtered = filtered.filter(w =>
+      w.word.toLowerCase().includes(wdbSearchTerm) ||
+      (w.hint1||'').toLowerCase().includes(wdbSearchTerm) ||
+      (w.hint2||'').toLowerCase().includes(wdbSearchTerm)
+    );
+  }
+  if(filtered.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">${wordDB.length===0?'Még nincs szó. Adj hozzá egyet, vagy importálj!':'Nincs találat a keresési feltételekre.'}</div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(w => {
+    const color = wdbGetCatColor(w.category);
+    const isUsed = usedHangmanWordIds.has(w.id);
+    return `<div class="wdb-card${isUsed?' wdb-used':''}" id="wdbcard-${w.id}" style="border-left-color:${color};">
+      <div class="wdb-actions">
+        <button class="q-btn-sm q-btn-edit" onclick="openWdbEdit(${JSON.stringify(w.id)})">✎</button>
+        <button class="q-btn-sm q-btn-del" onclick="deleteWdbWord(${JSON.stringify(w.id)})">✕</button>
+      </div>
+      <div class="wdb-card-word">${htmlEsc(w.word)}${isUsed?' <span style="font-size:9px;color:var(--muted);font-family:var(--font-body);letter-spacing:0;font-weight:400;">kijátszott</span>':''}</div>
+      <div><span class="wdb-card-cat" style="background:${color}20;color:${color};border:1px solid ${color}40;">${htmlEsc(w.category)}</span></div>
+      <div class="wdb-card-hints">
+        ${w.hint1 ? `<span style="color:var(--blue);">1:</span> ${htmlEsc(w.hint1)}<br>` : ''}
+        ${w.hint2 ? `<span style="color:var(--blue);">2:</span> ${htmlEsc(w.hint2)}` : ''}
+        ${!w.hint1 && !w.hint2 ? '<span style="color:var(--border);">Nincs segítség</span>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── WORD CRUD ────────────────────────────────────────────────
+function showWdbNewForm() {
+  wdbEditWordId = null;
+  document.getElementById('wdb-form-title').textContent = 'Új szó hozzáadása';
+  document.getElementById('wdb-form-word').value = '';
+  document.getElementById('wdb-form-cat').value = wdbFilterCat !== 'all' ? wdbFilterCat : '';
+  document.getElementById('wdb-form-hint1').value = '';
+  document.getElementById('wdb-form-hint2').value = '';
+  const form = document.getElementById('wdb-add-form');
+  form.classList.remove('hidden');
+  document.getElementById('wdb-panel-content').scrollTop = 0;
+  setTimeout(() => document.getElementById('wdb-form-word').focus(), 50);
+}
+
+function hideWdbForm() {
+  wdbEditWordId = null;
+  document.getElementById('wdb-add-form').classList.add('hidden');
+}
+
+function openWdbEdit(id) {
+  const w = wordDB.find(x => x.id === id);
+  if(!w) return;
+  wdbEditWordId = id;
+  document.getElementById('wdb-form-title').textContent = 'Szó szerkesztése';
+  document.getElementById('wdb-form-word').value = w.word;
+  document.getElementById('wdb-form-cat').value = w.category;
+  document.getElementById('wdb-form-hint1').value = w.hint1 || '';
+  document.getElementById('wdb-form-hint2').value = w.hint2 || '';
+  const form = document.getElementById('wdb-add-form');
+  form.classList.remove('hidden');
+  form.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function saveWdbWord() {
+  const wordRaw = document.getElementById('wdb-form-word').value.trim().toUpperCase();
+  const cat = document.getElementById('wdb-form-cat').value.trim();
+  const hint1 = document.getElementById('wdb-form-hint1').value.trim();
+  const hint2 = document.getElementById('wdb-form-hint2').value.trim();
+  if(!wordRaw || wordRaw.length < 2) { alert('A szónak legalább 2 karakteresnek kell lennie!'); return; }
+  if(!cat) { alert('Add meg a kategóriát!'); return; }
+
+  const data = { word: wordRaw, category: cat };
+  if(hint1) data.hint1 = hint1;
+  if(hint2) data.hint2 = hint2;
+
+  wdbEnsureCategory(cat);
+
+  if(wdbEditWordId) {
+    if(db) {
+      // Clear existing hint fields before update (handles deletion of hints)
+      roomRef.child('hangmanWordDB').child(wdbEditWordId).set(data);
+    } else {
+      const idx = wordDB.findIndex(x => x.id === wdbEditWordId);
+      if(idx >= 0) wordDB[idx] = {...data, id: wdbEditWordId};
+      renderWordDB();
+    }
+  } else {
+    if(db) roomRef.child('hangmanWordDB').push(data);
+    else { wordDB.push({...data, id:'w'+Date.now()}); renderWordDB(); }
+  }
+  hideWdbForm();
+}
+
+function deleteWdbWord(id) {
+  const w = wordDB.find(x => x.id === id);
+  if(!w || !confirm(`Törlöd: "${w.word}"?`)) return;
+  if(db) roomRef.child('hangmanWordDB').child(id).remove();
+  else { wordDB = wordDB.filter(x => x.id !== id); renderWordDB(); }
+}
+
+// ── CATEGORY HELPERS ─────────────────────────────────────────
+function wdbEnsureCategory(catName) {
+  if(!catName || !catName.trim()) return;
+  const exists = Object.values(wordDBCategories).some(c => c.name === catName);
+  if(!exists) {
+    const usedColors = Object.values(wordDBCategories).map(c => c.color);
+    const availColors = WDB_COLORS.filter(c => !usedColors.includes(c));
+    const color = availColors.length > 0
+      ? availColors[Math.floor(Math.random() * availColors.length)]
+      : WDB_COLORS[Math.floor(Math.random() * WDB_COLORS.length)];
+    if(db) roomRef.child('hangmanWordCategories').push({name: catName, color});
+    else {
+      const id = 'cat_' + Date.now();
+      wordDBCategories[id] = {name: catName, color};
+    }
+  }
+}
+
+// ── CATEGORY MANAGER ─────────────────────────────────────────
+function renderWdbCatManager() {
+  const el = document.getElementById('wdb-cat-manager-list');
+  if(!el) return;
+  const cats = Object.entries(wordDBCategories).sort((a,b) => a[1].name.localeCompare(b[1].name, 'hu'));
+  if(cats.length === 0) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px;">Még nincs kategória. Adj hozzá egy szót!</div>';
+    return;
+  }
+  el.innerHTML = cats.map(([catId, cat]) => {
+    const wordCount = wordDB.filter(w => w.category === cat.name).length;
+    const color = cat.color || '#888';
+    const isEditing = wdbEditCatId === catId;
+    if(isEditing) {
+      return `<div class="wdb-cat-manager-row" id="wdbcatrow-${catId}">
+        <div style="width:16px;height:16px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+        <input id="wdb-cat-edit-name-${catId}" value="${htmlEsc(cat.name)}" class="form-input" style="flex:1;padding:5px 8px;font-size:12px;margin:0;"
+          onkeydown="if(event.key==='Enter')saveWdbCatEdit('${catId}');if(event.key==='Escape')cancelWdbCatEdit()">
+        <button style="padding:4px 8px;background:var(--green);color:#000;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;" onclick="saveWdbCatEdit('${catId}')">✓</button>
+        <button style="padding:4px 8px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:5px;font-size:11px;cursor:pointer;" onclick="cancelWdbCatEdit()">✕</button>
+      </div>`;
+    }
+    return `<div class="wdb-cat-manager-row" id="wdbcatrow-${catId}">
+      <div style="width:16px;height:16px;border-radius:50%;background:${color};flex-shrink:0;cursor:pointer;border:2px solid ${color}99;" onclick="openWdbCatColorPicker('${catId}')" title="Szín módosítása"></div>
+      <span style="flex:1;font-size:13px;font-weight:600;color:${color};">${htmlEsc(cat.name)}</span>
+      <span style="font-size:11px;color:var(--muted);margin-right:6px;">${wordCount} szó</span>
+      <button class="q-btn-sm q-btn-edit" onclick="startWdbCatEdit('${catId}')" title="Átnevezés">✎</button>
+      <button class="q-btn-sm" style="background:rgba(62,207,142,0.12);color:var(--green);" onclick="exportWdbCat('${catId}')" title="Export">⬇</button>
+      <button class="q-btn-sm q-btn-del" onclick="deleteWdbCat('${catId}')" title="Törlés">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function toggleWdbCatManager() {
+  wdbCatManagerVisible = !wdbCatManagerVisible;
+  const el = document.getElementById('wdb-cat-manager');
+  if(el) el.classList.toggle('hidden', !wdbCatManagerVisible);
+  const btn = document.getElementById('wdb-cat-manager-btn');
+  if(btn) btn.textContent = wdbCatManagerVisible ? 'Kategóriák bezárása ▲' : 'Kategóriák kezelése ▶';
+}
+
+function startWdbCatEdit(catId) {
+  wdbEditCatId = catId;
+  renderWdbCatManager();
+  setTimeout(() => {
+    const inp = document.getElementById('wdb-cat-edit-name-' + catId);
+    if(inp){ inp.focus(); inp.select(); }
+  }, 30);
+}
+
+function cancelWdbCatEdit() {
+  wdbEditCatId = null;
+  renderWdbCatManager();
+}
+
+function saveWdbCatEdit(catId) {
+  const inp = document.getElementById('wdb-cat-edit-name-' + catId);
+  if(!inp){ cancelWdbCatEdit(); return; }
+  const newName = inp.value.trim();
+  const oldName = wordDBCategories[catId]?.name;
+  wdbEditCatId = null;
+  if(!newName || newName === oldName){ renderWdbCatManager(); return; }
+  const dupExists = Object.entries(wordDBCategories).some(([id,c]) => id !== catId && c.name === newName);
+  if(dupExists){ alert('Ez a kategória név már létezik!'); renderWdbCatManager(); return; }
+  if(db) roomRef.child('hangmanWordCategories').child(catId).child('name').set(newName);
+  else if(wordDBCategories[catId]) { wordDBCategories[catId].name = newName; }
+  // Update all words with old category name
+  const toUpdate = wordDB.filter(w => w.category === oldName);
+  toUpdate.forEach(w => {
+    if(db) roomRef.child('hangmanWordDB').child(w.id).child('category').set(newName);
+    else { const idx=wordDB.findIndex(x=>x.id===w.id); if(idx>=0) wordDB[idx].category=newName; }
+  });
+  if(wdbFilterCat === oldName) wdbFilterCat = newName;
+  if(!db) renderWordDB();
+}
+
+function deleteWdbCat(catId) {
+  const cat = wordDBCategories[catId];
+  if(!cat) return;
+  const wordCount = wordDB.filter(w => w.category === cat.name).length;
+  const msg = wordCount > 0
+    ? `Törlöd a(z) "${cat.name}" kategóriát és a benne lévő ${wordCount} szót?`
+    : `Törlöd a(z) "${cat.name}" kategóriát?`;
+  if(!confirm(msg)) return;
+  wordDB.filter(w => w.category === cat.name).forEach(w => {
+    if(db) roomRef.child('hangmanWordDB').child(w.id).remove();
+    else wordDB = wordDB.filter(x => x.id !== w.id);
+  });
+  if(db) roomRef.child('hangmanWordCategories').child(catId).remove();
+  else { delete wordDBCategories[catId]; renderWordDB(); }
+  if(wdbFilterCat === cat.name) wdbFilterCat = 'all';
+}
+
+function exportWdbCat(catId) {
+  const cat = wordDBCategories[catId];
+  if(!cat) return;
+  const words = wordDB.filter(w => w.category === cat.name);
+  wdbDownloadWords(words, cat.name);
+}
+
+function wdbExportAll() {
+  const cat = wdbFilterCat !== 'all' ? wdbFilterCat : null;
+  const words = cat ? wordDB.filter(w => w.category === cat) : wordDB;
+  wdbDownloadWords(words, cat || 'osszes-szo');
+}
+
+function wdbDownloadWords(words, filename) {
+  const data = JSON.stringify(words.map(w => ({
+    word: w.word,
+    category: w.category,
+    hint1: w.hint1 || '',
+    hint2: w.hint2 || ''
+  })), null, 2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data], {type:'application/json'}));
+  a.download = (filename||'szo-adatbazis').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-_]/g,'') + '.json';
+  a.click();
+}
+
+// ── COLOR PICKER ─────────────────────────────────────────────
+function openWdbCatColorPicker(catId) {
+  const cat = wordDBCategories[catId];
+  if(!cat) return;
+  wdbColorPickerCatId = catId;
+  wdbSelectedColor = cat.color || '#888';
+  document.getElementById('wdb-color-picker-title').textContent = 'Kategória: ' + cat.name;
+  renderWdbColorPicker();
+  document.getElementById('wdb-color-picker-modal').classList.remove('hidden');
+}
+
+function renderWdbColorPicker() {
+  const grid = document.getElementById('wdb-color-swatch-grid');
+  if(!grid) return;
+  grid.innerHTML = WDB_COLORS.map(c =>
+    `<div class="color-swatch${wdbSelectedColor===c?' selected':''}" style="background:${c};" onclick="wdbPickColor('${c}')"></div>`
+  ).join('');
+}
+
+function wdbPickColor(color) {
+  wdbSelectedColor = color;
+  renderWdbColorPicker();
+}
+
+function saveWdbCatColor() {
+  if(!wdbColorPickerCatId || !wdbSelectedColor) return;
+  if(db) roomRef.child('hangmanWordCategories').child(wdbColorPickerCatId).child('color').set(wdbSelectedColor);
+  else if(wordDBCategories[wdbColorPickerCatId]) {
+    wordDBCategories[wdbColorPickerCatId].color = wdbSelectedColor;
+    renderWordDB();
+  }
+  closeWdbColorPicker();
+}
+
+function closeWdbColorPicker() {
+  document.getElementById('wdb-color-picker-modal').classList.add('hidden');
+  wdbColorPickerCatId = null;
+}
+
+// ── IMPORT ───────────────────────────────────────────────────
+function openWdbImportModal() {
+  document.getElementById('wdb-import-modal').classList.remove('hidden');
+  document.getElementById('wdb-import-ta').value = '';
+}
+
+function closeWdbImportModal() {
+  document.getElementById('wdb-import-modal').classList.add('hidden');
+}
+
+function doWdbImport() {
+  const raw = document.getElementById('wdb-import-ta').value.trim();
+  if(!raw){ alert('Kérlek illeszd be a JSON-t!'); return; }
+  try {
+    const parsed = JSON.parse(raw);
+    if(!Array.isArray(parsed)) throw new Error('Tömbnek kell lennie [ ... ]');
+    let added = 0;
+    const errors = [];
+    const newCats = new Set();
+    parsed.forEach((item, i) => {
+      if(!item.word || typeof item.word !== 'string') { errors.push('Sor '+(i+1)+': hiányzó word mező'); return; }
+      const word = item.word.trim().toUpperCase();
+      if(word.length < 2) { errors.push('Sor '+(i+1)+': túl rövid szó'); return; }
+      const category = (item.category||'Általános').trim();
+      const hint1 = (item.hint1||item.hint||'').trim() || undefined;
+      const hint2 = (item.hint2||'').trim() || undefined;
+      const data = { word, category };
+      if(hint1) data.hint1 = hint1;
+      if(hint2) data.hint2 = hint2;
+      if(db) roomRef.child('hangmanWordDB').push(data);
+      else { wordDB.push({...data, id:'w'+Date.now()+'_'+Math.random().toString(36).substr(2,4)}); }
+      newCats.add(category);
+      added++;
+    });
+    newCats.forEach(catName => wdbEnsureCategory(catName));
+    if(!db) renderWordDB();
+    closeWdbImportModal();
+    alert(errors.length > 0
+      ? `✅ ${added} szó importálva.\n\n⚠️ ${errors.length} hiba:\n${errors.join('\n')}`
+      : `✅ ${added} szó sikeresen importálva!`);
+  } catch(e) { alert('❌ Import hiba: '+e.message); }
+}
+</script>
 
 </body>
 </html>
