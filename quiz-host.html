@@ -490,7 +490,7 @@
   .hm-intro-overlay {
     position:absolute; inset:0; display:flex; flex-direction:column;
     align-items:center; justify-content:center; gap:14px;
-    background:rgba(10,10,15,0.92); border-radius:12px; z-index:10;
+    background:var(--bg); border-radius:12px; z-index:10;
   }
   .hm-intro-overlay.hidden { display:none !important; }
   .hm-intro-countdown-ring { position:relative; width:72px; height:72px; flex-shrink:0; }
@@ -1991,7 +1991,8 @@ function newGame() {
   hangmanMode = 'coop'; hmPlayerQueue = []; hmCurrentAssignedPid = null; hmCurrentAssignedName = '';
   hmHintsUsed = 0; hmCurrentHint1 = null; hmCurrentHint2 = null; hmHintProcessed = new Set();
   hmPlayerResults = {};
-  usedHangmanWordIds = new Set();
+  // usedHangmanWordIds szándékosan NEM nullázódik itt — session-szinten tároljuk,
+  // hogy minden újraindítás alkalmával más szavak kerüljenek kiosztásra.
   // Blokus reset
   blokusActive = false;
   blokusBoard = null;
@@ -2790,10 +2791,29 @@ function startHangmanGame() {
   document.getElementById('question-state').classList.add('hidden');
   document.getElementById('hangman-state').classList.remove('hidden');
 
-  const INTRO_DURATION = 16500;
+  // Előző kör megmaradt tartalmának törlése — megelőzi, hogy az intro mögött
+  // a régi szótáblák / élet-ikonok átüssenek a (most már teljesen átlátszatlan) overlay alatt.
+  ['hm-word-row','hm-wrong-row','hm-lives','hm-gallows-wrap',
+   'hm-result-banner','hm-guessers-row'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = '';
+  });
+  const hmHintsEl = document.getElementById('hm-hints-host');
+  if(hmHintsEl) hmHintsEl.textContent = '';
+  const hmAssignEl = document.getElementById('hm-assignment-host');
+  if(hmAssignEl) { hmAssignEl.textContent = ''; hmAssignEl.style.display = 'none'; }
+  const hmCatEl = document.getElementById('hm-cat-tag');
+  if(hmCatEl) hmCatEl.textContent = '—';
+  const hmRoundEl = document.getElementById('hm-round-label');
+  if(hmRoundEl) hmRoundEl.textContent = '';
+  const hmTimerBarEl = document.getElementById('hm-timer-bar');
+  if(hmTimerBarEl) { hmTimerBarEl.style.width = '100%'; hmTimerBarEl.classList.remove('urgent'); }
+  const hmTimerDispEl = document.getElementById('hm-timer-display');
+  if(hmTimerDispEl) { hmTimerDispEl.textContent = '—'; hmTimerDispEl.classList.remove('urgent'); }
   if(db) {
     roomRef.child('gameState').set({phase: 'hangman-intro'});
   }
+  const INTRO_DURATION = 16500;
   showHangmanIntroCountdownHost(INTRO_DURATION);
   setTimeout(() => {
     nextHangmanWord();
@@ -2894,7 +2914,8 @@ function processHangmanGuess(letter, pid, playerName) {
     hmGuessedLetters[letter] = true;
     pts = 1;
     // Check if word is now solved
-    const solved = wordLetters.every(l => hmGuessedLetters[l]);
+    // Szóközöket kihagyjuk a kitalálás ellenőrzésénél (összetett szavak: "Mátyás király")
+    const solved = wordLetters.every(l => l === ' ' || hmGuessedLetters[l]);
     if(solved){ pts = 4; } // +3 bónusz az utolsó betűért
     // Award points
     if(players[pid]){
@@ -2924,7 +2945,7 @@ function revealHangmanWord(fromTimer=false, solved=false, failed=false) {
   if(!entry) return;
   // Reveal all letters
   entry.word.split('').forEach(l=>{ hmGuessedLetters[l]=true; });
-  const isSolved = solved || (!fromTimer && !failed && entry.word.split('').every(l=>hmGuessedLetters[l]));
+  const isSolved = solved || (!fromTimer && !failed && entry.word.split('').every(l => l === ' ' || hmGuessedLetters[l]));
 
   // ── Eredmény rögzítése ─────────────────────────────────────
   if(hangmanMode === 'solo' && hmCurrentAssignedPid) {
@@ -3996,6 +4017,7 @@ function showBlokusResults() {
   document.getElementById('results-full-scoreboard').innerHTML = fh;
 }
 </script>
+<script>
 function switchPanelTab(tab) {
   ['questions','worddb'].forEach(t => {
     document.getElementById('tab-'+t).classList.toggle('active', t===tab);
