@@ -1,0 +1,257 @@
+QuizMaster — Projekt összefoglaló
+Mi ez?
+Egy valós idejű multiplayer kvíz játék (Knowledge is Power ihletésű), amit Firebase Realtime Database-re építettünk. Két fájlból áll: egy host panel és egy játékos oldal.
+
+Technikai stack
+
+Frontend: Pure HTML/CSS/JS (nincs framework)
+Backend: Firebase Realtime Database (Realtime DB, nem Firestore)
+Hosting: GitHub Pages (https://fiokplusz004-tech.github.io/Kvizmester/)
+PWA: manifest.json + sw.js + ikonok (Android Chrome + iOS Safari)
+Betűtípusok: Bebas Neue (display) + DM Sans (body)
+
+
+Firebase adatok
+jsconst FIREBASE_CONFIG = {
+  apiKey:      "AIzaSyDCGdJWQg98bgLKI9GfAnqysd1L3M-Y5ic",
+  authDomain:  "kvizmester-50358.firebaseapp.com",
+  databaseURL: "https://kvizmester-50358-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:   "kvizmester-50358",
+};
+const DEFAULT_ROOM = "kvizjatek";
+
+Fájlstruktúra GitHubon
+Kvizmester/
+├── quiz-host.html
+├── quiz-player.html
+├── manifest.json
+├── sw.js
+└── icons/
+    ├── icon-72.png
+    ├── icon-96.png
+    ├── icon-128.png
+    ├── icon-144.png
+    ├── icon-152.png
+    ├── icon-192.png
+    ├── icon-384.png
+    └── icon-512.png
+
+Firebase adatbázis struktúra
+rooms/
+  kvizjatek/
+    gameState/
+      phase: 'waiting' | 'question' | 'revealed' | 'ended'
+      questionIndex: number
+      question: { text, options[], category, type, time }
+      correctAnswer: number
+      finalScores: [{ name, score }]
+    players/
+      [playerId]/
+        name: string
+        score: number
+        color: string
+        status: 'lobby' | 'active'
+        joinedAt: timestamp
+    answers/
+      [playerId]/
+        answer: number (0-3)
+        time: timestamp
+        playerName: string
+    questions/
+      [pushId]/
+        text: string
+        options: string[4]
+        correct: number (0=A, 1=B, 2=C, 3=D)
+        category: string
+        type: string
+        time: number
+
+Firebase Rules (jelenleg)
+json{
+  "rules": {
+    "rooms": {
+      "$roomId": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
+
+quiz-host.html — Funkciók
+Felület
+
+3 paneles layout: bal (kérdések) | közép (játékszín) | jobb (pontállás + váróterem)
+Topbar: logo, szoba neve, session timer, + Kérdés / Export / Import gombok
+
+Bal panel — Kérdések
+
+Fa struktúra kategóriánként (kinyitható/csukható)
+Bibliai altípusok: vers, személy, évszám, helység, esemény
+Film altípusok: idézet, személy, évszám, helység, esemény
+Kategória mellett: ⬇ Export és 🗑 Törlés gomb
+Fejlécen: 🗑 Mind törlése gomb
+Inline szerkesztő: a kártya alatt nyílik meg, nem tetején
+Új kérdés form tetején (+ Kérdés gombra)
+Helyes válasz jelölés: zöld körre kattintás (A=1., B=2., C=3., D=4.)
+Kérdés kártyán látszik: kategória, típus badge, idő, helyes válasz betűje
+
+Közép — Játékszín
+
+QR kód + player URL a várakozó képernyőn
+Visszaszámláló (piros ha ≤10 mp)
+Kérdés szövege + 4 válaszkártya
+Válasz statisztika sávok (A/B/C/D hány szavazat)
+Gombok: ▶ JÁTÉK INDÍTÁSA | 👁 MEGOLDÁS | KÖVETKEZŐ → | ■ BEFEJEZÉS
+
+Jobb panel — Váróterem + Pontállás
+
+⏳ VÁRÓTEREM szekció (a pontállás felett):
+
+Listázza a lobby státuszú játékosokat
+✓ Beenged gomb egyenként
+✓ Mindenki beenged gomb
+
+
+Pontállás (csak active státuszú játékosok):
+
+••• (3 pont) menü minden játékosnál → ⏳ Váróterembe | ✕ Kirúgás
+⟳ Nulláz gomb
+
+
+
+Játék indítása modal
+
+Témakör választó (dinamikus, a meglévő kategóriákból)
+Ha Bibliai vagy Film → altípus választó is megjelenik
+Kérdések száma: 5/10/15/20/Mind
+Infó sor: hány elérhető, hány friss, hány játékban
+Váltakozó kiosztás: round-robin a típusok között (vers→személy→évszám→helység→esemény)
+
+Export modal
+
+Kategória szerint szűrhető export
+Kategória melletti ⬇ gombbal is közvetlenül exportálható
+
+Import modal
+
+3 tab: Bibliai | Filmek | Egyéb
+Minden tabhoz mintaszöveg (JSON struktúra)
+correct: 0=A, 1=B, 2=C, 3=D (fentről lefele)
+
+
+quiz-player.html — Képernyők
+1. Főmenü
+
+Nagy QUIZ felirat
+Névbekérő mező (emlékezik előző névre localStorage-ban)
+🎮 ÚJ JÁTÉK gomb
+📖 ÚTMUTATÓ gomb
+
+2. Útmutató képernyő
+
+"Ezt a játékot azért hoztam létre..." bevezető szöveg
+Játékmenet 4 lépésben
+Pontozási táblázat
+PWA telepítési tipp
+
+3. Nem elérhető képernyő
+
+Feltétel: ÚJ JÁTÉK gomb → Firebase gameState node nem létezik → host nincs belépve
+Szöveg: "Jelenleg a játék nem elérhető, kérjük gyere vissza később."
+↺ Újrapróbálás gomb + ← Vissza a főmenübe gomb
+
+4. Váróterem képernyő
+
+Feltétel: host belépett, de a játékos status: 'lobby'
+⏳ ikon + VÁRÓTEREM cím + játékos neve
+"A host hamarosan beenged..." szöveg + töltő animáció
+Játékos lista: mindenki látható badge-dzsel (Te / ✓ Bent / Vár)
+← Vissza a főmenübe gomb
+
+5. Várakozás képernyő
+
+Feltétel: host beengedte (status: 'active')
+Avatár + játékos neve + szoba neve + töltő animáció
+Játékos lista: csak az active státuszú játékosok
+
+6. Játék képernyő
+
+Topbar: pontszám | visszaszámláló gyűrű | helyezés
+Progress dots (hányadik kérdésnél vagyunk)
+Játékosok chip-jei (kinek van már válasza)
+Kérdés + 4 válaszgomb
+Válasz után: "Válasz elküldve! Várakozás..." szöveg
+Megoldásnál: helyes zöld / helytelen piros
+
+7. Eredmény képernyő
+
+Trófea emoji (helyezés szerint)
+Végső pontszám + helyezés
+Teljes ranglista
+
+
+Pontozás
+HelyzetPontHelyes válasz — 1. válaszoló5 ptHelyes válasz — 2. válaszoló4 ptHelyes válasz — 3. válaszoló3 ptHelyes válasz — 4.+ válaszoló2 pt (min)Helytelen válasz1 ptLejárt az idő0 pt
+A delta animáció: zöld (helyes) vagy piros (helytelen).
+
+Váróterem logika (Firebase)
+
+Játékos belép → status: 'lobby' kerül az adatbázisba
+Host látja a váróteremben, beengedi → status: 'active'
+Player oldal figyeli saját status mezőjét:
+
+lobby → váróterem képernyő
+active → várakozás képernyő (majd játék)
+
+
+Játék indításakor csak az active státuszú játékosok kapják a kérdéseket
+Host visszarakhat valakit lobby-ba: ••• menü → Váróterembe
+Oldal frissítéskor a játékos automatikusan lobby-ba kerül
+
+
+Kérdés kategóriák és típusok
+jsconst CATEGORY_TYPES = {
+  'Bibliai': ['vers','személy','évszám','helység','esemény'],
+  'Film':    ['idézet','személy','évszám','helység','esemény'],
+};
+// Többi kategória (Általános, Természet, Történelem, Sport, Tudomány, Zene, Földrajz)
+// → nincs altípus, type = 'egyéb'
+
+JSON import formátum
+json[
+  {
+    "text": "Kérdés szövege?",
+    "options": ["1. válasz", "2. válasz", "3. válasz", "4. válasz"],
+    "correct": 1,
+    "category": "Bibliai",
+    "type": "vers",
+    "time": 30
+  }
+]
+correct: 0=A (1. válasz), 1=B (2. válasz), 2=C (3. válasz), 3=D (4. válasz)
+
+PWA (Progressive Web App)
+
+Android Chrome: automatikus telepítési banner (arany, alul)
+iOS Safari: Megosztás → Főképernyőhöz adás
+manifest.json: start_url és scope teljes URL-lel (iOS kompatibilitás)
+sw.js: Network First HTML-hez, Cache First statikus fájlokhoz, Firebase soha nem cache-elve
+
+
+Ismert korlátok / megjegyzések
+
+A blokkolás Device ID alapú lenne, de ez a funkció bugos volt és törölve lett
+Nincs Firebase Authentication → a rules nyitott (.write: true)
+Ha valaki törli a böngésző adatait, újra beléphet (lobby-ba kerül)
+Az "összes kérdés törlése" nem visszavonható
+Demo mód elérhető (Firebase nélkül, beégetett kérdésekkel)
+
+
+Legutóbbi fejlesztett funkció
+Játékos lista a váróterem és várakozás képernyőkön:
+
+Váróteremben mindenki látható (Te / ✓ Bent / Vár badge)
+Várakozás képernyőn csak az active játékosok
+Valós idejű frissítés
+"← Vissza a főmenübe" gomb a váróteremben
