@@ -452,6 +452,17 @@
   .ctrl-teams:hover { background:#5a8fe0; color:#fff; border-color:#5a8fe0; opacity:1; }
   .ctrl-hangman { background:rgba(224,90,43,0.12); color:#e05a2b; border:1px solid rgba(224,90,43,0.4); }
   .ctrl-hangman:hover { background:#e05a2b; color:#fff; border-color:#e05a2b; opacity:1; }
+  .ctrl-blokus { background:rgba(62,207,142,0.12); color:#3ecf8e; border:1px solid rgba(62,207,142,0.4); }
+  .ctrl-blokus:hover { background:#3ecf8e; color:#000; border-color:#3ecf8e; opacity:1; }
+  /* ── BLOKUS JÁTÉKMÓD ──────────────────────────────────────── */
+  .blokus-state { width:100%;max-width:760px;display:flex;flex-direction:column;align-items:center;gap:10px; }
+  .blokus-host-canvas { display:block;border-radius:4px;cursor:default; }
+  .blokus-player-card { display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:9px;border:2px solid transparent;transition:all 0.3s; }
+  .blokus-player-card.active { box-shadow:0 0 16px rgba(0,0,0,0.4); }
+  .blokus-color-dot { width:16px;height:16px;border-radius:3px;flex-shrink:0; }
+  .blokus-modal-player-row { display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;margin-bottom:6px; }
+  .blokus-color-select { background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-family:var(--font-body);font-size:12px;outline:none;flex-shrink:0;cursor:pointer; }
+  .blokus-color-select:focus { border-color:var(--accent); }
 
   /* ── AKASZTÓFA JÁTÉKMÓD ─────────────────────────────────── */
   .hangman-state { width:100%; max-width:760px; display:flex; flex-direction:column; align-items:center; gap:14px; }
@@ -795,7 +806,16 @@
           <div class="hm-guessers-row" id="hm-guessers-row"></div>
         </div>
       </div>
-      <!-- LAUNCHER PANEL — felfelé csúszik ki -->
+
+      <!-- BLOKUS STATE -->
+      <div class="blokus-state hidden" id="blokus-state">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;max-width:760px;padding:0 4px;">
+          <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);" id="blokus-phase-info">BLOKUS</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="blokus-player-tags"></div>
+        </div>
+        <canvas id="blokus-host-canvas" class="blokus-host-canvas" width="420" height="420"></canvas>
+        <div style="display:flex;gap:10px;width:100%;max-width:760px;flex-wrap:wrap;justify-content:center;" id="blokus-host-stats"></div>
+      </div>
       <div class="launcher-panel" id="launcher-panel">
         <div class="launcher-panel-inner">
           <!-- 1. sor: meglévő játékmódok -->
@@ -803,6 +823,7 @@
             <button class="ctrl-btn ctrl-start" id="btn-start" onclick="openStartModalNormal()">👤 EGYÉNI VERSENY</button>
             <button class="ctrl-btn ctrl-teams" id="btn-teams" onclick="openTeamModal()">👥 CSAPATVERSENY</button>
             <button class="ctrl-btn ctrl-hangman" id="btn-hangman" onclick="openHangmanModal()">🔤 AKASZTÓFA</button>
+            <button class="ctrl-btn ctrl-blokus" id="btn-blokus" onclick="openBlokusModal()">⬛ BLOKUS</button>
           </div>
           <div class="launcher-divider"></div>
           <!-- 2–3. sor: jövőbeli játékmódok -->
@@ -829,6 +850,7 @@
           <button class="ctrl-btn ctrl-reveal hidden" id="btn-hm-reveal" onclick="revealHangmanWord()" style="background:var(--accent2);color:#fff;">👁 MEGOLDÁS</button>
           <button class="ctrl-btn ctrl-next hidden" id="btn-hm-next" onclick="nextHangmanWord()">KÖVETKEZŐ SZÓ →</button>
           <button class="ctrl-btn ctrl-end hidden" id="btn-hm-end" onclick="endHangmanGame()">■ BEFEJEZÉS</button>
+          <button class="ctrl-btn ctrl-end hidden" id="btn-blokus-end" onclick="endBlokusGame()" style="background:var(--red);color:#fff;">■ BLOKUS VÉGE</button>
         </div>
 
         <!-- Windows launcher gomb (csak főmenüben látható) -->
@@ -1291,6 +1313,7 @@ function showMain() {
     roomRef.child('hangmanState').onDisconnect().remove();
     roomRef.child('hangmanHintRequests').onDisconnect().remove();
     roomRef.child('hangmanResults').onDisconnect().remove();
+    roomRef.child('blokusMoves').onDisconnect().remove();
     roomRef.child('gameState').onDisconnect().set({phase:'waiting'});
   }
   try{new QRCode(document.getElementById('qr-code'),{text:playerUrl,width:180,height:180,colorDark:'#000',colorLight:'#fff'});}catch(e){}
@@ -1951,6 +1974,7 @@ function newGame() {
     roomRef.child('hangmanState').remove();
     roomRef.child('hangmanHintRequests').remove();
     roomRef.child('hangmanResults').remove();
+    roomRef.child('blokusMoves').remove();
     // Team módban: csapatpontok nullázása, struktúra megmarad
     if(gameMode==='teams'){
       Object.keys(teams).forEach(tid=>{
@@ -1968,6 +1992,17 @@ function newGame() {
   hmHintsUsed = 0; hmCurrentHint1 = null; hmCurrentHint2 = null; hmHintProcessed = new Set();
   hmPlayerResults = {};
   usedHangmanWordIds = new Set();
+  // Blokus reset
+  blokusActive = false;
+  blokusBoard = null;
+  blokusTurnOrder = [];
+  blokusTurnIndex = 0;
+  blokusRemainingPieces = {};
+  blokusAssignments = {};
+  blokusColorToPlayer = {};
+  blokusPlayerColors = {};
+  blokusFirstMove = {};
+  clearInterval(blokusHostCanvasInterval);
   clearInterval(hangmanTimerInterval);
   clearInterval(_hmIntroCountdownTimer);
   const introOverlay = document.getElementById('hm-intro-overlay');
@@ -1975,8 +2010,9 @@ function newGame() {
   document.getElementById('waiting-state').classList.remove('hidden');
   document.getElementById('question-state').classList.add('hidden');
   document.getElementById('hangman-state').classList.add('hidden');
-  ['btn-start','btn-teams','btn-hangman'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
-  ['btn-reveal','btn-next','btn-end','btn-hm-reveal','btn-hm-next','btn-hm-end'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('blokus-state').classList.add('hidden');
+  ['btn-start','btn-teams','btn-hangman','btn-blokus'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.remove('hidden'); });
+  ['btn-reveal','btn-next','btn-end','btn-hm-reveal','btn-hm-next','btn-hm-end','btn-blokus-end'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add('hidden'); });
   gameToLauncher();
   updateScoreboard();updatePlayerChips();updateVoteMonitor();
 }
@@ -3445,10 +3481,521 @@ hint1, hint2: opcionális segítségek</div>
   </div>
 </div>
 
+<!-- BLOKUS MODAL -->
+<div class="modal-overlay hidden" id="blokus-modal" onclick="if(event.target===this)closeBlokusModal()">
+  <div class="modal" style="max-width:580px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+    <h3>⬛ BLOKUS INDÍTÁSA</h3>
+
+    <div class="modal-field" style="margin-bottom:12px;">
+      <label>Játékosok száma</label>
+      <div style="display:flex;gap:8px;">
+        <button id="blokus-pc-2" class="btn-cancel-form" style="flex:1;padding:9px;font-size:14px;" onclick="setBlokusPlayerCount(2)">2 Játékos</button>
+        <button id="blokus-pc-3" class="btn-cancel-form" style="flex:1;padding:9px;font-size:14px;" onclick="setBlokusPlayerCount(3)">3 Játékos</button>
+        <button id="blokus-pc-4" class="btn-save"        style="flex:1;padding:9px;font-size:14px;" onclick="setBlokusPlayerCount(4)">4 Játékos</button>
+      </div>
+    </div>
+
+    <div id="blokus-player-assign-wrap" style="margin-bottom:12px;flex:1;overflow-y:auto;">
+      <label style="display:block;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Játékos → Szín kiosztás</label>
+      <div id="blokus-assign-list"></div>
+      <div id="blokus-mode-info" style="font-size:11px;color:var(--muted);padding:8px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-top:8px;line-height:1.7;"></div>
+    </div>
+
+    <div id="blokus-modal-info" style="font-size:12px;color:var(--muted);margin-bottom:12px;padding:9px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);line-height:1.7;">
+      Válassz játékos számot a beállításhoz.
+    </div>
+
+    <div style="display:flex;gap:9px;">
+      <button class="btn-save" id="blokus-start-btn" style="flex:1;font-size:15px;padding:13px;" onclick="confirmStartBlokus()">⬛ BLOKUS INDÍTÁSA</button>
+      <button class="btn-cancel-form" onclick="closeBlokusModal()">Mégse</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
-// PANEL TAB SWITCHING
+// BLOKUS JÁTÉKMÓD — Host logika
 // ============================================================
+
+// ── KONSTANSOK ───────────────────────────────────────────────
+// Blokus 21 darab definíciója: minden darab cellalistáját tartalmazza [sor, oszlop]
+// Névkonvenció: F,I1,I2,I3,I4,I5,L4,L5,N,O,P,S,T4,T5,U,V3,V5,W,X,Y,Z
+const BLOKUS_PIECES = {
+  I1: [[0,0]],
+  I2: [[0,0],[0,1]],
+  I3: [[0,0],[0,1],[0,2]],
+  L3: [[0,0],[1,0],[1,1]],
+  I4: [[0,0],[0,1],[0,2],[0,3]],
+  L4: [[0,0],[1,0],[2,0],[2,1]],
+  T4: [[0,0],[0,1],[0,2],[1,1]],
+  S4: [[0,1],[0,2],[1,0],[1,1]],
+  O:  [[0,0],[0,1],[1,0],[1,1]],
+  I5: [[0,0],[0,1],[0,2],[0,3],[0,4]],
+  L5: [[0,0],[1,0],[2,0],[3,0],[3,1]],
+  Y:  [[0,1],[1,0],[1,1],[2,1],[3,1]],
+  N:  [[0,1],[1,0],[1,1],[2,0],[3,0]],
+  T5: [[0,0],[0,1],[0,2],[1,1],[2,1]],
+  U:  [[0,0],[0,2],[1,0],[1,1],[1,2]],
+  V5: [[0,0],[1,0],[2,0],[2,1],[2,2]],
+  W:  [[0,0],[1,0],[1,1],[2,1],[2,2]],
+  X:  [[0,1],[1,0],[1,1],[1,2],[2,1]],
+  P:  [[0,0],[0,1],[1,0],[1,1],[2,0]],
+  F:  [[0,1],[0,2],[1,0],[1,1],[2,1]],
+  Z:  [[0,0],[0,1],[1,1],[1,2],[2,2]],
+};
+const BLOKUS_PIECE_IDS = Object.keys(BLOKUS_PIECES);
+
+// 4 szín konstansai
+const BLK_COLORS = {
+  1: { name:'Sárga', hex:'#f0c040', dark:'#c09020' },
+  2: { name:'Piros', hex:'#e05a5a', dark:'#b02020' },
+  3: { name:'Kék',   hex:'#5a8fe0', dark:'#2050b0' },
+  4: { name:'Zöld',  hex:'#3ecf8e', dark:'#1a8f5e' },
+};
+
+// Sarok hozzárendelés: melyik sarokból indul melyik szín
+// colorId → [sor, oszlop] a 20×20-as táblán
+const BLK_CORNERS = {
+  1: [0,0],
+  2: [0,19],
+  3: [19,19],
+  4: [19,0],
+};
+
+// ── STATE ────────────────────────────────────────────────────
+let blokusPlayerCount = 4;          // 2, 3 vagy 4
+let blokusAssignments = {};         // { pid: [colorId, ...] } — 2 játékosnál 2 szín/fő
+let blokusBoard = null;             // 20×20 mátrix, colorId vagy 0
+let blokusTurnOrder = [];           // [colorId, colorId, ...] — körök sorrendje
+let blokusTurnIndex = 0;            // aktuális colorId index a turnOrder-ben
+let blokusRemainingPieces = {};     // { colorId: Set<pieceId> }
+let blokusPassedConsecutive = {};   // { colorId: bool } — egymás utáni passok
+let blokusActive = false;
+let blokusColorToPlayer = {};       // { colorId: pid }
+let blokusPlayerColors = {};        // { pid: [colorId,...] }
+let blokusFirstMove = {};           // { colorId: bool } — az első lépés-e még
+let blokusAllPassedRound = false;
+let blokusHostCanvasInterval = null;
+
+// ── MODAL ────────────────────────────────────────────────────
+function openBlokusModal() {
+  const actives = Object.entries(players).filter(([,p])=>p.status==='active');
+  if(actives.length < 2) { alert('Legalább 2 aktív játékos szükséges!'); return; }
+  document.getElementById('blokus-modal').classList.remove('hidden');
+  blokusPlayerCount = Math.min(4, Math.max(2, actives.length));
+  renderBlokusModalPCBtns();
+  renderBlokusAssignList();
+}
+
+function closeBlokusModal() {
+  document.getElementById('blokus-modal').classList.add('hidden');
+}
+
+function setBlokusPlayerCount(n) {
+  blokusPlayerCount = n;
+  renderBlokusModalPCBtns();
+  renderBlokusAssignList();
+}
+
+function renderBlokusModalPCBtns() {
+  [2,3,4].forEach(n => {
+    const btn = document.getElementById('blokus-pc-'+n);
+    if(!btn) return;
+    btn.className = n === blokusPlayerCount ? 'btn-save' : 'btn-cancel-form';
+    btn.style.cssText = 'flex:1;padding:9px;font-size:14px;';
+  });
+}
+
+function renderBlokusAssignList() {
+  const actives = Object.entries(players).filter(([,p])=>p.status==='active');
+  const list = document.getElementById('blokus-assign-list');
+  const infoEl = document.getElementById('blokus-mode-info');
+  const n = blokusPlayerCount;
+
+  // Snap to valid range
+  const use = Math.min(n, actives.length);
+
+  let infoText = '';
+  if(n === 2) {
+    infoText = '2 játékos: mindenki 2 színt irányít. Sárga+Zöld vs Piros+Kék. Körök: Sárga→Piros→Zöld→Kék.';
+  } else if(n === 3) {
+    infoText = '3 játékos: A játékos Sárgát+Kéket irányít (kétszer lép körönként), B Pirosat, C Zöldet.';
+  } else {
+    infoText = '4 játékos: mindenki 1 színt kap. Körök: Sárga→Piros→Kék→Zöld.';
+  }
+  infoEl.textContent = infoText;
+
+  // Build default assignments
+  const colorAssign = getDefaultColorAssign(n, actives.map(([id])=>id));
+
+  list.innerHTML = actives.slice(0, use).map(([pid,p], i) => {
+    const colors = colorAssign[pid] || [];
+    const colorDots = colors.map(cid =>
+      `<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${BLK_COLORS[cid].hex};margin-right:3px;vertical-align:middle;"></span>${BLK_COLORS[cid].name}`
+    ).join(' + ');
+    return `<div class="blokus-modal-player-row">
+      <div style="width:28px;height:28px;border-radius:50%;background:${p.color||'#888'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">${(p.name||'?')[0].toUpperCase()}</div>
+      <div style="flex:1;font-size:13px;font-weight:600;">${htmlEsc(p.name||'Névtelen')}</div>
+      <div style="font-size:12px;color:var(--muted);">${colorDots}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('blokus-modal-info').innerHTML =
+    `Játékosok: <strong style="color:var(--text);">${use} fő</strong> · 
+     Szabad mezők verseny: <strong style="color:var(--accent);">20×20 tábla, 21 darab/szín</strong>`;
+}
+
+function getDefaultColorAssign(n, pids) {
+  // Returns { pid: [colorId, ...] }
+  const result = {};
+  if(n === 2) {
+    result[pids[0]] = [1,4]; // Sárga+Zöld
+    result[pids[1]] = [2,3]; // Piros+Kék
+  } else if(n === 3) {
+    result[pids[0]] = [1,3]; // Sárga+Kék
+    result[pids[1]] = [2];   // Piros
+    result[pids[2]] = [4];   // Zöld
+  } else {
+    result[pids[0]] = [1];   // Sárga
+    result[pids[1]] = [2];   // Piros
+    result[pids[2]] = [3];   // Kék
+    result[pids[3]] = [4];   // Zöld
+  }
+  return result;
+}
+
+function confirmStartBlokus() {
+  const actives = Object.entries(players).filter(([,p])=>p.status==='active');
+  const use = Math.min(blokusPlayerCount, actives.length);
+  if(use < 2) { alert('Legalább 2 aktív játékos szükséges!'); return; }
+
+  const pids = actives.slice(0,use).map(([id])=>id);
+  blokusAssignments = getDefaultColorAssign(use, pids);
+
+  // colorToPlayer és playerColors fordított map
+  blokusColorToPlayer = {};
+  blokusPlayerColors = {};
+  Object.entries(blokusAssignments).forEach(([pid, colors]) => {
+    blokusPlayerColors[pid] = colors;
+    colors.forEach(cid => { blokusColorToPlayer[cid] = pid; });
+  });
+
+  // Körök sorrendje: Sárga(1)→Piros(2)→Kék(3)→Zöld(4) — csak a használt színek
+  const allColors = [1,2,3,4];
+  const usedColors = new Set(Object.values(blokusAssignments).flat());
+  blokusTurnOrder = allColors.filter(c => usedColors.has(c));
+
+  // 3 játékosnál: Sárga(1)+Kék(3) → A játékos kétszer lép
+  // Ez automatikusan következik a turnOrder-ből: [1,2,3,4] de csak [1,2,3,4] aktív
+
+  // Init board
+  blokusBoard = Array.from({length:20}, ()=>Array(20).fill(0));
+  blokusFirstMove = {};
+  blokusRemainingPieces = {};
+  blokusPassedConsecutive = {};
+  usedColors.forEach(cid => {
+    blokusFirstMove[cid] = true;
+    blokusRemainingPieces[cid] = new Set(BLOKUS_PIECE_IDS);
+    blokusPassedConsecutive[cid] = false;
+  });
+  blokusTurnIndex = 0;
+  blokusActive = true;
+  blokusAllPassedRound = false;
+
+  closeBlokusModal();
+  startBlokusGame();
+}
+
+// ── GAME START ───────────────────────────────────────────────
+function startBlokusGame() {
+  gameMode = 'blokus';
+  launcherToGame();
+  ['btn-start','btn-teams','btn-hangman','btn-blokus'].forEach(id => {
+    const el=document.getElementById(id); if(el) el.classList.add('hidden');
+  });
+  document.getElementById('btn-blokus-end').classList.remove('hidden');
+
+  document.getElementById('waiting-state').classList.add('hidden');
+  document.getElementById('question-state').classList.add('hidden');
+  document.getElementById('hangman-state').classList.add('hidden');
+  document.getElementById('blokus-state').classList.remove('hidden');
+
+  document.getElementById('phase-label').textContent = 'BLOKUS — JÁTÉK FOLYAMATBAN';
+
+  setupBlokusListeners();
+
+  // Firebase gameState
+  if(db) {
+    const boardFlat = blokusBoard.map(row => row.join(',')).join(';');
+    const remaining = {};
+    Object.entries(blokusRemainingPieces).forEach(([cid, s]) => { remaining[cid] = [...s]; });
+    roomRef.child('gameState').set({
+      phase: 'blokus-active',
+      mode: 'blokus',
+      blokus: {
+        board: boardFlat,
+        turnOrder: blokusTurnOrder,
+        turnIndex: blokusTurnIndex,
+        currentColor: blokusTurnOrder[blokusTurnIndex],
+        remaining,
+        firstMove: blokusFirstMove,
+        assignments: blokusAssignments,
+        colorToPlayer: blokusColorToPlayer,
+        playerCount: blokusPlayerCount,
+      }
+    });
+    // Töröljük a korábbi answers-t
+    roomRef.child('answers').remove();
+    roomRef.child('blokusMoves').remove();
+  }
+
+  renderBlokusHostCanvas();
+  renderBlokusHostStats();
+  startBlokusHostCanvasRefresh();
+}
+
+// ── FIREBASE MOVE LISTENER ───────────────────────────────────
+function setupBlokusListeners() {
+  if(!db || !roomRef) return;
+  roomRef.child('blokusMoves').on('child_added', snap => {
+    if(!blokusActive) return;
+    const move = snap.val();
+    if(!move) return;
+    applyBlokusMove(move);
+  });
+}
+
+function applyBlokusMove(move) {
+  const { colorId, cells, pass } = move;
+  if(pass) {
+    blokusPassedConsecutive[colorId] = true;
+  } else {
+    blokusPassedConsecutive[colorId] = false;
+    // Lerakás a táblára
+    cells.forEach(([r,c]) => {
+      if(r>=0&&r<20&&c>=0&&c<20) blokusBoard[r][c] = colorId;
+    });
+    // Darab eltávolítása
+    blokusRemainingPieces[colorId].delete(move.pieceId);
+    blokusFirstMove[colorId] = false;
+  }
+
+  // Következő szín
+  advanceBlokusTurn();
+
+  // Firebase sync
+  syncBlokusState();
+  renderBlokusHostCanvas();
+  renderBlokusHostStats();
+
+  // Játék vége ellenőrzés
+  if(checkBlokusEnd()) {
+    endBlokusGame();
+  }
+}
+
+function advanceBlokusTurn() {
+  blokusTurnIndex = (blokusTurnIndex + 1) % blokusTurnOrder.length;
+}
+
+function checkBlokusEnd() {
+  // Vége ha az összes szín egymás után passolt (minden szín passzol egymás után)
+  const usedColors = new Set(Object.values(blokusAssignments).flat());
+  return [...usedColors].every(cid => blokusPassedConsecutive[cid]);
+}
+
+function syncBlokusState() {
+  if(!db || !roomRef) return;
+  const boardFlat = blokusBoard.map(row => row.join(',')).join(';');
+  const remaining = {};
+  Object.entries(blokusRemainingPieces).forEach(([cid, s]) => { remaining[cid] = [...s]; });
+  roomRef.child('gameState').child('blokus').update({
+    board: boardFlat,
+    turnIndex: blokusTurnIndex,
+    currentColor: blokusTurnOrder[blokusTurnIndex],
+    remaining,
+    firstMove: blokusFirstMove,
+  });
+}
+
+// ── HOST CANVAS RENDER ───────────────────────────────────────
+function renderBlokusHostCanvas() {
+  const canvas = document.getElementById('blokus-host-canvas');
+  if(!canvas || !blokusBoard) return;
+  const ctx = canvas.getContext('2d');
+  const N = 20;
+  const sz = Math.floor(canvas.width / N);
+  const gap = 0.5;
+
+  ctx.fillStyle = '#111120';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  for(let r=0;r<N;r++) {
+    for(let c=0;c<N;c++) {
+      const cid = blokusBoard[r][c];
+      const x = c * sz;
+      const y = r * sz;
+      if(cid > 0) {
+        ctx.fillStyle = BLK_COLORS[cid].hex;
+        ctx.fillRect(x+1,y+1,sz-1,sz-1);
+        // Highlight felső/bal él
+        ctx.fillStyle = BLK_COLORS[cid].dark;
+        ctx.fillRect(x+1,y+sz-2,sz-2,1);
+        ctx.fillRect(x+sz-2,y+1,1,sz-2);
+      } else {
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(x+1,y+1,sz-1,sz-1);
+      }
+    }
+  }
+
+  // Grid vonalak
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 0.5;
+  for(let i=0;i<=N;i++) {
+    const p = i * sz;
+    ctx.beginPath(); ctx.moveTo(p,0); ctx.lineTo(p,N*sz); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,p); ctx.lineTo(N*sz,p); ctx.stroke();
+  }
+
+  // Sarok jelölők (aktív szín kiemelése)
+  const currentColor = blokusTurnOrder[blokusTurnIndex];
+  Object.entries(BLK_CORNERS).forEach(([cid, [cr,cc]]) => {
+    const cidN = parseInt(cid);
+    const usedColors = new Set(Object.values(blokusAssignments).flat());
+    if(!usedColors.has(cidN)) return;
+    const x = cc * sz;
+    const y = cr * sz;
+    ctx.strokeStyle = BLK_COLORS[cidN].hex;
+    ctx.lineWidth = cidN === currentColor ? 2 : 1;
+    ctx.strokeRect(x+0.5,y+0.5,sz-1,sz-1);
+  });
+
+  // Aktuális szín jelzés
+  const phaseEl = document.getElementById('blokus-phase-info');
+  if(phaseEl && blokusActive) {
+    const cc = blokusTurnOrder[blokusTurnIndex];
+    const pid = blokusColorToPlayer[cc];
+    const pname = players[pid]?.name || '?';
+    phaseEl.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:${BLK_COLORS[cc].hex};vertical-align:middle;margin-right:4px;"></span>${BLK_COLORS[cc].name} lép — ${htmlEsc(pname)}`;
+  }
+  renderBlokusPlayerTags();
+}
+
+function renderBlokusPlayerTags() {
+  const el = document.getElementById('blokus-player-tags');
+  if(!el) return;
+  const currentColor = blokusTurnOrder[blokusTurnIndex];
+  el.innerHTML = blokusTurnOrder.map(cid => {
+    const pid = blokusColorToPlayer[cid];
+    const pname = players[pid]?.name || '?';
+    const rem = blokusRemainingPieces[cid]?.size ?? 0;
+    const isActive = cid === currentColor;
+    return `<div style="display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;border:1.5px solid ${isActive?BLK_COLORS[cid].hex:'rgba(255,255,255,0.1)'};background:${isActive?BLK_COLORS[cid].hex+'22':'var(--surface2)'};">
+      <div style="width:10px;height:10px;border-radius:2px;background:${BLK_COLORS[cid].hex};flex-shrink:0;"></div>
+      <span style="font-size:11px;font-weight:600;">${htmlEsc(pname)}</span>
+      <span style="font-size:10px;color:var(--muted);">${rem} db</span>
+    </div>`;
+  }).join('');
+}
+
+function renderBlokusHostStats() {
+  const el = document.getElementById('blokus-host-stats');
+  if(!el) return;
+  const usedColors = blokusTurnOrder;
+  el.innerHTML = usedColors.map(cid => {
+    const pid = blokusColorToPlayer[cid];
+    const pname = players[pid]?.name || '?';
+    const rem = blokusRemainingPieces[cid]?.size ?? 0;
+    const placed = 21 - rem;
+    const pct = Math.round(placed / 21 * 100);
+    return `<div style="flex:1;min-width:100px;background:var(--surface2);border:1px solid ${BLK_COLORS[cid].hex}44;border-radius:8px;padding:7px 10px;">
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;">
+        <div style="width:10px;height:10px;border-radius:2px;background:${BLK_COLORS[cid].hex};flex-shrink:0;"></div>
+        <span style="font-size:11px;font-weight:600;">${htmlEsc(pname)}</span>
+      </div>
+      <div style="font-family:var(--font-display);font-size:20px;color:${BLK_COLORS[cid].hex};line-height:1;">${placed}<span style="font-size:11px;color:var(--muted);font-family:var(--font-body);">/21</span></div>
+      <div style="height:3px;background:#2a2a3d;border-radius:2px;margin-top:5px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${BLK_COLORS[cid].hex};border-radius:2px;"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function startBlokusHostCanvasRefresh() {
+  clearInterval(blokusHostCanvasInterval);
+  blokusHostCanvasInterval = setInterval(() => {
+    if(!blokusActive) { clearInterval(blokusHostCanvasInterval); return; }
+    renderBlokusHostCanvas();
+  }, 2000);
+}
+
+// ── GAME END ─────────────────────────────────────────────────
+function endBlokusGame() {
+  blokusActive = false;
+  clearInterval(blokusHostCanvasInterval);
+  if(db) {
+    roomRef.child('gameState').set({ phase: 'blokus-ended', mode: 'blokus' });
+  }
+  document.getElementById('phase-label').textContent = 'BLOKUS — VÉGE';
+  showBlokusResults();
+}
+
+function showBlokusResults() {
+  // Pontszámítás: megmaradt mezők száma = negatív pont (speciális pontozás)
+  // Lerakott mezők = pozitív (alap pontozás)
+  // +15 ha az összes lerakva, +5 ha az utolsó monomino
+  const results = [];
+  const usedColors = new Set(Object.values(blokusAssignments).flat());
+  Object.entries(blokusAssignments).forEach(([pid, colorIds]) => {
+    let totalRemaining = 0;
+    let allPlaced = true;
+    colorIds.forEach(cid => {
+      if(!usedColors.has(cid)) return;
+      const rem = blokusRemainingPieces[cid]?.size ?? 0;
+      totalRemaining += rem;
+      if(rem > 0) allPlaced = false;
+    });
+    // Megmaradt mezőszám kiszámítása
+    let remainingCells = 0;
+    colorIds.forEach(cid => {
+      [...(blokusRemainingPieces[cid] || [])].forEach(pid2 => {
+        remainingCells += BLOKUS_PIECES[pid2]?.length || 0;
+      });
+    });
+    let score = -remainingCells;
+    if(allPlaced) score += 15;
+    // TODO: +5 ha utolsó a monomino
+    results.push({ pid, name: players[pid]?.name||'Névtelen', score, remainingCells, colorIds });
+    // Firebase score
+    if(db) roomRef.child('players').child(pid).child('score').set(score);
+    else if(players[pid]) players[pid].score = score;
+  });
+  results.sort((a,b) => b.score - a.score);
+
+  // Show results screen
+  document.getElementById('results-screen').style.display = 'flex';
+  const medals = ['🥇','🥈','🥉'];
+  const top3 = results.slice(0,3);
+  const podiumOrder = [1,0,2], podiumH = ['p2','p1','p3'];
+  let ph = '';
+  podiumOrder.forEach((rank, vi) => {
+    const p = top3[rank]; if(!p) return;
+    ph += `<div class="podium-block"><div class="podium-name">${htmlEsc(p.name)}</div><div class="podium-score">${p.score} pt</div><div class="podium-bar ${podiumH[vi]}">${rank+1}.</div></div>`;
+  });
+  document.getElementById('podium').innerHTML = ph;
+  let fh = '<h3>BLOKUS VÉGEREDMÉNY</h3>';
+  fh += results.map((r,i) => {
+    const colDots = r.colorIds.map(cid => `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BLK_COLORS[cid]?.hex||'#888'};margin-right:2px;"></span>`).join('');
+    return `<div class="results-score-row ${['r1','r2','r3'][i]||''}">
+      <div class="results-rank-num">${medals[i]||(i+1)+'.'}</div>
+      <div class="results-player-name">${colDots}${htmlEsc(r.name)}</div>
+      <div class="results-player-pts">${r.score>0?'+':''}${r.score} pt</div>
+    </div>`;
+  }).join('');
+  document.getElementById('results-full-scoreboard').innerHTML = fh;
+}
+</script>
 function switchPanelTab(tab) {
   ['questions','worddb'].forEach(t => {
     document.getElementById('tab-'+t).classList.toggle('active', t===tab);
