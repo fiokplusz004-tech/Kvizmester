@@ -393,6 +393,34 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   .cl-desc { font-size:13px; color:var(--text); line-height:1.6; }
   .cl-date { font-size:11px; color:var(--muted); margin-top:3px; }
 
+  /* ── JÁTÉKMÓD KÁRTYÁK a szavazóban ─────────────── */
+  .vote-mode-card {
+    background:var(--surface2); border:2px solid var(--border); border-radius:14px;
+    padding:16px 10px 12px; text-align:center; cursor:pointer;
+    transition:all .15s; -webkit-user-select:none; user-select:none;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  }
+  .vote-mode-card:active { transform:scale(0.94); }
+  .vote-mode-card.selected-quiz    { border-color:var(--accent);  background:rgba(240,192,64,0.12); }
+  .vote-mode-card.selected-teams   { border-color:var(--blue);    background:rgba(90,143,224,0.12); }
+  .vote-mode-card.selected-hangman { border-color:var(--accent2); background:rgba(224,90,43,0.12); }
+  .vote-mode-card.selected-blokus  { border-color:var(--green);   background:rgba(62,207,142,0.12); }
+  .vmc-icon { font-size:28px; line-height:1; }
+  .vmc-label {
+    font-family:var(--font-display); font-size:13px; letter-spacing:1.5px;
+    color:var(--text); line-height:1;
+  }
+  .vote-mode-card.selected-quiz    .vmc-label { color:var(--accent); }
+  .vote-mode-card.selected-teams   .vmc-label { color:var(--blue); }
+  .vote-mode-card.selected-hangman .vmc-label { color:var(--accent2); }
+  .vote-mode-card.selected-blokus  .vmc-label { color:var(--green); }
+  .vote-cat-reveal {
+    overflow:hidden; max-height:0;
+    transition:max-height .35s cubic-bezier(0.4,0,0.2,1), opacity .25s;
+    opacity:0;
+  }
+  .vote-cat-reveal.open { max-height:700px; opacity:1; }
+
   /* ── JELENTÉS MODAL ──────────────────────────────── */
   .report-modal-overlay {
     position:fixed; inset:0; background:rgba(0,0,0,0.78);
@@ -651,81 +679,85 @@ if (FIREBASE_CONFIG.apiKey !== "IDE_ILLESZD_BE") {
   <!-- SZAVAZÓ FELÜLET -->
   <div id="vote-section">
     <div class="vote-divider"></div>
-    <div class="vote-title">🗳 SZAVAZÁS</div>
-    <div class="vote-subtitle">Milyen témájú kvízt szeretnél?</div>
+    <div class="vote-title" style="font-size:16px;">🎮 MI LEGYEN A KÖVETKEZŐ JÁTÉKMÓD?</div>
+    <div class="vote-subtitle">Szavazz a következő körre</div>
 
-    <!-- NEM SZERETNÉK SZAVAZNI -->
-    <div class="vote-radio-btn skip-btn" id="vote-skip-btn" onclick="selectVote('skip', null)">
-      <div class="vote-circle" id="vote-circle-skip"></div>
-      <div class="vote-label" style="text-align:center;color:var(--muted);">Nem szeretnék szavazni</div>
+    <!-- Játékmód kártyák — 3+1 elrendezés -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div class="vote-mode-card" id="vmc-quiz" onclick="selectMode('quiz')">
+        <div class="vmc-icon">🎯</div>
+        <div class="vmc-label">EGYÉNI</div>
+      </div>
+      <div class="vote-mode-card" id="vmc-teams" onclick="selectMode('teams')">
+        <div class="vmc-icon">👥</div>
+        <div class="vmc-label">CSAPAT</div>
+      </div>
+      <div class="vote-mode-card" id="vmc-hangman" onclick="selectMode('hangman')">
+        <div class="vmc-icon">🔤</div>
+        <div class="vmc-label">AKASZTÓFA</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div class="vote-mode-card" id="vmc-blokus" onclick="selectMode('blokus')">
+        <div class="vmc-icon">⬛</div>
+        <div class="vmc-label">BLOKUS</div>
+      </div>
+      <div></div><div></div>
     </div>
 
-    <!-- FŐ KATEGÓRIÁK -->
-    <div class="vote-option-row">
-      <!-- BIBLIAI -->
-      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-        <div class="vote-radio-btn" id="vote-main-Bibliai" onclick="selectVote('Bibliai', null)">
-          <div class="vote-circle" id="vote-circle-Bibliai"></div>
-          <div class="vote-label">📖 Bibliai</div>
-          <div class="vote-expand-icon" id="vote-expand-Bibliai" onclick="event.stopPropagation();toggleSubcats('Bibliai')">▶</div>
+    <!-- Kategória szavazás — csak Egyéni mód esetén nyílik ki -->
+    <div class="vote-cat-reveal" id="vote-cat-reveal">
+      <div style="height:1px;background:var(--border);margin:0 0 14px;"></div>
+      <div class="vote-title" style="font-size:15px;">🗳 MELYIK KATEGÓRIÁT?</div>
+      <div class="vote-subtitle">Szavazz a témakörre</div>
+
+      <!-- BÁRMELYIK MEGFELEL -->
+      <div class="vote-radio-btn skip-btn" id="vote-skip-cat-btn" onclick="selectVote('any', null)" style="margin-bottom:10px;">
+        <div class="vote-circle" id="vote-circle-any"></div>
+        <div class="vote-label" style="text-align:center;color:var(--muted);">Bármelyik kategória megfelel</div>
+      </div>
+
+      <!-- FŐ KATEGÓRIÁK -->
+      <div class="vote-option-row">
+        <!-- BIBLIAI -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <div class="vote-radio-btn" id="vote-main-Bibliai" onclick="selectVote('Bibliai', null)">
+            <div class="vote-circle" id="vote-circle-Bibliai"></div>
+            <div class="vote-label">📖 Bibliai</div>
+            <div class="vote-expand-icon" id="vote-expand-Bibliai" onclick="event.stopPropagation();toggleSubcats('Bibliai')">▶</div>
+          </div>
+          <div class="vote-subcats" id="vote-subcats-Bibliai">
+            <div class="vote-subcat-item" id="vote-sub-Bibliai-vers" onclick="selectVote('Bibliai','vers')"><div class="vote-subcat-circle"></div><div class="vote-subcat-label">📖 Vers felismerés</div></div>
+            <div class="vote-subcat-item" id="vote-sub-Bibliai-személy" onclick="selectVote('Bibliai','személy')"><div class="vote-subcat-circle"></div><div class="vote-subcat-label">👤 Személy</div></div>
+            <div class="vote-subcat-item" id="vote-sub-Bibliai-évszám" onclick="selectVote('Bibliai','évszám')"><div class="vote-subcat-circle"></div><div class="vote-subcat-label">📅 Évszám</div></div>
+            <div class="vote-subcat-item" id="vote-sub-Bibliai-helység" onclick="selectVote('Bibliai','helység')"><div class="vote-subcat-circle"></div><div class="vote-subcat-label">📍 Helység</div></div>
+            <div class="vote-subcat-item" id="vote-sub-Bibliai-esemény" onclick="selectVote('Bibliai','esemény')"><div class="vote-subcat-circle"></div><div class="vote-subcat-label">⚡ Esemény</div></div>
+          </div>
         </div>
-        <div class="vote-subcats" id="vote-subcats-Bibliai">
-          <div class="vote-subcat-item" id="vote-sub-Bibliai-vers" onclick="selectVote('Bibliai','vers')">
-            <div class="vote-subcat-circle"></div>
-            <div class="vote-subcat-label">📖 Vers felismerés</div>
+        <!-- FILMEK -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <div class="vote-radio-btn" id="vote-main-Filmek" onclick="selectVote('Filmek', null)">
+            <div class="vote-circle" id="vote-circle-Filmek"></div>
+            <div class="vote-label">🎬 Filmek</div>
+            <div class="vote-expand-icon" id="vote-expand-Filmek" onclick="event.stopPropagation();toggleSubcats('Filmek')">▶</div>
           </div>
-          <div class="vote-subcat-item" id="vote-sub-Bibliai-személy" onclick="selectVote('Bibliai','személy')">
-            <div class="vote-subcat-circle"></div>
-            <div class="vote-subcat-label">👤 Személy</div>
-          </div>
-          <div class="vote-subcat-item" id="vote-sub-Bibliai-évszám" onclick="selectVote('Bibliai','évszám')">
-            <div class="vote-subcat-circle"></div>
-            <div class="vote-subcat-label">📅 Évszám</div>
-          </div>
-          <div class="vote-subcat-item" id="vote-sub-Bibliai-helység" onclick="selectVote('Bibliai','helység')">
-            <div class="vote-subcat-circle"></div>
-            <div class="vote-subcat-label">📍 Helység</div>
-          </div>
-          <div class="vote-subcat-item" id="vote-sub-Bibliai-esemény" onclick="selectVote('Bibliai','esemény')">
-            <div class="vote-subcat-circle"></div>
-            <div class="vote-subcat-label">⚡ Esemény</div>
+          <div class="vote-subcats" id="vote-subcats-Filmek">
+            <div class="vote-subcat-item" id="vote-sub-Filmek-idézet" onclick="selectVote('Filmek','idézet')"><div class="vote-subcat-circle"></div><div class="vote-subcat-label">💬 Idézet</div></div>
+            <div class="vote-subcat-item" id="vote-sub-Filmek-személy" onclick="selectVote('Filmek','személy')"><div class="vote-subcat-circle"></div><div class="vote-subcat-label">👤 Személy</div></div>
+            <div class="vote-subcat-item" id="vote-sub-Filmek-évszám/időpont" onclick="selectVote('Filmek','évszám/időpont')"><div class="vote-subcat-circle"></div><div class="vote-subcat-label">📅 Évszám/Időpont</div></div>
+            <div class="vote-subcat-item" id="vote-sub-Filmek-helység" onclick="selectVote('Filmek','helység')"><div class="vote-subcat-circle"></div><div class="vote-subcat-label">📍 Helység</div></div>
+            <div class="vote-subcat-item" id="vote-sub-Filmek-esemény" onclick="selectVote('Filmek','esemény')"><div class="vote-subcat-circle"></div><div class="vote-subcat-label">⚡ Esemény</div></div>
           </div>
         </div>
       </div>
-
-      <!-- FILMEK -->
-      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-        <div class="vote-radio-btn" id="vote-main-Filmek" onclick="selectVote('Filmek', null)">
-          <div class="vote-circle" id="vote-circle-Filmek"></div>
-          <div class="vote-label">🎬 Filmek</div>
-          <div class="vote-expand-icon" id="vote-expand-Filmek" onclick="event.stopPropagation();toggleSubcats('Filmek')">▶</div>
-        </div>
-        <div class="vote-subcats" id="vote-subcats-Filmek">
-          <div class="vote-subcat-item" id="vote-sub-Filmek-idézet" onclick="selectVote('Filmek','idézet')">
-            <div class="vote-subcat-circle"></div>
-            <div class="vote-subcat-label">💬 Idézet</div>
-          </div>
-          <div class="vote-subcat-item" id="vote-sub-Filmek-személy" onclick="selectVote('Filmek','személy')">
-            <div class="vote-subcat-circle"></div>
-            <div class="vote-subcat-label">👤 Személy</div>
-          </div>
-          <div class="vote-subcat-item" id="vote-sub-Filmek-évszám/időpont" onclick="selectVote('Filmek','évszám/időpont')">
-            <div class="vote-subcat-circle"></div>
-            <div class="vote-subcat-label">📅 Évszám/Időpont</div>
-          </div>
-          <div class="vote-subcat-item" id="vote-sub-Filmek-helység" onclick="selectVote('Filmek','helység')">
-            <div class="vote-subcat-circle"></div>
-            <div class="vote-subcat-label">📍 Helység</div>
-          </div>
-          <div class="vote-subcat-item" id="vote-sub-Filmek-esemény" onclick="selectVote('Filmek','esemény')">
-            <div class="vote-subcat-circle"></div>
-            <div class="vote-subcat-label">⚡ Esemény</div>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <button class="vote-submit-btn" id="vote-submit-btn" onclick="submitVote()" disabled>🗳 Elküldés</button>
+    <!-- Nem szavazok link -->
+    <div style="text-align:center;margin-bottom:10px;">
+      <span id="vote-skip-link" onclick="selectMode('skip')" style="font-size:12px;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;">⏭ Nem szeretnék szavazni</span>
+    </div>
+
+    <button class="vote-submit-btn" id="vote-submit-btn" onclick="submitVote()" disabled>🗳 SZAVAZÁS</button>
 
     <!-- SZAVAZAT ELKÜLDVE — eredmény panel -->
     <div class="vote-sent-box hidden" id="vote-sent-box">
@@ -959,8 +991,9 @@ let myQuestionHistory = [];   // [{qText, options, myAnswer, correctAnswer, pts,
 let pendingQuestion = null;   // az éppen folyamatban lévő kérdés adatai
 
 // Szavazás state
-let myVoteCat = null;     // pl. 'Bibliai', 'Filmek', 'skip'
-let myVoteSubtype = null; // pl. 'vers', null
+let myVoteMode = null;     // 'quiz'|'teams'|'hangman'|'blokus'|'skip'
+let myVoteCat = null;      // pl. 'Bibliai', 'Filmek', 'any' — csak quiz módban
+let myVoteSubtype = null;  // pl. 'vers', null
 let myVoteSubmitted = false;
 
 // ── CSAPATVERSENY STATE ──────────────────────────────────────
@@ -987,8 +1020,8 @@ window.addEventListener('load', () => {
 function hideAll() {
   ['menu-screen','guide-screen','unavailable-screen','lobby-screen',
    'waiting-screen','game-screen','result-screen','history-screen','changelog-screen',
-   'hangman-screen','hangman-intro-screen','hangman-result-screen','blokus-player-screen']
-    .forEach(id => { const el=document.getElementById(id); if(el) el.style.display = 'none'; });
+   'hangman-screen','hangman-intro-screen','hangman-result-screen']
+    .forEach(id => document.getElementById(id).style.display = 'none');
 }
 function showMenu() {
   hideAll();
@@ -1186,15 +1219,6 @@ function setupListeners() {
       updateHangmanReturnBtn();
       // Team módban: pontszám felirat frissítése
       if(gameMode==='teams') updateGameModeUI();
-    } else if (state.phase === 'blokus-active') {
-      if(myPlayerStatus === 'active') {
-        initBlokusPlayer(state.blokus);
-      }
-    } else if (state.phase === 'blokus-ended') {
-      hostReadyForRejoin = false;
-      const blokusVisible = document.getElementById('blokus-player-screen').style.display !== 'none';
-      if(blokusVisible) showBlokusResultPlayer();
-      updateReturnToGameBtn();
     }
   });
 
@@ -1767,7 +1791,7 @@ async function returnToGame() {
     currentQIndex = -1;
     answeredNamesThisRound = new Set();
     pendingQuestion = null;
-    myVoteCat = null; myVoteSubtype = null; myVoteSubmitted = false;
+    myVoteCat = null; myVoteMode = null; myVoteSubtype = null; myVoteSubmitted = false;
     myPlayerStatus = 'active';
     lastKnownCorrectAnswer = -1;
     hostReadyForRejoin = false;
@@ -1788,6 +1812,11 @@ async function returnToGame() {
 
 // ── SZAVAZÁS ─────────────────────────────────────────────────
 const VOTE_LABELS_PLAYER = {
+  'mode|quiz':    '🎯 Egyéni verseny',
+  'mode|teams':   '👥 Csapatverseny',
+  'mode|hangman': '🔤 Akasztófa',
+  'mode|blokus':  '⬛ Blokus',
+  'mode|skip':    '⏭ Nem szavazott',
   'Bibliai': '📖 Bibliai (összes)',
   'Bibliai|vers': '📖 Bibliai — Vers felismerés',
   'Bibliai|személy': '📖 Bibliai — Személy',
@@ -1800,28 +1829,85 @@ const VOTE_LABELS_PLAYER = {
   'Filmek|évszám/időpont': '🎬 Filmek — Évszám/Időpont',
   'Filmek|helység': '🎬 Filmek — Helység',
   'Filmek|esemény': '🎬 Filmek — Esemény',
+  'any': '🎲 Bármelyik kategória',
   'skip': 'Nem szavazott',
 };
 
 function resetVoteUI() {
+  myVoteMode = null;
   myVoteCat = null;
   myVoteSubtype = null;
   myVoteSubmitted = false;
-  // Minden kijelölés törlése
+  // Mode card selections törlése
+  ['quiz','teams','hangman','blokus'].forEach(m => {
+    const el = document.getElementById('vmc-'+m);
+    if(el) el.className = 'vote-mode-card';
+  });
+  // Kategória szekció bezárása
+  const catReveal = document.getElementById('vote-cat-reveal');
+  if(catReveal) catReveal.classList.remove('open');
+  // Radio / subcat selections törlése
   document.querySelectorAll('.vote-radio-btn.selected').forEach(el => el.classList.remove('selected'));
   document.querySelectorAll('.vote-subcat-item.selected').forEach(el => el.classList.remove('selected'));
-  // Alkategóriák bezárása
+  // Subcats bezárása
   document.querySelectorAll('.vote-subcats.open').forEach(el => el.classList.remove('open'));
   document.querySelectorAll('.vote-expand-icon.open').forEach(el => el.classList.remove('open'));
-  // Submit gomb letiltva
+  // Skip link visszaállítása
+  const skipLink = document.getElementById('vote-skip-link');
+  if(skipLink) { skipLink.style.color=''; skipLink.style.fontWeight=''; }
+  // Submit gomb
   const btn = document.getElementById('vote-submit-btn');
-  if (btn) { btn.disabled = true; btn.style.display = ''; }
+  if(btn) { btn.disabled = true; btn.style.display = ''; }
   // Sent box elrejtése
   const sent = document.getElementById('vote-sent-box');
-  if (sent) sent.classList.add('hidden');
+  if(sent) sent.classList.add('hidden');
   // Vote section megjelenítése
   const section = document.getElementById('vote-section');
-  if (section) section.style.display = '';
+  if(section) section.style.display = '';
+}
+
+// ── JÁTÉKMÓD KÁRTYA KIVÁLASZTÁS ──────────────────────────────
+function selectMode(mode) {
+  if(myVoteSubmitted) return;
+  myVoteMode = mode;
+
+  // Mode kártyák reset
+  ['quiz','teams','hangman','blokus'].forEach(m => {
+    const el = document.getElementById('vmc-'+m);
+    if(el) el.className = 'vote-mode-card';
+  });
+  // Skip link reset
+  const skipLink = document.getElementById('vote-skip-link');
+  if(skipLink) { skipLink.style.color=''; skipLink.style.fontWeight=''; }
+
+  // Kiválasztott kártya kiemelése
+  if(mode !== 'skip') {
+    const card = document.getElementById('vmc-'+mode);
+    if(card) card.className = 'vote-mode-card selected-'+mode;
+  } else {
+    if(skipLink) { skipLink.style.color='var(--accent)'; skipLink.style.fontWeight='700'; }
+  }
+
+  // Kategória szekció megjelenítése/elrejtése
+  const catReveal = document.getElementById('vote-cat-reveal');
+  if(catReveal) {
+    if(mode === 'quiz') {
+      catReveal.classList.add('open');
+    } else {
+      catReveal.classList.remove('open');
+      // Kategória szavazatot töröljük ha nem quiz mód
+      myVoteCat = null;
+      myVoteSubtype = null;
+      document.querySelectorAll('.vote-radio-btn.selected').forEach(el => el.classList.remove('selected'));
+      document.querySelectorAll('.vote-subcat-item.selected').forEach(el => el.classList.remove('selected'));
+      document.querySelectorAll('.vote-subcats.open').forEach(el => el.classList.remove('open'));
+      document.querySelectorAll('.vote-expand-icon.open').forEach(el => el.classList.remove('open'));
+    }
+  }
+
+  // Submit gomb engedélyezése
+  const btn = document.getElementById('vote-submit-btn');
+  if(btn) btn.disabled = false;
 }
 
 function selectVote(cat, subtype) {
@@ -1833,24 +1919,17 @@ function selectVote(cat, subtype) {
   document.querySelectorAll('.vote-radio-btn').forEach(el => el.classList.remove('selected'));
   document.querySelectorAll('.vote-subcat-item').forEach(el => el.classList.remove('selected'));
 
-  if (cat === 'skip') {
-    document.getElementById('vote-skip-btn').classList.add('selected');
+  if (cat === 'any') {
+    document.getElementById('vote-skip-cat-btn')?.classList.add('selected');
   } else if (subtype) {
-    // Alkategória kiválasztva
     const subEl = document.getElementById('vote-sub-' + cat + '-' + subtype);
     if (subEl) subEl.classList.add('selected');
-    // Főkategória gomb is kiemelve (halványan jelzi a szülőt)
     const mainEl = document.getElementById('vote-main-' + cat);
     if (mainEl) mainEl.style.borderColor = 'rgba(240,192,64,0.4)';
   } else {
-    // Főkategória kiválasztva
     const mainEl = document.getElementById('vote-main-' + cat);
     if (mainEl) mainEl.classList.add('selected');
   }
-
-  // Submit gomb engedélyezése
-  const btn = document.getElementById('vote-submit-btn');
-  if (btn) btn.disabled = false;
 }
 
 function toggleSubcats(cat) {
@@ -1868,29 +1947,40 @@ function toggleSubcats(cat) {
 }
 
 function submitVote() {
-  if (!myVoteCat || myVoteSubmitted) return;
+  if (!myVoteMode || myVoteSubmitted) return;
   myVoteSubmitted = true;
 
-  // Firebase-be írjuk a szavazatot
+  // Firebase struktúra: cat = játékmód, subtype = kategória (quiz módban)
+  // Kompatibilis a meglévő votes validate rules-szal (cat és ts kötelező)
+  const catField = myVoteMode;
+  let subtypeField = null;
+  if (myVoteMode === 'quiz' && myVoteCat) {
+    subtypeField = myVoteSubtype ? myVoteCat + '|' + myVoteSubtype : myVoteCat;
+  }
+
   if (db && roomRef) {
     roomRef.child('votes').child(playerId).set({
-      cat: myVoteCat,
-      subtype: myVoteSubtype || null,
+      cat: catField,
+      subtype: subtypeField,
       playerName: playerName,
       ts: firebase.database.ServerValue.TIMESTAMP
     });
   }
 
-  // Submit gomb elrejtése
+  // Submit gomb + skip link elrejtése
   const btn = document.getElementById('vote-submit-btn');
   if (btn) btn.style.display = 'none';
+  const skipLink = document.getElementById('vote-skip-link');
+  if (skipLink) skipLink.style.display = 'none';
 
   // Sent box megjelenítése
   const sent = document.getElementById('vote-sent-box');
   if (sent) sent.classList.remove('hidden');
 
-  const voteKey = myVoteSubtype ? myVoteCat + '|' + myVoteSubtype : myVoteCat;
-  const choiceLabel = myVoteCat === 'skip' ? 'Nem szavazott' : (VOTE_LABELS_PLAYER[voteKey] || voteKey);
+  let choiceLabel = VOTE_LABELS_PLAYER['mode|' + myVoteMode] || myVoteMode;
+  if (myVoteMode === 'quiz' && subtypeField) {
+    choiceLabel += ' — ' + (VOTE_LABELS_PLAYER[subtypeField] || subtypeField);
+  }
   const choiceEl = document.getElementById('vote-sent-choice');
   if (choiceEl) choiceEl.textContent = 'Szavazatod: ' + choiceLabel;
 
@@ -1976,9 +2066,6 @@ function backToMenu() {
     roomRef.child('hangmanState').off();
     roomRef.child('hangmanHintRequests').off();
     roomRef.child('hangmanResults').off();
-    // Blokus listeners
-    roomRef.child('blokusMoves').off();
-    roomRef.child('gameState').child('blokus').off();
     if (playerId) {
       roomRef.child('votes').child(playerId).remove();
       roomRef.child('players').child(playerId).child('status').off();
@@ -1989,8 +2076,7 @@ function backToMenu() {
   hasAnswered = false; myScore = 0; currentQIndex = -1;
   players = {}; questions = []; answeredNamesThisRound = new Set();
   myQuestionHistory = []; pendingQuestion = null;
-  myVoteCat = null; myVoteSubtype = null; myVoteSubmitted = false;
-  myPlayerStatus = 'lobby';
+  myVoteCat = null; myVoteMode = null; myVoteSubtype = null; myVoteSubmitted = false;
   lastKnownCorrectAnswer = -1;
   hostReadyForRejoin = false;
   gameMode = 'normal'; myTeamId = null; myTeamName = ''; teamScores = {};
@@ -1998,14 +2084,6 @@ function backToMenu() {
   hmModeP = 'coop'; hmAssignedPidP = null; hmAssignedNameP = '';
   hmHintsUsedP = 0; hmHintRevealP = null;
   clearHangmanIntroTimers();
-  // Blokus reset
-  blkActive = false;
-  blkBoard = null;
-  blkMyColors = [];
-  blkCurrentColor = 0;
-  blkSelectedPieceId = null;
-  blkPlaceRow = -1; blkPlaceCol = -1;
-  blkMovesRef = null;
   document.getElementById('my-score').textContent = '0';
   document.getElementById('my-rank').textContent = '#—';
   updateGameModeUI();
@@ -2629,673 +2707,6 @@ window.addEventListener('appinstalled', () => hideBanner());
 
 <!-- VERSION BADGE -->
 <div class="version-badge">Játék verzió: 2.5</div>
-
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- BLOKUS JÁTÉKOS KÉPERNYŐ                                   -->
-<!-- ══════════════════════════════════════════════════════════ -->
-<div id="blokus-player-screen" style="display:none;flex-direction:column;width:100%;max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;padding:0;">
-
-  <!-- FEJLÉC -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 12px 6px;flex-shrink:0;">
-    <div>
-      <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;" id="blk-score-label">PONTOM</div>
-      <div style="font-family:var(--font-display);font-size:30px;line-height:1;" id="blk-my-score">0</div>
-    </div>
-    <div style="text-align:center;">
-      <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">KÖR</div>
-      <div style="font-family:var(--font-display);font-size:16px;letter-spacing:1px;padding:3px 10px;border-radius:6px;background:rgba(240,192,64,0.1);border:1px solid rgba(240,192,64,0.25);color:var(--accent);" id="blk-turn-info">—</div>
-    </div>
-    <div style="text-align:right;">
-      <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;">MARADÉK</div>
-      <div style="font-family:var(--font-display);font-size:30px;line-height:1;" id="blk-remaining">21</div>
-    </div>
-  </div>
-
-  <!-- AKTUÁLIS SZÍN BANNER -->
-  <div id="blk-myturn-banner" style="display:none;margin:4px 10px;padding:9px 14px;background:rgba(240,192,64,0.1);border:1.5px solid var(--accent);border-radius:10px;text-align:center;">
-    <div style="font-family:var(--font-display);font-size:20px;letter-spacing:3px;color:var(--accent);">A TE KÖRÖD!</div>
-    <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="blk-myturn-color">Válassz darabot</div>
-  </div>
-  <div id="blk-wait-banner" style="display:none;margin:4px 10px;padding:9px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:10px;">
-    <div id="blk-wait-color-dot" style="width:18px;height:18px;border-radius:4px;flex-shrink:0;"></div>
-    <div style="flex:1;">
-      <div style="font-size:12px;font-weight:600;" id="blk-wait-name">—</div>
-      <div style="font-size:10px;color:var(--muted);">lép most...</div>
-    </div>
-    <div style="display:flex;gap:4px;">
-      <div style="width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce 1.2s infinite;"></div>
-      <div style="width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce 1.2s infinite;animation-delay:0.2s;"></div>
-      <div style="width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce 1.2s infinite;animation-delay:0.4s;"></div>
-    </div>
-  </div>
-
-  <!-- TÁBLA — edge-to-edge -->
-  <div style="width:100%;flex-shrink:0;position:relative;" id="blk-board-wrap">
-    <canvas id="blk-board-canvas" style="display:block;width:100%;touch-action:none;"></canvas>
-    <!-- Ghost overlay for piece preview -->
-    <canvas id="blk-overlay-canvas" style="position:absolute;top:0;left:0;width:100%;pointer-events:none;"></canvas>
-  </div>
-
-  <!-- DARAB PALETTA -->
-  <div style="flex-shrink:0;padding:6px 10px 2px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
-      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);" id="blk-palette-label">DARABOK</div>
-      <div style="display:flex;gap:5px;">
-        <button onclick="blkRotate()" style="padding:4px 10px;background:var(--surface2);border:1px solid var(--accent);border-radius:6px;font-size:11px;color:var(--accent);cursor:pointer;font-weight:600;">↻ Forgat</button>
-        <button onclick="blkMirror()" style="padding:4px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:600;">↔ Tükröz</button>
-      </div>
-    </div>
-    <!-- Darab miniatűrök vízszintes scrollban -->
-    <div id="blk-piece-palette" style="display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
-    </div>
-  </div>
-
-  <!-- KIVÁLASZTOTT DARAB INFO -->
-  <div id="blk-selected-info" style="margin:4px 10px;padding:8px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
-    <canvas id="blk-piece-preview" width="60" height="40" style="background:var(--bg);border-radius:4px;flex-shrink:0;"></canvas>
-    <div style="flex:1;">
-      <div style="font-size:12px;font-weight:600;" id="blk-piece-name">Nincs kiválasztva</div>
-      <div style="font-size:10px;color:var(--muted);">Koppints a táblán a pozíció megadásához</div>
-    </div>
-  </div>
-
-  <!-- AKCIÓ GOMBOK -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 10px 16px;flex-shrink:0;">
-    <button id="blk-place-btn" onclick="blkConfirmPlace()" style="padding:13px;background:var(--green);color:#000;border:none;border-radius:10px;font-family:var(--font-display);font-size:18px;letter-spacing:2px;cursor:pointer;opacity:0.4;" disabled>✓ LERAK</button>
-    <button onclick="blkPass()" style="padding:13px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;">⏭ Kör kihagyás</button>
-  </div>
-
-  <div style="padding:0 10px 20px;">
-    <button onclick="backToMenu()" style="width:100%;padding:9px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">↺ Főmenü</button>
-  </div>
-</div>
-
-<script>
-// ============================================================
-// BLOKUS JÁTÉKOS OLDAL
-// ============================================================
-
-// ── KONSTANSOK (azonos a host-tal) ───────────────────────────
-const BLK_PIECES_P = {
-  I1: [[0,0]],
-  I2: [[0,0],[0,1]],
-  I3: [[0,0],[0,1],[0,2]],
-  L3: [[0,0],[1,0],[1,1]],
-  I4: [[0,0],[0,1],[0,2],[0,3]],
-  L4: [[0,0],[1,0],[2,0],[2,1]],
-  T4: [[0,0],[0,1],[0,2],[1,1]],
-  S4: [[0,1],[0,2],[1,0],[1,1]],
-  O:  [[0,0],[0,1],[1,0],[1,1]],
-  I5: [[0,0],[0,1],[0,2],[0,3],[0,4]],
-  L5: [[0,0],[1,0],[2,0],[3,0],[3,1]],
-  Y:  [[0,1],[1,0],[1,1],[2,1],[3,1]],
-  N:  [[0,1],[1,0],[1,1],[2,0],[3,0]],
-  T5: [[0,0],[0,1],[0,2],[1,1],[2,1]],
-  U:  [[0,0],[0,2],[1,0],[1,1],[1,2]],
-  V5: [[0,0],[1,0],[2,0],[2,1],[2,2]],
-  W:  [[0,0],[1,0],[1,1],[2,1],[2,2]],
-  X:  [[0,1],[1,0],[1,1],[1,2],[2,1]],
-  P:  [[0,0],[0,1],[1,0],[1,1],[2,0]],
-  F:  [[0,1],[0,2],[1,0],[1,1],[2,1]],
-  Z:  [[0,0],[0,1],[1,1],[1,2],[2,2]],
-};
-
-const BLK_COLORS_P = {
-  1: { name:'Sárga', hex:'#f0c040', dark:'#c09020' },
-  2: { name:'Piros', hex:'#e05a5a', dark:'#b02020' },
-  3: { name:'Kék',   hex:'#5a8fe0', dark:'#2050b0' },
-  4: { name:'Zöld',  hex:'#3ecf8e', dark:'#1a8f5e' },
-};
-
-const BLK_CORNERS_P = { 1:[0,0], 2:[0,19], 3:[19,19], 4:[19,0] };
-
-// ── STATE ────────────────────────────────────────────────────
-let blkBoard = null;                 // 20×20, colorId or 0
-let blkMyColors = [];                // [colorId, ...] — szín(ek) amiket irányítok
-let blkCurrentColor = 0;             // éppen kinek a köre (colorId)
-let blkTurnOrder = [];
-let blkRemainingPieces = {};         // {colorId: [pieceId,...]}
-let blkFirstMove = {};               // {colorId: bool}
-let blkColorToPlayer = {};           // {colorId: pid}
-let blkSelectedPieceId = null;
-let blkRotation = 0;                 // 0-3
-let blkMirrored = false;
-let blkPlaceRow = -1;
-let blkPlaceCol = -1;
-let blkCellSize = 0;
-let blkIsMyTurn = false;
-let blkActive = false;
-let blkMovesRef = null;
-
-// ── INIT ─────────────────────────────────────────────────────
-function initBlokusPlayer(blokusData) {
-  if(!blokusData) return;
-
-  // Parse board
-  blkBoard = blokusData.board
-    ? blokusData.board.split(';').map(row => row.split(',').map(Number))
-    : Array.from({length:20}, ()=>Array(20).fill(0));
-
-  blkTurnOrder = blokusData.turnOrder || [1,2,3,4];
-  blkCurrentColor = blokusData.currentColor || blkTurnOrder[0];
-  blkColorToPlayer = blokusData.colorToPlayer || {};
-  blkFirstMove = blokusData.firstMove || {};
-
-  // Saját színek meghatározása
-  const assignments = blokusData.assignments || {};
-  blkMyColors = assignments[playerId] || [];
-  blkRemainingPieces = {};
-  Object.entries(blokusData.remaining || {}).forEach(([cid, arr]) => {
-    blkRemainingPieces[parseInt(cid)] = arr || [];
-  });
-
-  blkSelectedPieceId = null;
-  blkRotation = 0;
-  blkMirrored = false;
-  blkPlaceRow = -1;
-  blkPlaceCol = -1;
-  blkActive = true;
-
-  // Megjelenítés
-  hideAll();
-  const screen = document.getElementById('blokus-player-screen');
-  screen.style.display = 'flex';
-
-  // Canvas méretezés
-  blkSizeCanvas();
-
-  // Render
-  blkUpdateUI();
-  blkRenderBoard();
-  blkRenderPalette();
-  blkClearOverlay();
-
-  // Firebase blokusMoves listener
-  if(db && roomRef && !blkMovesRef) {
-    blkMovesRef = roomRef.child('blokusMoves');
-    blkMovesRef.on('child_added', snap => {
-      const move = snap.val();
-      if(!move || !blkBoard) return;
-      // Alkalmazzuk a lépést a helyi táblára
-      if(!move.pass && move.cells) {
-        move.cells.forEach(([r,c]) => {
-          if(r>=0&&r<20&&c>=0&&c<20) blkBoard[r][c] = move.colorId;
-        });
-        const cid = move.colorId;
-        blkFirstMove[cid] = false;
-        // Távolítsuk el a darabot a remaining-ből
-        if(blkRemainingPieces[cid]) {
-          blkRemainingPieces[cid] = blkRemainingPieces[cid].filter(id => id !== move.pieceId);
-        }
-      }
-      // Ne frissítsük gameState-ből – a blokusData snapshot frissül
-    });
-  }
-
-  // gameState blokus alap figyelése (turnIndex változás)
-  if(db && roomRef) {
-    roomRef.child('gameState').child('blokus').on('value', snap => {
-      const bd = snap.val();
-      if(!bd || !blkActive) return;
-      // Board szinkron
-      if(bd.board) {
-        blkBoard = bd.board.split(';').map(row => row.split(',').map(Number));
-      }
-      blkCurrentColor = bd.currentColor || blkCurrentColor;
-      blkFirstMove = bd.firstMove || blkFirstMove;
-      if(bd.remaining) {
-        Object.entries(bd.remaining).forEach(([cid,arr]) => {
-          blkRemainingPieces[parseInt(cid)] = arr || [];
-        });
-      }
-      blkUpdateUI();
-      blkRenderBoard();
-      blkRenderPalette();
-      if(blkPlaceRow >= 0 && blkSelectedPieceId) blkRenderOverlay();
-      else blkClearOverlay();
-    });
-  }
-
-  // Touch/click events a canvas-ra
-  setTimeout(blkSetupBoardTouch, 80);
-}
-
-// ── CANVAS SIZING ────────────────────────────────────────────
-function blkSizeCanvas() {
-  const wrap = document.getElementById('blk-board-wrap');
-  if(!wrap) return;
-  const w = wrap.getBoundingClientRect().width || window.innerWidth;
-  const sz = Math.floor(w / 20);
-  blkCellSize = sz;
-  const N = 20;
-  const total = sz * N;
-  ['blk-board-canvas','blk-overlay-canvas'].forEach(id => {
-    const cv = document.getElementById(id);
-    if(cv) { cv.width = total; cv.height = total; }
-  });
-}
-
-// ── UI UPDATE ────────────────────────────────────────────────
-function blkUpdateUI() {
-  blkIsMyTurn = blkMyColors.includes(blkCurrentColor);
-
-  // Fejléc
-  const colorInfo = BLK_COLORS_P[blkCurrentColor];
-  const myRem = blkMyColors.reduce((sum,cid) => sum + (blkRemainingPieces[cid]?.length||0), 0);
-  document.getElementById('blk-remaining').textContent = myRem;
-  document.getElementById('blk-remaining').style.color = blkIsMyTurn
-    ? (BLK_COLORS_P[blkMyColors[0]]?.hex || 'var(--accent)') : 'var(--text)';
-
-  const turnEl = document.getElementById('blk-turn-info');
-  if(turnEl && colorInfo) {
-    turnEl.innerHTML = `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${colorInfo.hex};vertical-align:middle;margin-right:4px;"></span>${colorInfo.name}`;
-  }
-
-  // Banner
-  const myBanner = document.getElementById('blk-myturn-banner');
-  const waitBanner = document.getElementById('blk-wait-banner');
-  if(blkIsMyTurn) {
-    myBanner.style.display = 'block';
-    waitBanner.style.display = 'none';
-    const col = BLK_COLORS_P[blkCurrentColor];
-    document.getElementById('blk-myturn-color').textContent = col ? col.name + ' szín' : '';
-    myBanner.style.borderColor = col?.hex || 'var(--accent)';
-  } else {
-    myBanner.style.display = 'none';
-    waitBanner.style.display = 'flex';
-    const dot = document.getElementById('blk-wait-color-dot');
-    const nameEl = document.getElementById('blk-wait-name');
-    if(dot && colorInfo) dot.style.background = colorInfo.hex;
-    if(nameEl) {
-      const pid = blkColorToPlayer[blkCurrentColor];
-      const pname = players[pid]?.name || colorInfo?.name || '?';
-      nameEl.textContent = pname;
-    }
-  }
-
-  // Place gomb állapot
-  blkUpdatePlaceBtn();
-
-  // Palette label
-  const palLabel = document.getElementById('blk-palette-label');
-  if(palLabel) palLabel.textContent = blkIsMyTurn ? 'VÁLASSZ DARABOT' : 'DARABOK';
-}
-
-function blkUpdatePlaceBtn() {
-  const btn = document.getElementById('blk-place-btn');
-  if(!btn) return;
-  const canPlace = blkIsMyTurn && blkSelectedPieceId && blkPlaceRow >= 0 && blkIsValidPlacement();
-  btn.disabled = !canPlace;
-  btn.style.opacity = canPlace ? '1' : '0.4';
-  btn.style.cursor = canPlace ? 'pointer' : 'not-allowed';
-}
-
-// ── PIECE HELPERS ────────────────────────────────────────────
-function blkGetCells(pieceId, rotation, mirrored) {
-  let cells = BLK_PIECES_P[pieceId] ? JSON.parse(JSON.stringify(BLK_PIECES_P[pieceId])) : [];
-  // Tükrözés
-  if(mirrored) { cells = cells.map(([r,c]) => [r, -c]); }
-  // Forgatás (rotation × 90°)
-  for(let i=0; i<rotation; i++) { cells = cells.map(([r,c]) => [c, -r]); }
-  // Normalizálás (min sor/oszlop = 0)
-  const minR = Math.min(...cells.map(([r])=>r));
-  const minC = Math.min(...cells.map(([,c])=>c));
-  return cells.map(([r,c]) => [r-minR, c-minC]);
-}
-
-function blkGetAbsCells(pieceId, rotation, mirrored, anchorR, anchorC) {
-  return blkGetCells(pieceId, rotation, mirrored).map(([r,c]) => [r+anchorR, c+anchorC]);
-}
-
-function blkIsValidPlacement() {
-  if(!blkSelectedPieceId || blkPlaceRow < 0 || blkPlaceCol < 0) return false;
-  return blkCheckValidAt(blkSelectedPieceId, blkRotation, blkMirrored, blkCurrentColor, blkPlaceRow, blkPlaceCol);
-}
-
-// ── BOARD RENDER ──────────────────────────────────────────────
-function blkRenderBoard() {
-  const cv = document.getElementById('blk-board-canvas');
-  if(!cv || !blkBoard) return;
-  const ctx = cv.getContext('2d');
-  const sz = blkCellSize;
-  const N = 20;
-
-  ctx.fillStyle = '#111120';
-  ctx.fillRect(0,0,cv.width,cv.height);
-
-  for(let r=0;r<N;r++) {
-    for(let c=0;c<N;c++) {
-      const cid = blkBoard[r][c];
-      const x = c*sz, y = r*sz;
-      if(cid > 0) {
-        const col = BLK_COLORS_P[cid];
-        ctx.fillStyle = col.hex;
-        ctx.fillRect(x+1,y+1,sz-1,sz-1);
-        // Árnyék él
-        ctx.fillStyle = col.dark;
-        ctx.fillRect(x+1,y+sz-2,sz-2,1);
-        ctx.fillRect(x+sz-2,y+1,1,sz-2);
-      } else {
-        ctx.fillStyle = '#181828';
-        ctx.fillRect(x+1,y+1,sz-1,sz-1);
-      }
-    }
-  }
-
-  // Grid
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-  ctx.lineWidth = 0.5;
-  for(let i=0;i<=N;i++) {
-    const p=i*sz;
-    ctx.beginPath();ctx.moveTo(p,0);ctx.lineTo(p,N*sz);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(0,p);ctx.lineTo(N*sz,p);ctx.stroke();
-  }
-
-  // Sarokjelölők
-  Object.entries(BLK_CORNERS_P).forEach(([cid,[cr,cc]]) => {
-    const cidN = parseInt(cid);
-    if(!blkTurnOrder.includes(cidN)) return;
-    const col = BLK_COLORS_P[cidN];
-    const x=cc*sz, y=cr*sz;
-    const isFirst = blkFirstMove[cidN];
-    if(isFirst) {
-      ctx.strokeStyle = col.hex;
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(x+1,y+1,sz-2,sz-2);
-    }
-  });
-
-  // Touch terület: valid pozíciók zöld ponttal jelölve (ha van kiválasztott darab és én lépek)
-  if(blkIsMyTurn && blkSelectedPieceId) {
-    blkHighlightValidAnchors(ctx, sz);
-  }
-}
-
-function blkHighlightValidAnchors(ctx, sz) {
-  const colorId = blkCurrentColor;
-  const col = BLK_COLORS_P[colorId];
-  ctx.fillStyle = col.hex + '33';
-
-  for(let ar=0; ar<20; ar++) {
-    for(let ac=0; ac<20; ac++) {
-      if(blkCheckValidAt(blkSelectedPieceId, blkRotation, blkMirrored, colorId, ar, ac)) {
-        ctx.fillRect(ac*sz+1, ar*sz+1, sz-1, sz-1);
-      }
-    }
-  }
-}
-
-// Pure validity check (no global state mutation)
-function blkCheckValidAt(pieceId, rotation, mirrored, colorId, anchorR, anchorC) {
-  const cells = blkGetAbsCells(pieceId, rotation, mirrored, anchorR, anchorC);
-  if(cells.some(([r,c]) => r<0||r>=20||c<0||c>=20)) return false;
-  if(cells.some(([r,c]) => blkBoard[r][c] !== 0)) return false;
-
-  const isFirst = blkFirstMove[colorId];
-  if(isFirst) {
-    const corner = BLK_CORNERS_P[colorId];
-    if(!corner) return true;
-    return cells.some(([r,c]) => r===corner[0] && c===corner[1]);
-  }
-
-  const DIR4 = [[-1,0],[1,0],[0,-1],[0,1]];
-  const DIR_CORNER = [[-1,-1],[-1,1],[1,-1],[1,1]];
-  const cellSet = new Set(cells.map(([r,c])=>r+','+c));
-
-  for(const [r,c] of cells) {
-    for(const [dr,dc] of DIR4) {
-      const nr=r+dr, nc=c+dc;
-      if(nr<0||nr>=20||nc<0||nc>=20) continue;
-      if(cellSet.has(nr+','+nc)) continue;
-      if(blkBoard[nr][nc] === colorId) return false;
-    }
-  }
-
-  for(const [r,c] of cells) {
-    for(const [dr,dc] of DIR_CORNER) {
-      const nr=r+dr, nc=c+dc;
-      if(nr<0||nr>=20||nc<0||nc>=20) continue;
-      if(blkBoard[nr][nc] === colorId) return true;
-    }
-  }
-  return false;
-}
-
-// ── OVERLAY (ghost darab) ────────────────────────────────────
-function blkRenderOverlay() {
-  const cv = document.getElementById('blk-overlay-canvas');
-  if(!cv) return;
-  const ctx = cv.getContext('2d');
-  const sz = blkCellSize;
-  ctx.clearRect(0,0,cv.width,cv.height);
-
-  if(!blkSelectedPieceId || blkPlaceRow < 0) return;
-
-  const cells = blkGetAbsCells(blkSelectedPieceId, blkRotation, blkMirrored, blkPlaceRow, blkPlaceCol);
-  const valid = blkIsValidPlacement();
-  const colorId = blkCurrentColor;
-  const col = BLK_COLORS_P[colorId];
-
-  cells.forEach(([r,c]) => {
-    if(r<0||r>=20||c<0||c>=20) return;
-    ctx.fillStyle = valid ? col.hex+'99' : '#e05a5a88';
-    ctx.fillRect(c*sz+1,r*sz+1,sz-1,sz-1);
-    ctx.strokeStyle = valid ? col.hex : '#e05a5a';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(c*sz+1,r*sz+1,sz-2,sz-2);
-  });
-}
-
-function blkClearOverlay() {
-  const cv = document.getElementById('blk-overlay-canvas');
-  if(!cv) return;
-  const ctx = cv.getContext('2d');
-  ctx.clearRect(0,0,cv.width,cv.height);
-}
-
-// ── TÁBLA TOUCH/CLICK ────────────────────────────────────────
-function blkSetupBoardTouch() {
-  const cv = document.getElementById('blk-board-canvas');
-  if(!cv) return;
-
-  function getCell(e) {
-    const rect = cv.getBoundingClientRect();
-    const scaleX = cv.width / rect.width;
-    const scaleY = cv.height / rect.height;
-    let clientX, clientY;
-    if(e.touches && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-    const x = (clientX - rect.left) * scaleX;
-    const y = (clientY - rect.top) * scaleY;
-    return [Math.floor(y / blkCellSize), Math.floor(x / blkCellSize)];
-  }
-
-  function handleTap(e) {
-    if(!blkIsMyTurn || !blkSelectedPieceId) return;
-    e.preventDefault();
-    const [r, c] = getCell(e);
-    if(r<0||r>=20||c<0||c>=20) return;
-    blkPlaceRow = r;
-    blkPlaceCol = c;
-    blkRenderOverlay();
-    blkUpdatePlaceBtn();
-  }
-
-  cv.addEventListener('touchstart', handleTap, {passive:false});
-  cv.addEventListener('click', handleTap);
-}
-
-// ── PALETTE ──────────────────────────────────────────────────
-function blkRenderPalette() {
-  const el = document.getElementById('blk-piece-palette');
-  if(!el) return;
-  if(!blkIsMyTurn) {
-    el.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:10px;white-space:nowrap;">Várakozás a köröd-re...</div>';
-    return;
-  }
-  const colorId = blkCurrentColor;
-  const remaining = blkRemainingPieces[colorId] || [];
-  const col = BLK_COLORS_P[colorId];
-
-  el.innerHTML = remaining.map(pid => {
-    const cells = blkGetCells(pid, 0, false);
-    const maxR = Math.max(...cells.map(([r])=>r));
-    const maxC = Math.max(...cells.map(([,c])=>c));
-    const cs = 7; // cell size in palette
-    const pw = (maxC+1)*cs+4;
-    const ph = (maxR+1)*cs+4;
-    const isSelected = pid === blkSelectedPieceId;
-    return `<div onclick="blkSelectPiece('${pid}')" style="flex-shrink:0;padding:3px;border-radius:6px;border:1.5px solid ${isSelected?col.hex:'var(--border)'};background:${isSelected?col.hex+'22':'var(--surface2)'};cursor:pointer;">
-      <canvas id="blk-pal-${pid}" width="${pw}" height="${ph}" style="display:block;"></canvas>
-    </div>`;
-  }).join('');
-
-  // Draw each palette piece
-  remaining.forEach(pid => {
-    const cv = document.getElementById('blk-pal-'+pid);
-    if(!cv) return;
-    const ctx = cv.getContext('2d');
-    const cells = blkGetCells(pid, 0, false);
-    const cs = 7;
-    ctx.clearRect(0,0,cv.width,cv.height);
-    cells.forEach(([r,c]) => {
-      ctx.fillStyle = pid === blkSelectedPieceId ? col.hex : col.hex+'88';
-      ctx.fillRect(c*cs+2,r*cs+2,cs-1,cs-1);
-    });
-  });
-}
-
-function blkSelectPiece(pid) {
-  blkSelectedPieceId = pid;
-  blkRotation = 0;
-  blkMirrored = false;
-  blkPlaceRow = -1;
-  blkPlaceCol = -1;
-  blkRenderPalette();
-  blkUpdatePiecePreview();
-  blkClearOverlay();
-  blkUpdatePlaceBtn();
-  blkRenderBoard(); // refresh valid position hints
-}
-
-function blkUpdatePiecePreview() {
-  const cv = document.getElementById('blk-piece-preview');
-  if(!cv) return;
-  const ctx = cv.getContext('2d');
-  ctx.clearRect(0,0,cv.width,cv.height);
-  if(!blkSelectedPieceId) return;
-
-  const cells = blkGetCells(blkSelectedPieceId, blkRotation, blkMirrored);
-  const maxR = Math.max(...cells.map(([r])=>r));
-  const maxC = Math.max(...cells.map(([,c])=>c));
-  const cs = Math.min(Math.floor(Math.min(cv.width/(maxC+1), cv.height/(maxR+1)))-1, 10);
-  const colorId = blkCurrentColor;
-  const col = BLK_COLORS_P[colorId];
-
-  cells.forEach(([r,c]) => {
-    ctx.fillStyle = col?.hex || '#f0c040';
-    ctx.fillRect(c*cs+2,r*cs+2,cs-1,cs-1);
-  });
-
-  document.getElementById('blk-piece-name').textContent = blkSelectedPieceId + ' (' + cells.length + ' mező)';
-}
-
-// ── ROTATE / MIRROR ──────────────────────────────────────────
-function blkRotate() {
-  if(!blkSelectedPieceId) return;
-  blkRotation = (blkRotation + 1) % 4;
-  blkPlaceRow = -1; blkPlaceCol = -1;
-  blkUpdatePiecePreview();
-  blkClearOverlay();
-  blkUpdatePlaceBtn();
-  blkRenderBoard();
-}
-
-function blkMirror() {
-  if(!blkSelectedPieceId) return;
-  blkMirrored = !blkMirrored;
-  blkPlaceRow = -1; blkPlaceCol = -1;
-  blkUpdatePiecePreview();
-  blkClearOverlay();
-  blkUpdatePlaceBtn();
-  blkRenderBoard();
-}
-
-// ── LERAK ────────────────────────────────────────────────────
-function blkConfirmPlace() {
-  if(!blkIsMyTurn || !blkSelectedPieceId || blkPlaceRow < 0) return;
-  if(!blkIsValidPlacement()) { alert('Ez a pozíció nem érvényes! Ellenőrizd a szabályokat.'); return; }
-
-  const cells = blkGetAbsCells(blkSelectedPieceId, blkRotation, blkMirrored, blkPlaceRow, blkPlaceCol);
-  const move = {
-    colorId: blkCurrentColor,
-    pieceId: blkSelectedPieceId,
-    cells,
-    pass: false,
-    player: playerId,
-    playerName,
-    ts: db ? firebase.database.ServerValue.TIMESTAMP : Date.now(),
-  };
-
-  // Optimista UI frissítés
-  cells.forEach(([r,c]) => { if(r>=0&&r<20&&c>=0&&c<20) blkBoard[r][c] = blkCurrentColor; });
-  blkRemainingPieces[blkCurrentColor] = (blkRemainingPieces[blkCurrentColor]||[]).filter(id=>id!==blkSelectedPieceId);
-  blkFirstMove[blkCurrentColor] = false;
-  blkSelectedPieceId = null;
-  blkPlaceRow = -1; blkPlaceCol = -1;
-  blkRenderBoard();
-  blkClearOverlay();
-
-  if(db && roomRef) {
-    roomRef.child('blokusMoves').push(move);
-  }
-  blkUpdatePlaceBtn();
-}
-
-// ── KÖR KIHAGYÁS ─────────────────────────────────────────────
-function blkPass() {
-  if(!blkIsMyTurn) return;
-  if(!confirm('Biztosan kihagyod a körödet?')) return;
-  const move = {
-    colorId: blkCurrentColor,
-    pass: true,
-    player: playerId,
-    playerName,
-    ts: db ? firebase.database.ServerValue.TIMESTAMP : Date.now(),
-  };
-  if(db && roomRef) {
-    roomRef.child('blokusMoves').push(move);
-  }
-}
-
-// ── EREDMÉNY ─────────────────────────────────────────────────
-function showBlokusResultPlayer() {
-  hideAll();
-  document.getElementById('result-screen').style.display = 'block';
-  document.getElementById('final-score').textContent = myScore;
-  document.getElementById('result-emoji').textContent = '⬛';
-  document.getElementById('final-rank').textContent = 'Blokus — Játék vége';
-  document.getElementById('result-scoreboard').innerHTML =
-    '<h4>BLOKUS EREDMÉNY</h4><div style="font-size:13px;color:var(--muted);text-align:center;padding:12px;">A végeredmény a host felületen látható.</div>';
-  const btn = document.getElementById('btn-return-to-game');
-  if(btn) { btn.disabled = true; btn.textContent = '⏳ VÁRAKOZÁS...'; }
-}
-
-// ── SETUP (initBlokusPlayer után hívódik) ────────────────────
-window.addEventListener('resize', () => {
-  if(blkActive && document.getElementById('blokus-player-screen').style.display !== 'none') {
-    blkSizeCanvas();
-    blkRenderBoard();
-    if(blkPlaceRow >= 0 && blkSelectedPieceId) blkRenderOverlay();
-    else blkClearOverlay();
-  }
-});
-</script>
 
 </body>
 </html>
