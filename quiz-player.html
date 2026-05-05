@@ -4157,8 +4157,9 @@ function setupAnimalPlayerListeners(){
 }
 
 // Extend hideAll to include animal screens
+// FONTOS: assignment stílus, NEM function deklaráció — elkerüli a hoisting-ot
 const _origHideAll=hideAll;
-function hideAll(){
+hideAll = function(){
   _origHideAll();
   ['animal-char-screen','animal-chapter-screen','animal-game-screen',
    'animal-merchant-screen','animal-victory-screen','animal-defeat-screen',
@@ -4166,19 +4167,21 @@ function hideAll(){
     const el=document.getElementById(id);
     if(el)el.style.display='none';
   });
-}
+};
 
 // Extend startGame to hook animal listeners
+// FONTOS: assignment stílus, NEM function deklaráció — elkerüli a hoisting-ot
 const _origStartGamePlayer=startGame;
-async function startGame(){
+startGame = async function(){
   await _origStartGamePlayer.call(this,...arguments);
   // After connection established, also set up animal listeners
-  setTimeout(setupAnimalPlayerListeners,500);
-}
+  setTimeout(setupAnimalPlayerListeners,800);
+};
 
 // Extend returnToGame to reset animal state
+// FONTOS: assignment stílus, NEM function deklaráció — elkerüli a hoisting-ot
 const _origReturnToGame=returnToGame;
-async function returnToGame(){
+returnToGame = async function(){
   clearInterval(animalTimerInterval);
   clearInterval(animalFreezeInterval);
   animalMyChar=null;animalMyGold=0;animalCurrentWord='';
@@ -4186,14 +4189,15 @@ async function returnToGame(){
   animalGoldMultiplierActive=false;animalTravelerDeleteUsed=false;
   animalStarterTipsLeft=2;animalSlot2={type:null,count:0};animalSlot3={type:null,count:0};
   await _origReturnToGame.call(this,...arguments);
-}
+};
 
 // Extend updateReturnToGameBtn for animal screens
+// FONTOS: assignment stílus, NEM function deklaráció — elkerüli a hoisting-ot
 const _origUpdateReturnBtn=updateReturnToGameBtn;
-function updateReturnToGameBtn(){
+updateReturnToGameBtn = function(){
   _origUpdateReturnBtn();
   updateAnimalReturnBtns();
-}
+};
 </script>
 
 </body>
